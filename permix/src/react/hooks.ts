@@ -5,7 +5,7 @@ import { checkWithRules, getRules, validatePermix } from '../core/create-permix'
 export interface PermixContext<T extends PermixDefinition> {
   permix: Permix<T>
   isReady: boolean
-  rules: PermixRules<T>
+  rules?: PermixRules<T>
 }
 
 export const Context = React.createContext<PermixContext<any>>(null!)
@@ -35,7 +35,7 @@ export function usePermix<T extends PermixDefinition>(permix: Permix<T>) {
 
   const check: typeof permix.check = React.useCallback((...args) => {
     return checkWithRules(rules ?? getRules(permixContext), ...args)
-  }, [permixContext, rules])
+  }, [rules, permixContext])
 
   return { check, isReady }
 }

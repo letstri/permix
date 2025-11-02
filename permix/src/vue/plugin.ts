@@ -5,7 +5,7 @@ import { getRules, validatePermix } from '../core/create-permix'
 
 export const PERMIX_CONTEXT_KEY = Symbol('vue-permix') as InjectionKey<Ref<{
   permix: Permix<any>
-  state: PermixRules<any>
+  rules?: PermixRules<any>
   isReady: boolean
 }>>
 
@@ -23,14 +23,14 @@ export const permixPlugin: Plugin<{ permix: Permix<any> }> = (app, { permix }) =
 
   const context = ref({
     permix,
-    state: getRules(permix),
+    rules: getRules(permix),
     isReady: false,
   })
 
   app.provide(PERMIX_CONTEXT_KEY, context)
 
   permix.hook('setup', () => {
-    context.value.state = getRules(permix)
+    context.value.rules = getRules(permix)
   })
 
   permix.hook('ready', () => {

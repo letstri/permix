@@ -1,6 +1,6 @@
 import { render, waitFor } from '@solidjs/testing-library'
 import { describe, expect, it } from 'vitest'
-import { createPermix, dehydrate } from '../core'
+import { createPermix } from '../core'
 import { createComponents, PermixHydrate, PermixProvider } from './components'
 import { usePermix } from './hooks'
 import '@testing-library/jest-dom/vitest'
@@ -21,7 +21,7 @@ describe('components', () => {
       },
     })
 
-    const dehydrated = dehydrate(permixServer)
+    const dehydrated = permixServer.dehydrate()
 
     const permixClient = createPermix<{
       post: {

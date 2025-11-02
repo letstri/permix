@@ -3,7 +3,6 @@ import type { PermixStateJSON } from '../core/create-permix'
 import type { CheckFunctionObject } from '../core/params'
 import type { PermixContext } from './hooks'
 import * as React from 'react'
-import { hydrate } from '../core'
 import { getRules, validatePermix } from '../core/create-permix'
 import { Context, usePermix, usePermixContext } from './hooks'
 
@@ -47,7 +46,7 @@ export function PermixHydrate({ children, state }: { children: React.ReactNode, 
 
   validatePermix(permix)
 
-  React.useMemo(() => hydrate(permix, state), [permix, state])
+  React.useMemo(() => permix.hydrate(state), [permix, state])
 
   return children
 }
@@ -75,13 +74,9 @@ export function createComponents<Permissions extends PermixDefinition>(permix: P
     const { check } = usePermix(permix)
 
     const hasPermission = check(entity, action, data)
-    return (
-      <>
-        {reverse
-          ? hasPermission ? otherwise : children
-          : hasPermission ? children : otherwise}
-      </>
-    )
+    return reverse
+      ? hasPermission ? otherwise : children
+      : hasPermission ? children : otherwise
   }
 
   Check.displayName = 'Check'

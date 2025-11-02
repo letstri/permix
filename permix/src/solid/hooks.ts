@@ -5,7 +5,7 @@ import { checkWithRules, getRules, validatePermix } from '../core/create-permix'
 export interface PermixContext<T extends PermixDefinition> {
   permix: Permix<T>
   isReady: boolean
-  rules: PermixRules<T>
+  rules?: PermixRules<T>
 }
 
 export const Context = createContext<PermixContext<any>>(null!)

@@ -1,6 +1,6 @@
 import type { Permix, PermixDefinition } from '../core/create-permix'
 import { computed, inject } from 'vue'
-import { checkWithRules, validatePermix } from '../core/create-permix'
+import { checkWithRules, getRules, validatePermix } from '../core/create-permix'
 import { PERMIX_CONTEXT_KEY } from './plugin'
 
 function usePermixContext() {
@@ -25,9 +25,10 @@ export function usePermix<T extends PermixDefinition>(
 
   const context = usePermixContext()
 
+  validatePermix(context.value.permix)
+
   const check: typeof permix.check = (...args) => {
-    validatePermix(context.value.permix)
-    return checkWithRules(context.value.state!, ...args)
+    return checkWithRules(context.value.rules ?? getRules(context.value.permix), ...args)
   }
 
   return { check, isReady: computed(() => context.value.isReady) }

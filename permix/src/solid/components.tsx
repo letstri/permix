@@ -5,7 +5,6 @@ import type { CheckFunctionObject } from '../core/params'
 import type { PermixContext } from './hooks'
 import { createEffect, createMemo, onCleanup } from 'solid-js'
 import { createStore } from 'solid-js/store'
-import { hydrate } from '../core'
 import { getRules, validatePermix } from '../core/create-permix'
 import { Context, usePermix, usePermixContext } from './hooks'
 
@@ -48,7 +47,7 @@ export function PermixHydrate(props: { children: JSX.Element, state: PermixState
 
   validatePermix(context.permix)
 
-  createMemo(() => hydrate(context.permix, props.state))
+  context.permix.hydrate(props.state)
 
   return props.children
 }
