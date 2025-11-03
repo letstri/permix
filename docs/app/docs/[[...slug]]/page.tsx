@@ -1,7 +1,8 @@
+import type { Metadata } from 'next'
 import * as Twoslash from 'fumadocs-twoslash/ui'
 import * as StepsComponents from 'fumadocs-ui/components/steps'
 import * as TabsComponents from 'fumadocs-ui/components/tabs'
-import defaultMdxComponents from 'fumadocs-ui/mdx'
+import { createRelativeLink } from 'fumadocs-ui/mdx'
 import {
   DocsBody,
   DocsDescription,
@@ -9,12 +10,11 @@ import {
   DocsTitle,
 } from 'fumadocs-ui/page'
 import { notFound } from 'next/navigation'
+import { getMDXComponents } from '@/app/mdx-components'
 import { LLMCopyButton, ViewOptions } from '@/components/ai/page-actions'
 import { source } from '@/lib/source'
 
-export default async function Page(props: {
-  params: Promise<{ slug?: string[] }>
-}) {
+export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   const params = await props.params
   const page = source.getPage(params.slug)
 
@@ -37,12 +37,12 @@ export default async function Page(props: {
       </div>
       <DocsBody>
         <MDX
-          components={{
-            ...defaultMdxComponents,
+          components={getMDXComponents({
+            a: createRelativeLink(source, page),
             ...TabsComponents,
             ...StepsComponents,
             ...Twoslash,
-          }}
+          })}
         />
       </DocsBody>
     </DocsPage>
@@ -53,11 +53,12 @@ export async function generateStaticParams() {
   return source.generateParams()
 }
 
-export async function generateMetadata(props: {
-  params: Promise<{ slug?: string[] }>
-}) {
+export async function generateMetadata(
+  props: PageProps<'/docs/[[...slug]]'>,
+): Promise<Metadata> {
   const params = await props.params
   const page = source.getPage(params.slug)
+
   if (!page)
     notFound()
 

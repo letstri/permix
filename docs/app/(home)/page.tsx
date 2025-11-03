@@ -71,7 +71,7 @@ export default function Home() {
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-fd-accent text-2xl">
                 {item.emoji}
               </div>
-              <h3 className="text-lg !font-semibold !mt-6">{item.title}</h3>
+              <h3 className="text-lg font-semibold! mt-6!">{item.title}</h3>
               <p
                 className="text-fd-muted-foreground"
                 // eslint-disable-next-line react-dom/no-dangerously-set-innerhtml

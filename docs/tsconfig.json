@@ -12,9 +12,8 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/.source": [".source"],
+      "@/*": ["./*"]
     },
     "resolveJsonModule": true,
     "allowJs": true,
