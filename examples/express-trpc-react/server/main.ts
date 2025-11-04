@@ -54,7 +54,7 @@ export const appRouter = router({
     .use(permix.checkMiddleware('user', 'create'))
     .input(z.object({
       name: z.string(),
-      email: z.string().email(),
+      email: z.email(),
     }))
     .mutation(() => {
       // Imagine this is a database mutation

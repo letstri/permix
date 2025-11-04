@@ -1,4 +1,4 @@
 import { createComponents } from 'permix/react'
-import { permix } from '@/shared/permix'
+import { permix } from '../permix'
 
 export const { Check } = createComponents(permix)

@@ -14,7 +14,7 @@ export function setupPermix(user: User) {
   return permix.setup({
     post: {
       read: true,
-      edit: post => post.authorId === user.id,
+      edit: post => post?.authorId === user.id,
     },
   })
 }

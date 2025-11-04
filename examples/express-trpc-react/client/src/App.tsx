@@ -1,8 +1,9 @@
 import type { RouterOutput } from '@/shared/trpc'
 import { useEffect, useState } from 'react'
-import { setupPermix } from '@/shared/permix'
+import { getRules } from '@/shared/permix'
 import { Check } from './components/permix'
 import { usePermissions } from './hooks/use-permissions'
+import { permix } from './permix'
 import { trpc } from './trpc'
 
 export default function App() {
@@ -17,7 +18,7 @@ export default function App() {
       role: 'user' as const,
     }
 
-    setupPermix(user.role)
+    permix.setup(getRules(user.role))
   }, [])
 
   useEffect(() => {

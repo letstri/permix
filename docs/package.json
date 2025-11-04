@@ -28,18 +28,18 @@
     "twoslash": "^0.3.4"
   },
   "devDependencies": {
-    "@orpc/server": ">=1",
-    "@trpc/server": ">=11",
+    "@orpc/server": ">=1.10.3",
+    "@trpc/server": ">=11.7.1",
     "@types/express": "^5.0.5",
     "@types/mdx": "^2.0.13",
     "@types/node": "24.10.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "autoprefixer": "^10.4.21",
-    "elysia": ">=1",
+    "elysia": ">=1.4.15",
     "express": ">=5",
-    "fastify": ">=5",
-    "hono": ">=4",
+    "fastify": ">=5.6.1",
+    "hono": ">=4.10.4",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.16",
     "typescript": "^5.9.3"

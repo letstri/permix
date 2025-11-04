@@ -1,5 +1,5 @@
 import { usePermix } from 'permix/react'
-import { permix } from '@/shared/permix'
+import { permix } from '../permix'
 
 export function usePermissions() {
   return usePermix(permix)
