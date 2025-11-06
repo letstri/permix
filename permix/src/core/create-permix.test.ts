@@ -303,6 +303,36 @@ describe('createPermix', () => {
     expect(permix.check('post', 'all')).toBe(false)
   })
 
+  it('should check any permissions', () => {
+    permix.setup({
+      post: {
+        create: false,
+        read: true,
+      },
+      comment: {
+        create: true,
+        read: true,
+        update: true,
+      },
+    })
+
+    expect(permix.check('post', 'any')).toBe(true)
+
+    permix.setup({
+      post: {
+        create: false,
+        read: false,
+      },
+      comment: {
+        create: false,
+        read: false,
+        update: false,
+      },
+    })
+
+    expect(permix.check('post', 'any')).toBe(false)
+  })
+
   it('should call setup hook', () => {
     const callback = vi.fn()
 

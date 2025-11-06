@@ -80,6 +80,11 @@ app.put('/posts/:id', permix.checkMiddleware('post', ['read', 'update']), (req, 
 app.delete('/posts/:id', permix.checkMiddleware('post', 'all'), (req, res) => {
   res.json({ success: true })
 })
+
+// Check any action
+app.get('/posts', permix.checkMiddleware('post', 'any'), (req, res) => {
+  res.json({ posts: getAllPosts() })
+})
 ```
 
 </Step>

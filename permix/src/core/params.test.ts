@@ -105,6 +105,17 @@ describe('params', () => {
       expect(obj.action).toBe('all')
     })
 
+    it('should accept "any" as action', () => {
+      const obj: CheckFunctionObject<TestDefinition, 'post'> = {
+        entity: 'post',
+        action: 'any',
+        data: { id: '1', title: 'Test Post' },
+      }
+
+      expect(obj.entity).toBe('post')
+      expect(obj.action).toBe('any')
+    })
+
     it('should work without data property', () => {
       const obj: CheckFunctionObject<TestDefinition, 'post'> = {
         entity: 'post',
@@ -157,6 +168,15 @@ describe('params', () => {
       expect(Array.isArray(context.actions)).toBe(true)
       expect(context.actions.length).toBe(1)
       expect(context.actions[0]).toBe('all')
+    })
+
+    it('should create a context from params with "any" action', () => {
+      const context = createCheckContext('post', 'any', { id: '1', title: 'Test Post' })
+
+      expect(context.entity).toBe('post')
+      expect(Array.isArray(context.actions)).toBe(true)
+      expect(context.actions.length).toBe(1)
+      expect(context.actions[0]).toBe('any')
     })
 
     it('should create a context without data parameter', () => {

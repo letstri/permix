@@ -91,6 +91,14 @@ app.delete('/posts/:id', () => {
 }, {
   beforeHandle: permix.checkHandler('post', 'all')
 })
+
+// Check any action
+app.get('/posts', () => {
+  // Get posts logic here
+  return { posts: getAllPosts() }
+}, {
+  beforeHandle: permix.checkHandler('post', 'any')
+})
 ```
 
 </Step>

@@ -87,6 +87,12 @@ app.delete('/posts/:id', permix.checkMiddleware('post', 'all'), (c) => {
   // Delete post logic here
   return c.json({ success: true })
 })
+
+// Check any action
+app.get('/posts', permix.checkMiddleware('post', 'any'), (c) => {
+  // Get posts logic here
+  return c.json({ posts: getAllPosts() })
+})
 ```
 
 </Step>

@@ -33,6 +33,15 @@ Use the special 'all' keyword to verify if all possible actions for an entity ar
 permix.check('post', 'all') // returns true only if all actions are permitted
 ```
 
+## Any
+
+Use the special 'any' keyword to verify if any of the actions for an entity are permitted:
+
+```ts
+// Check if any action is allowed for posts
+permix.check('post', 'any') // returns true if any action is permitted
+```
+
 ## `checkAsync`
 
 When you need to ensure permissions are ready before checking, use `checkAsync`. This is useful when permissions might be set up asynchronously:

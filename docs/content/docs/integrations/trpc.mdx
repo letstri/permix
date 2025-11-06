@@ -105,10 +105,17 @@ const router = t.router({
       return { success: true }
     }),
 
-  adminAction: protectedProcedure
+  allAction: protectedProcedure
     .use(permix.checkMiddleware('post', 'all'))
     .query(() => {
       // Admin-only action
+      return { success: true }
+    })
+
+  anyAction: protectedProcedure
+    .use(permix.checkMiddleware('post', 'any'))
+    .query(() => {
+      // Any action
       return { success: true }
     })
 })

@@ -94,6 +94,34 @@ describe('hydration', () => {
     expect(permix.check('post', 'all')).toBe(false)
   })
 
+  it('should handle "any" action check after hydration', () => {
+    const permix = createPermix<{
+      post: {
+        action: 'create' | 'read' | 'update'
+      }
+    }>()
+
+    permix.hydrate({
+      post: {
+        create: false,
+        read: false,
+        update: false,
+      },
+    })
+
+    expect(permix.check('post', 'any')).toBe(false)
+
+    permix.hydrate({
+      post: {
+        create: true,
+        read: false,
+        update: true,
+      },
+    })
+
+    expect(permix.check('post', 'any')).toBe(true)
+  })
+
   it('should dehydrate permissions to JSON state', () => {
     const permix = createPermix<{
       post: {

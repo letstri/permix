@@ -55,17 +55,21 @@ export function checkWithRules<Definition extends PermixDefinition, K extends ke
   const entityObj = state[entity]
   const actions = Array.isArray(action) ? action : [action]
 
-  const actionValues = action === 'all'
+  const actionValues = action === 'all' || action === 'any'
     ? Object.values(entityObj)
     : actions.map(a => entityObj[a])
 
-  return actionValues.every((action) => {
+  const checkFn = (action: unknown) => {
     if (typeof action === 'function') {
       return Boolean(action(data))
     }
 
     return action ?? false
-  })
+  }
+
+  return action === 'any'
+    ? actionValues.some(checkFn)
+    : actionValues.every(checkFn)
 }
 
 /**
@@ -99,6 +103,9 @@ export interface Permix<Definition extends PermixDefinition> {
    *
    * // All actions check
    * permix.check('post', 'all') // returns true if ALL actions are allowed
+   *
+   * // Any action check
+   * permix.check('post', 'any') // returns true if ANY action is allowed
    * ```
    */
   check: <K extends keyof Definition>(...args: CheckFunctionParams<Definition, K>) => boolean

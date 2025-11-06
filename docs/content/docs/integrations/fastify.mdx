@@ -86,6 +86,13 @@ fastify.delete('/posts/:id', {
 }, (request, reply) => {
   reply.send({ success: true })
 })
+
+// Check any action
+fastify.get('/posts', {
+  preHandler: permix.checkHandler('post', 'any'),
+}, (request, reply) => {
+  reply.send({ posts: getAllPosts() })
+})
 ```
 
 </Step>
