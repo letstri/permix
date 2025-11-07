@@ -105,10 +105,10 @@ You can access the Permix instance directly in your route handlers using the `ge
 
 ```ts
 app.get('/posts', (c) => {
-  const permix = permix.get(c)
+  const { check } = permix.get(c)
 
   // Check permissions manually
-  if (permix.check('post', 'read')) {
+  if (check('post', 'read')) {
     // User has permission to read posts
     return c.json({ posts: getAllPosts() })
   } else {
@@ -235,10 +235,10 @@ app.put('/posts/:id', async (c) => {
   const postId = c.req.param('id')
   const post = await getPostById(postId)
 
-  const permix = permix.get(c)
+  const { check } = permix.get(c)
 
   // Check if user can update this specific post
-  if (permix.check('post', 'update', post)) {
+  if (check('post', 'update', post)) {
     // Update post logic
     return c.json({ success: true })
   } else {
