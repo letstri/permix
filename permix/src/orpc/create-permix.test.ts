@@ -82,13 +82,10 @@ describe('createPermix', () => {
 
   it('should throw if called without setupMiddleware', async () => {
     const router = orpcPermix.router({
-      // @ts-expect-error should throw
       createPost: orpcPermix
-      // @ts-expect-error should throw
         .use(permix.checkMiddleware('post', 'create'))
         .handler(({ context }) => {
-          // @ts-expect-error should throw
-          return { success: context.permix.check('post', 'update') }
+          return { success: (context as any).permix?.check('post', 'update') }
         }),
     })
 
@@ -534,6 +531,109 @@ describe('createPermix', () => {
       },
       user: {
         delete: false,
+      },
+    })
+  })
+
+  it('should work with custom contextKey', async () => {
+    const customPermix = createPermix<PermissionsDefinition>({
+      contextKey: 'userPermissions',
+    })
+
+    const router = orpcPermix.router({
+      createPost: orpcPermix
+        .use(({ next }) => {
+          const p = customPermix.setup({
+            post: {
+              create: true,
+              read: true,
+              update: true,
+            },
+            user: {
+              delete: true,
+            },
+          })
+
+          return next({
+            context: {
+              userPermissions: p,
+            },
+          })
+        })
+        .use(customPermix.checkMiddleware('post', 'create'))
+        .handler(({ context }) => {
+          return { success: context.userPermissions.check('post', 'create') }
+        }),
+    })
+
+    const result = await new RPCHandler(router).handle(createRequest('/createPost'), {
+      context: { user: { id: '1' } },
+    })
+    expect(result.response?.status).toEqual(200)
+    expect(await result.response?.json()).toEqual({ json: { success: true } })
+  })
+
+  it('should support multiple permix instances with different contextKeys', async () => {
+    const userPermix = createPermix<PermissionsDefinition>({
+      contextKey: 'userPermissions',
+    })
+
+    const orgPermix = createPermix<PermissionsDefinition>({
+      contextKey: 'orgPermissions',
+    })
+
+    const router = orpcPermix.router({
+      createPost: orpcPermix
+        .use(({ next }) => {
+          const userP = userPermix.setup({
+            post: {
+              create: true,
+              read: true,
+              update: false,
+            },
+            user: {
+              delete: false,
+            },
+          })
+
+          const orgP = orgPermix.setup({
+            post: {
+              create: true,
+              read: true,
+              update: true,
+            },
+            user: {
+              delete: true,
+            },
+          })
+
+          return next({
+            context: {
+              userPermissions: userP,
+              orgPermissions: orgP,
+            },
+          })
+        })
+        .use(userPermix.checkMiddleware('post', 'create'))
+        .use(orgPermix.checkMiddleware('post', 'update'))
+        .handler(({ context }) => {
+          return {
+            userCanCreate: context.userPermissions.check('post', 'create'),
+            userCanUpdate: context.userPermissions.check('post', 'update'),
+            orgCanUpdate: context.orgPermissions.check('post', 'update'),
+          }
+        }),
+    })
+
+    const result = await new RPCHandler(router).handle(createRequest('/createPost'), {
+      context: { user: { id: '1' } },
+    })
+    expect(result.response?.status).toEqual(200)
+    expect(await result.response?.json()).toEqual({
+      json: {
+        userCanCreate: true,
+        userCanUpdate: false,
+        orgCanUpdate: true,
       },
     })
   })

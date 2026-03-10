@@ -1,4 +1,4 @@
-import type { Permix, PermixDefinition, PermixRules } from '../core/create-permix'
+import type { PermixDefinition, PermixRules } from '../core/create-permix'
 import type { CheckContext, CheckFunctionParams } from '../core/params'
 import { ORPCError, os } from '@orpc/server'
 import { createPermix as createPermixCore } from '../core/create-permix'
@@ -7,6 +7,11 @@ import { createTemplate } from '../core/template'
 import { pick } from '../utils'
 
 export interface PermixOptions<T extends PermixDefinition> {
+  /**
+   * Custom key to use for storing the permix instance in the context
+   * @default 'permix'
+   */
+  contextKey?: string
   /**
    * Custom error to throw when permission is denied
    */
@@ -20,12 +25,13 @@ export interface PermixOptions<T extends PermixDefinition> {
  */
 export function createPermix<Definition extends PermixDefinition>(
   {
+    contextKey = 'permix',
     forbiddenError = () => new ORPCError('FORBIDDEN', {
       message: 'You do not have permission to perform this action',
     }),
   }: PermixOptions<Definition> = {},
 ) {
-  const plugin = os.$context<{ permix: Pick<Permix<Definition>, 'check' | 'dehydrate'> }>()
+  const plugin = os.$context()
 
   function setup(rules: PermixRules<Definition>) {
     return pick(createPermixCore<Definition>(rules), ['check', 'dehydrate'])
@@ -33,11 +39,11 @@ export function createPermix<Definition extends PermixDefinition>(
 
   function checkMiddleware<K extends keyof Definition>(...params: CheckFunctionParams<Definition, K>) {
     return plugin.middleware(async ({ context, next }) => {
-      if (!context.permix) {
+      if (!context[contextKey]) {
         throw new Error('[Permix] Instance not found. Please use the `setupMiddleware` function.')
       }
 
-      const hasPermission = context.permix.check(...params)
+      const hasPermission = context[contextKey].check(...params)
 
       if (!hasPermission) {
         const error = typeof forbiddenError === 'function'
