@@ -537,4 +537,34 @@ describe('createPermix', () => {
       },
     })
   })
+
+  it('should support custom contextKey', async () => {
+    const customPermix = createPermix<PermissionsDefinition>({ contextKey: 'customPermixKey' })
+    const p = customPermix.setup({
+      post: {
+        create: true,
+      },
+    })
+
+    const orpcCustom = os.$context<{ customPermixKey: typeof p }>()
+
+    const router = orpcCustom.router({
+      createPost: orpcCustom
+        .route({
+          context: {
+            customPermixKey: p,
+          },
+        })
+        .use(customPermix.checkMiddleware('post', 'create'))
+        .handler(({ context }) => {
+          return { success: context.customPermixKey.check('post', 'create') }
+        }),
+    })
+
+    const result = await new RPCHandler(router).handle(createRequest('/createPost'), {
+      context: { customPermixKey: p }
+    })
+
+    expect(result.response?.status).toEqual(200)
+  })
 })
