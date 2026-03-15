@@ -23,6 +23,7 @@
     "integrations/hono",
     "integrations/elysia",
     "integrations/fastify",
+    "integrations/better-auth",
     "---Examples---",
     "[role-based](https://github.com/letstri/permix/tree/main/examples/role-based)",
     "[enum-based](https://github.com/letstri/permix/tree/main/examples/enum-based)",

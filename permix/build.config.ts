@@ -16,6 +16,7 @@ export default defineBuildConfig({
     './src/elysia/index.ts',
     './src/fastify/index.ts',
     './src/solid/index.ts',
+    './src/better-auth/index.ts',
   ],
   declaration: true,
   clean: true,
