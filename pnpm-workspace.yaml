@@ -39,6 +39,7 @@ catalog:
   '@vue/tsconfig': ^0.9.0
   autoprefixer: ^10.4.27
   babel-preset-solid: ^1.9.10
+  better-auth: ^1.5.5
   class-variance-authority: ^0.7.1
   cors: ^2.8.6
   dotenv: ^17.3.1

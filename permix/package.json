@@ -78,6 +78,10 @@
     "./solid": {
       "types": "./dist/solid/index.d.ts",
       "import": "./dist/solid/index.mjs"
+    },
+    "./better-auth": {
+      "types": "./dist/better-auth/index.d.ts",
+      "import": "./dist/better-auth/index.mjs"
     }
   },
   "main": "./dist/core/index.mjs",
@@ -106,6 +110,7 @@
     "react": ">=18",
     "react-dom": ">=18",
     "solid-js": ">=1",
+    "better-auth": ">=1",
     "vue": ">=3"
   },
   "peerDependenciesMeta": {
@@ -113,6 +118,9 @@
       "optional": true
     },
     "@trpc/server": {
+      "optional": true
+    },
+    "better-auth": {
       "optional": true
     },
     "elysia": {
@@ -145,6 +153,7 @@
   },
   "devDependencies": {
     "@babel/preset-react": "catalog:",
+    "better-auth": "catalog:",
     "@babel/preset-typescript": "catalog:",
     "@rollup/plugin-babel": "catalog:",
     "@solidjs/testing-library": "catalog:",

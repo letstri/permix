@@ -1,0 +1,233 @@
+---
+title: Better Auth
+description: Learn how to use Permix with Better Auth
+---
+
+## Overview
+
+Permix provides a [Better Auth](https://www.better-auth.com/) plugin that automatically maps authenticated sessions to permission rules. It exposes a `GET /permix/permissions` endpoint that returns the current user's dehydrated permissions, making it easy to sync permissions between server and client.
+
+<Callout>
+Before getting started with Better Auth integration, make sure you've completed the initial setup steps in the [Quick Start](/docs/quick-start) guide.
+</Callout>
+
+<Steps>
+
+<Step>
+
+## Server Setup
+
+Create a Permix instance with a `rules` callback that receives the Better Auth session and returns your permission rules. Then add `permix.plugin` to your Better Auth configuration:
+
+```ts title="auth.ts"
+import { betterAuth } from 'better-auth'
+import { createPermix } from 'permix/better-auth'
+
+interface Post {
+  id: string
+  authorId: string
+  title: string
+  content: string
+}
+
+// Create your Permix instance with rules based on the session
+const permix = createPermix<{
+  post: {
+    dataType: Post
+    action: 'create' | 'read' | 'update' | 'delete'
+  }
+}>({
+  rules: ({ user }) => ({
+    post: {
+      create: user.role === 'admin',
+      read: true,
+      update: user.role === 'admin',
+      delete: user.role === 'admin',
+    },
+  }),
+})
+
+// Add the plugin to your Better Auth instance
+export const auth = betterAuth({
+  // ...your config
+  plugins: [permix.plugin],
+})
+```
+
+This automatically registers a `GET /permix/permissions` endpoint on your auth server. The endpoint requires authentication (returns 401 if unauthenticated) and returns the dehydrated permission state for the current user.
+
+</Step>
+
+<Step>
+
+## Client Setup
+
+Add the `permixClient` plugin to your Better Auth client to get typed access to the permissions endpoint:
+
+```ts title="auth-client.ts"
+import { createAuthClient } from 'better-auth/client'
+import { permixClient } from 'permix/better-auth'
+import type { permix } from './auth' // import the type of your server permix instance
+
+const authClient = createAuthClient({
+  plugins: [permixClient<typeof permix>()],
+})
+
+// Fetch the current user's permissions
+const { data: permissions, error } = await authClient.permix.permissions()
+```
+
+</Step>
+
+<Step>
+
+## Hydrating on the Client
+
+The permissions endpoint returns a dehydrated state that you can hydrate into a client-side Permix instance. This works with any frontend framework integration (React, Vue, Solid):
+
+```ts title="permissions.ts"
+import { createPermix } from 'permix'
+
+const permix = createPermix<{
+  post: {
+    action: 'create' | 'read' | 'update' | 'delete'
+  }
+}>()
+
+// Fetch and hydrate permissions
+const { data } = await authClient.permix.permissions()
+
+if (data) {
+  permix.hydrate(data)
+}
+```
+
+See the [Hydration](/docs/guide/hydration) guide for more details on how hydration works with SSR frameworks.
+
+</Step>
+
+<Step>
+
+## Using Templates
+
+Permix provides a template helper to create reusable permission rule sets:
+
+```ts title="auth.ts"
+const permix = createPermix<Definition>({
+  rules: ({ user }) => {
+    if (user.role === 'admin') {
+      return adminTemplate()
+    }
+
+    return userTemplate()
+  },
+})
+
+// Create role-based templates
+const adminTemplate = permix.template({
+  post: {
+    create: true,
+    read: true,
+    update: true,
+    delete: true,
+  },
+})
+
+const userTemplate = permix.template({
+  post: {
+    create: false,
+    read: true,
+    update: false,
+    delete: false,
+  },
+})
+```
+
+</Step>
+
+</Steps>
+
+## Reusing Rules with Framework Middleware
+
+The `createPermix` return value exposes the `rules` function so you can reuse the same session-to-permissions mapping in your framework-specific middleware. This is useful when you need to protect application routes (not just Better Auth endpoints):
+
+```ts title="app.ts"
+import { Hono } from 'hono'
+import { createPermix as createHonoPermix } from 'permix/hono'
+import { auth, permix } from './auth'
+
+const honoPermix = createHonoPermix<Definition>()
+
+const app = new Hono()
+
+// Reuse the same rules callback from your Better Auth plugin
+app.use(honoPermix.setupMiddleware(async ({ c }) => {
+  const session = await auth.api.getSession({
+    headers: c.req.raw.headers,
+  })
+
+  if (!session) {
+    return {
+      post: { create: false, read: false, update: false, delete: false },
+    }
+  }
+
+  return permix.rules(session)
+}))
+
+app.post('/posts', honoPermix.checkMiddleware('post', 'create'), (c) => {
+  return c.json({ success: true })
+})
+```
+
+## Advanced Usage
+
+### Async Permission Rules
+
+The `rules` callback supports async functions, useful when permissions depend on data beyond the session (e.g., team membership, feature flags):
+
+```ts
+const permix = createPermix<Definition>({
+  rules: async ({ user }) => {
+    const teamPermissions = await getTeamPermissions(user.id)
+
+    return {
+      post: {
+        create: teamPermissions.canCreatePosts,
+        read: true,
+        update: teamPermissions.canUpdatePosts,
+        delete: teamPermissions.canDeletePosts,
+      },
+    }
+  },
+})
+```
+
+### Using with Better Auth's Admin Plugin
+
+If you're using Better Auth's [admin plugin](https://www.better-auth.com/docs/plugins/admin), you can use the `role` field it adds to the user object:
+
+```ts
+import { betterAuth } from 'better-auth'
+import { admin } from 'better-auth/plugins'
+import { createPermix } from 'permix/better-auth'
+
+const permix = createPermix<Definition>({
+  rules: ({ user }) => {
+    const role = (user as { role?: string }).role ?? 'user'
+
+    return {
+      post: {
+        create: role === 'admin' || role === 'editor',
+        read: true,
+        update: role === 'admin' || role === 'editor',
+        delete: role === 'admin',
+      },
+    }
+  },
+})
+
+export const auth = betterAuth({
+  plugins: [admin(), permix.plugin],
+})
+```
