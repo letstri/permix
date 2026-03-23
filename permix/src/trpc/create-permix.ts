@@ -67,8 +67,8 @@ export function createPermix<Definition extends PermixDefinition>(
     })
   }
 
-  function template<T = void>(...params: Parameters<typeof createTemplate<T, Definition>>) {
-    return createTemplate<T, Definition>(...params)
+  function template<T = void>(...params: Parameters<typeof createTemplate<Definition, T>>) {
+    return createTemplate<Definition, T>(...params)
   }
 
   return {

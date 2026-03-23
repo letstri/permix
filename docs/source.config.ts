@@ -26,6 +26,7 @@ export default defineConfig({
           typesCache: createFileSystemTypesCache(),
         }),
       ],
+      inline: 'tailing-curly-colon',
     },
   },
 })

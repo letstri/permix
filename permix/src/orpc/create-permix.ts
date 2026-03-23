@@ -14,8 +14,8 @@ export interface PermixOrpc<
   setup: (rules: PermixRules<Definition>) => PermixInstance<Definition>
   checkMiddleware: <EntityKey extends keyof Definition>(...params: CheckFunctionParams<Definition, EntityKey>) => any
   template: <T = void>(
-    ...params: Parameters<typeof createTemplate<T, Definition>>
-  ) => ReturnType<typeof createTemplate<T, Definition>>
+    ...params: Parameters<typeof createTemplate<Definition, T>>
+  ) => ReturnType<typeof createTemplate<Definition, T>>
 }
 
 export interface PermixOptions<T extends PermixDefinition, ContextKey extends string = string> {
@@ -83,8 +83,8 @@ export function createPermix<
     })
   }
 
-  function template<T = void>(...params: Parameters<typeof createTemplate<T, Definition>>) {
-    return createTemplate<T, Definition>(...params)
+  function template<T = void>(...params: Parameters<typeof createTemplate<Definition, T>>) {
+    return createTemplate<Definition, T>(...params)
   }
 
   return {

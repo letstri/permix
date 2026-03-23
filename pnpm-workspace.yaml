@@ -6,10 +6,13 @@ packages:
   - permix
   - docs
   - examples/*
+allowBuilds:
+  better-sqlite3: true
 catalog:
   '@antfu/eslint-config': ^7.6.1
   '@babel/preset-react': ^7.28.5
   '@babel/preset-typescript': ^7.28.5
+  '@better-auth/drizzle-adapter': ^1.5.6
   '@commitlint/cli': ^20.4.2
   '@commitlint/config-conventional': ^20.4.2
   '@eslint-react/eslint-plugin': ^2.13.0
@@ -23,6 +26,7 @@ catalog:
   '@testing-library/react': ^16.3.2
   '@trpc/client': ^11.11.0
   '@trpc/server': ^11.11.0
+  '@types/better-sqlite3': ^7.6.13
   '@types/cors': ^2.8.19
   '@types/express': ^5.0.6
   '@types/mdx': ^2.0.13
@@ -40,6 +44,7 @@ catalog:
   autoprefixer: ^10.4.27
   babel-preset-solid: ^1.9.10
   better-auth: ^1.5.5
+  better-sqlite3: ^12.8.0
   class-variance-authority: ^0.7.1
   cors: ^2.8.6
   dotenv: ^17.3.1

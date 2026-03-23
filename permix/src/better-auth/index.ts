@@ -1,1 +1,1 @@
-export { createPermix, permixClient, type PermixOptions, type PermixSession } from './create-permix'
+export { createPermix, permixClient, type PermixOptions, permixPlugin, type PermixPluginInstance } from './create-permix'
