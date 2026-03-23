@@ -5,7 +5,7 @@ import { createAuthEndpoint, sessionMiddleware } from 'better-auth/api'
 import { createPermix as createPermixCore } from '../core/create-permix'
 import { createTemplate } from '../core/template'
 
-interface PermixSession {
+export interface PermixSession {
   user: User & Record<string, any>
   session: Session & Record<string, any>
 }
