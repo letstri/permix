@@ -1,9 +1,8 @@
 // @vitest-environment node
-import type { User } from 'better-auth'
 import type { PermixDefinition } from '../core/create-permix'
 import { getTestInstance } from 'better-auth/test'
-import { describe, expect, it } from 'vitest'
-import { createPermix } from './create-permix'
+import { describe, expect, expectTypeOf, it } from 'vitest'
+import { createPermix, permixPlugin } from './create-permix'
 
 type Definition = PermixDefinition<{
   post: {
@@ -19,7 +18,7 @@ async function requestPermissions(
   headers?: Headers,
 ) {
   return auth.handler(
-    new Request('http://localhost:3000/api/auth/permix/permissions', {
+    new Request('http://localhost:3000/api/auth/permix/get-permissions', {
       method: 'GET',
       headers: headers || new Headers(),
     }),
@@ -28,15 +27,15 @@ async function requestPermissions(
 
 describe('createPermix', () => {
   it('should return permissions for authenticated user', async () => {
-    const permix = createPermix<Definition>({
+    const { auth, signInWithTestUser } = await getTestInstance({
+      plugins: [permixPlugin()],
+    })
+
+    createPermix<Definition>({
       rules: () => ({
         post: { create: true, read: true, update: false },
         user: { delete: false },
       }),
-    })
-
-    const { auth, signInWithTestUser } = await getTestInstance({
-      plugins: [permix.plugin],
     })
 
     const { headers } = await signInWithTestUser()
@@ -50,15 +49,15 @@ describe('createPermix', () => {
   })
 
   it('should return 401 for unauthenticated request', async () => {
-    const permix = createPermix<Definition>({
+    const { auth } = await getTestInstance({
+      plugins: [permixPlugin()],
+    })
+
+    createPermix<Definition>({
       rules: () => ({
         post: { create: true, read: true, update: false },
         user: { delete: false },
       }),
-    })
-
-    const { auth } = await getTestInstance({
-      plugins: [permix.plugin],
     })
 
     const res = await requestPermissions(auth)
@@ -67,7 +66,11 @@ describe('createPermix', () => {
   })
 
   it('should work with session-based rules', async () => {
-    const permix = createPermix<Definition>({
+    const { auth, signInWithTestUser } = await getTestInstance({
+      plugins: [permixPlugin()],
+    })
+
+    createPermix<Definition>({
       rules: ({ user }) => ({
         post: {
           create: user.name === 'test user',
@@ -76,10 +79,6 @@ describe('createPermix', () => {
         },
         user: { delete: false },
       }),
-    })
-
-    const { auth, signInWithTestUser } = await getTestInstance({
-      plugins: [permix.plugin],
     })
 
     const { headers } = await signInWithTestUser()
@@ -93,7 +92,11 @@ describe('createPermix', () => {
   })
 
   it('should support async rules', async () => {
-    const permix = createPermix<Definition>({
+    const { auth, signInWithTestUser } = await getTestInstance({
+      plugins: [permixPlugin()],
+    })
+
+    createPermix<Definition>({
       rules: async () => {
         await new Promise(resolve => setTimeout(resolve, 10))
 
@@ -102,10 +105,6 @@ describe('createPermix', () => {
           user: { delete: false },
         }
       },
-    })
-
-    const { auth, signInWithTestUser } = await getTestInstance({
-      plugins: [permix.plugin],
     })
 
     const { headers } = await signInWithTestUser()
@@ -119,7 +118,11 @@ describe('createPermix', () => {
   })
 
   it('should dehydrate function-based rules to false', async () => {
-    const permix = createPermix<Definition>({
+    const { auth, signInWithTestUser } = await getTestInstance({
+      plugins: [permixPlugin()],
+    })
+
+    createPermix<Definition>({
       rules: () => ({
         post: {
           create: () => true,
@@ -128,10 +131,6 @@ describe('createPermix', () => {
         },
         user: { delete: false },
       }),
-    })
-
-    const { auth, signInWithTestUser } = await getTestInstance({
-      plugins: [permix.plugin],
     })
 
     const { headers } = await signInWithTestUser()
@@ -144,15 +143,19 @@ describe('createPermix', () => {
     })
   })
 
-  it('should expose reusable rules function', () => {
-    const rules = ({ user }: { user: User & Record<string, any> }) => ({
+  it('should expose reusable rules function', async () => {
+    await getTestInstance({
+      plugins: [permixPlugin()],
+    })
+
+    const rules = ({ user }: { user: { name: string } }) => ({
       post: {
-        create: user.role === 'admin',
+        create: user.name === 'admin',
         read: true,
-        update: user.role === 'admin',
+        update: user.name === 'admin',
       },
       user: {
-        delete: user.role === 'admin',
+        delete: user.name === 'admin',
       },
     })
 
@@ -161,7 +164,11 @@ describe('createPermix', () => {
     expect(permix.rules).toBe(rules)
   })
 
-  it('should work with template', () => {
+  it('should work with template', async () => {
+    await getTestInstance({
+      plugins: [permixPlugin()],
+    })
+
     const permix = createPermix<Definition>({
       rules: () => ({
         post: { create: true, read: true, update: true },
@@ -178,5 +185,59 @@ describe('createPermix', () => {
       post: { create: true, read: true, update: false },
       user: { delete: false },
     })
+  })
+
+  it('should work via auth.api.getPermissions()', async () => {
+    const { auth, signInWithTestUser } = await getTestInstance({
+      plugins: [permixPlugin<Definition>()],
+    })
+
+    createPermix<Definition>({
+      rules: () => ({
+        post: { create: true, read: true, update: false },
+        user: { delete: false },
+      }),
+    })
+
+    const { headers } = await signInWithTestUser()
+    const data = await auth.api.getPermissions({ headers })
+
+    expect(data).toEqual({
+      post: { create: true, read: true, update: false },
+      user: { delete: false },
+    })
+  })
+
+  it('should accept session type via generic for additionalFields', async () => {
+    const { auth: _auth } = await getTestInstance({
+      plugins: [permixPlugin()],
+      user: {
+        additionalFields: {
+          role: {
+            type: ['user', 'admin'],
+            defaultValue: 'user',
+          },
+        },
+      },
+    })
+
+    type Session = typeof _auth.$Infer.Session
+
+    const permix = createPermix<Definition, Session>({
+      rules: ({ user }) => {
+        expectTypeOf(user.role).toEqualTypeOf<'user' | 'admin'>()
+
+        return {
+          post: {
+            create: user.role === 'admin',
+            read: true,
+            update: false,
+          },
+          user: { delete: false },
+        }
+      },
+    })
+
+    expectTypeOf(permix.rules).toBeFunction()
   })
 })

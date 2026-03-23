@@ -25,6 +25,12 @@ export default antfu(
     },
   },
   {
+    files: ['examples/nextjs-better-auth/src/app/**/*.ts?(x)'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+  {
     files: ['permix/src/vue/*.ts?(x)'],
     rules: {
       'react-hooks/rules-of-hooks': 'off',
