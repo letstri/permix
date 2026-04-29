@@ -1,5 +1,5 @@
 import type { PermixDefinition } from '../core/create-permix'
-import { Elysia } from 'elysia'
+import { Elysia, t } from 'elysia'
 import { describe, expect, it } from 'vitest'
 import { createPermix } from './create-permix'
 
@@ -204,6 +204,32 @@ describe('createPermix', () => {
     expect(response.status).toBe(200)
     const body = await response.json()
     expect(body).toEqual({ success: true })
+  })
+
+  it('should typecheck with schema-validated query (regression #33)', async () => {
+    const app = new Elysia()
+      .derive(() => permix.derive({
+        post: {
+          create: true,
+          read: false,
+          update: false,
+        },
+        user: {
+          delete: false,
+        },
+      }))
+      .get('/posts', ({ query }) => ({ page: query.page }), {
+        query: t.Object({
+          page: t.Numeric({ default: 1 }),
+        }),
+        beforeHandle: permix.checkHandler('post', 'create'),
+      })
+
+    const response = await app.handle(new Request('http://localhost/posts?page=2'))
+
+    expect(response.status).toBe(200)
+    const body = await response.json()
+    expect(body).toEqual({ page: 2 })
   })
 
   it('should dehydrate permissions', async () => {

@@ -8,7 +8,7 @@ import { createTemplate } from '../core/template'
 import { pick } from '../utils'
 
 export interface ElysiaContext {
-  context: Context
+  context: { set: Context['set'], [key: string]: any }
 }
 
 export interface PermixOptions<T extends PermixDefinition> {
@@ -36,7 +36,7 @@ export function createPermix<Definition extends PermixDefinition>(
   })
 
   const checkHandler = <K extends keyof Definition>(...params: CheckFunctionParams<Definition, K>) => {
-    return async (context: Context & { permix: Pick<Permix<Definition>, 'check' | 'dehydrate'> }) => {
+    return async (context: { permix: Pick<Permix<Definition>, 'check' | 'dehydrate'>, set: Context['set'] }) => {
       if (!context.permix) {
         throw new Error('[Permix]: Instance not found. Please use the `setupMiddleware` function.')
       }
