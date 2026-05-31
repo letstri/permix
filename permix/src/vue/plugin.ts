@@ -1,11 +1,10 @@
 import type { InjectionKey, Plugin, Ref } from 'vue'
-import type { Permix, PermixRules } from '../core'
+import type { Permix, Rules } from '../core'
 import { ref } from 'vue'
-import { getRules, validatePermix } from '../core/create-permix'
 
 export const PERMIX_CONTEXT_KEY = Symbol('vue-permix') as InjectionKey<Ref<{
   permix: Permix<any>
-  rules?: PermixRules<any>
+  rules: Rules<any> | null
   isReady: boolean
 }>>
 
@@ -19,18 +18,16 @@ export const permixPlugin: Plugin<{ permix: Permix<any> }> = (app, { permix }) =
     throw new Error('[Permix]: Looks like you forgot to provide the permix instance to the plugin')
   }
 
-  validatePermix(permix)
-
   const context = ref({
     permix,
-    rules: getRules(permix),
-    isReady: false,
+    rules: permix.getRules(),
+    isReady: permix.isReady(),
   })
 
   app.provide(PERMIX_CONTEXT_KEY, context)
 
   permix.hook('setup', () => {
-    context.value.rules = getRules(permix)
+    context.value.rules = permix.getRules()
   })
 
   permix.hook('ready', () => {

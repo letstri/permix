@@ -1,0 +1,16 @@
+{
+  "name": "better-auth",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "tsx main.ts",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "better-auth": ">=1",
+    "permix": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.22.3"
+  }
+}

@@ -2,9 +2,9 @@
   "name": "permix",
   "displayName": "Permix",
   "type": "module",
-  "version": "3.5.2",
+  "version": "4.0.0-rc.1",
   "private": false,
-  "packageManager": "pnpm@10.20.0",
+  "packageManager": "pnpm@11.5.0",
   "description": "Permix is a lightweight, framework-agnostic, type-safe permissions management library for JavaScript applications on the client and server sides.",
   "author": "Valerii Strilets",
   "license": "MIT",
@@ -35,48 +35,72 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/core/index.d.ts",
+      "types": "./dist/core/index.d.mts",
       "import": "./dist/core/index.mjs"
     },
+    "./sever": {
+      "types": "./dist/server/index.d.mts",
+      "import": "./dist/server/index.mjs"
+    },
     "./react": {
-      "types": "./dist/react/index.d.ts",
+      "types": "./dist/react/index.d.mts",
       "import": "./dist/react/index.mjs"
     },
     "./vue": {
-      "types": "./dist/vue/index.d.ts",
+      "types": "./dist/vue/index.d.mts",
       "import": "./dist/vue/index.mjs"
     },
     "./trpc": {
-      "types": "./dist/trpc/index.d.ts",
+      "types": "./dist/trpc/index.d.mts",
       "import": "./dist/trpc/index.mjs"
     },
     "./orpc": {
-      "types": "./dist/orpc/index.d.ts",
+      "types": "./dist/orpc/index.d.mts",
       "import": "./dist/orpc/index.mjs"
     },
     "./express": {
-      "types": "./dist/express/index.d.ts",
+      "types": "./dist/express/index.d.mts",
       "import": "./dist/express/index.mjs"
     },
     "./hono": {
-      "types": "./dist/hono/index.d.ts",
+      "types": "./dist/hono/index.d.mts",
       "import": "./dist/hono/index.mjs"
     },
     "./node": {
-      "types": "./dist/node/index.d.ts",
+      "types": "./dist/node/index.d.mts",
       "import": "./dist/node/index.mjs"
     },
     "./elysia": {
-      "types": "./dist/elysia/index.d.ts",
+      "types": "./dist/elysia/index.d.mts",
       "import": "./dist/elysia/index.mjs"
     },
     "./fastify": {
-      "types": "./dist/fastify/index.d.ts",
+      "types": "./dist/fastify/index.d.mts",
       "import": "./dist/fastify/index.mjs"
     },
     "./solid": {
-      "types": "./dist/solid/index.d.ts",
+      "types": "./dist/solid/index.d.mts",
       "import": "./dist/solid/index.mjs"
+    },
+    "./drizzle": {
+      "types": "./dist/drizzle/index.d.mts",
+      "import": "./dist/drizzle/index.mjs"
+    },
+    "./effect": {
+      "types": "./dist/effect/index.d.mts",
+      "import": "./dist/effect/index.mjs"
+    },
+    "./better-auth": {
+      "types": "./dist/better-auth/index.d.mts",
+      "import": "./dist/better-auth/index.mjs"
+    },
+    "./better-auth/client": {
+      "types": "./dist/better-auth/client.d.mts",
+      "import": "./dist/better-auth/client.mjs"
+    },
+    "./drizzle/legacy": {
+      "types": "./dist/drizzle/legacy/index.d.mts",
+      "import": "./dist/drizzle/legacy/index.mjs"
     }
   },
   "main": "./dist/core/index.mjs",
@@ -89,7 +113,7 @@
   },
   "scripts": {
     "prepublishOnly": "run-s check-types test build scripts:copy-readme",
-    "build": "unbuild",
+    "build": "tsdown",
     "test": "vitest run",
     "check-types": "tsc --build",
     "scripts:copy-readme": "node ./scripts/copy-readme.ts"
@@ -97,6 +121,9 @@
   "peerDependencies": {
     "@orpc/server": ">=1",
     "@trpc/server": ">=11",
+    "better-auth": ">=1",
+    "drizzle-orm": ">=0.30.0 || >=1.0.0-rc.3",
+    "effect": ">=3",
     "elysia": ">=1",
     "express": ">=4",
     "fastify": ">=5",
@@ -112,6 +139,15 @@
       "optional": true
     },
     "@trpc/server": {
+      "optional": true
+    },
+    "better-auth": {
+      "optional": true
+    },
+    "drizzle-orm": {
+      "optional": true
+    },
+    "effect": {
       "optional": true
     },
     "elysia": {
@@ -143,28 +179,29 @@
     }
   },
   "devDependencies": {
-    "@babel/preset-react": "^7.28.5",
-    "@babel/preset-typescript": "^7.28.5",
-    "@rollup/plugin-babel": "^6.1.0",
     "@solidjs/testing-library": "^0.8.10",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.0",
-    "@types/express": "^5.0.5",
-    "@types/node": "^24.10.0",
-    "@types/react": "^19.2.2",
-    "@types/supertest": "^6.0.3",
-    "@vitejs/plugin-react": "^5.1.0",
-    "@vitest/coverage-v8": "^4.0.6",
-    "@vue/test-utils": "^2.4.6",
-    "babel-preset-solid": "^1.9.10",
-    "happy-dom": "^20.0.10",
-    "react-dom": "^19.2.0",
-    "supertest": "^7.1.4",
-    "typescript": "^5.9.3",
-    "unbuild": "^3.6.1",
-    "vite-plugin-solid": "^2.11.10",
-    "vitest": "^4.0.6",
+    "@testing-library/react": "^16.3.2",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
+    "@types/supertest": "^7.2.0",
+    "@vitejs/plugin-react": "^6.0.2",
+    "@vitest/coverage-v8": "^4.1.7",
+    "@vue/test-utils": "^2.4.10",
+    "babel-preset-solid": "^1.9.12",
+    "better-auth": "^1.6.11",
+    "drizzle-orm": "1.0.0-rc.3",
+    "effect": "^3.21.2",
+    "happy-dom": "^20.9.0",
+    "react-dom": "^19.2.6",
+    "supertest": "^7.2.2",
+    "tsdown": "^0.22.1",
+    "type-fest": "^5.6.0",
+    "typescript": "^6.0.3",
+    "vite-plugin-solid": "^2.11.12",
+    "vitest": "^4.1.7",
     "vue": "^3.5.17",
-    "zod": "^4.1.12"
+    "zod": "^4.4.3"
   }
 }

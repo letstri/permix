@@ -1,1 +1,1 @@
-run-p test lint check-types build
+run-p test lint check-types

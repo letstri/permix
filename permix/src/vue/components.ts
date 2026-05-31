@@ -1,9 +1,10 @@
 import type { SetupContext, SlotsType, VNode } from 'vue'
-import type { Permix, PermixDefinition } from '../core/create-permix'
-import type { CheckFunctionObject } from '../core/params'
+import type { CheckArgs, Permix, Statement } from '../core'
 import { usePermix } from './composables'
 
-export type CheckProps<Definition extends PermixDefinition, K extends keyof Definition> = CheckFunctionObject<Definition, K> & {
+export interface CheckProps<D extends Statement> {
+  path: CheckArgs<D>[0]
+  data?: CheckArgs<D>[1]
   reverse?: boolean
 }
 
@@ -12,21 +13,21 @@ type CheckContext = SetupContext<any, SlotsType<{
   otherwise?: void
 }>>
 
-export interface PermixComponents<Definition extends PermixDefinition> {
-  Check: <K extends keyof Definition>(
-    props: CheckProps<Definition, K>,
+export interface PermixComponents<D extends Statement> {
+  Check: (
+    props: CheckProps<D>,
     context: CheckContext,
   ) => VNode | VNode[] | undefined
 }
 
-export function createComponents<Definition extends PermixDefinition>(permix: Permix<Definition>): PermixComponents<Definition> {
-  function Check<K extends keyof Definition>(
-    props: CheckProps<Definition, K>,
+export function createComponents<D extends Statement>(permix: Permix<D>): PermixComponents<D> {
+  function Check(
+    props: CheckProps<D>,
     context: CheckContext,
   ) {
     const { check } = usePermix(permix)
 
-    const hasPermission = check(props.entity, props.action, props.data)
+    const hasPermission = check(...([props.path, props.data] as unknown as CheckArgs<D>))
     return props.reverse
       ? (hasPermission ? context.slots.otherwise?.() : context.slots.default?.())
       : (hasPermission ? context.slots.default?.() : context.slots.otherwise?.())
@@ -34,12 +35,8 @@ export function createComponents<Definition extends PermixDefinition>(permix: Pe
 
   Check.inheritAttrs = false
   Check.props = {
-    entity: {
+    path: {
       type: String,
-      required: true,
-    },
-    action: {
-      type: [String, Array],
       required: true,
     },
     data: {

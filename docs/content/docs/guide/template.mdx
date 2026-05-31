@@ -5,10 +5,10 @@ description: Learn how to define permissions using templates
 
 ## Overview
 
-Permix provides a `template` method that allows you to define permissions in a separate location from where they are set up. This is useful for organizing permission definitions and reusing them across different parts of your application.
+Permix provides a `template` method that allows you to define permissions in a separate location from where they are set up. This is useful for organizing permission statements and reusing them across different parts of your application.
 
 <Callout>
-Templates are validated when they are created, ensuring your permission definitions are correct before runtime.
+Templates are validated when they are created, ensuring your permission statements are correct before runtime.
 </Callout>
 
 ## Basic Usage
@@ -52,7 +52,7 @@ permix.setup(userPermissions(user))
 
 ## Type Safety
 
-Templates maintain full type safety from your Permix instance definition:
+Templates maintain full type safety from your Permix instance statement:
 
 ```ts twoslash
 import { createPermix } from 'permix'
@@ -112,11 +112,11 @@ function setupPermissions() {
 You can define permission templates outside of the Permix instance using the `PermixRules` type. This is useful when you want to organize your permission logic in separate files:
 
 ```ts twoslash
-import type { PermixRules, PermixDefinition } from 'permix'
+import type { PermixRules, PermixStatement } from 'permix'
 import { createPermix } from 'permix'
 
-// Define your Permix definition type
-type Definition = PermixDefinition<{
+// Define your Permix statement type
+type Statement = PermixStatement<{
   post: {
     dataType: { id: string; authorId: string }
     action: 'create' | 'read' | 'update' | 'delete'
@@ -124,10 +124,10 @@ type Definition = PermixDefinition<{
 }>
 
 // It can be in separate file and imported here
-const permix = createPermix<Definition>()
+const permix = createPermix<Statement>()
 
 // Create a standalone template function
-function userPermissions(userId: string, role: 'admin' | 'user'): PermixRules<Definition> {
+function userPermissions(userId: string, role: 'admin' | 'user'): PermixRules<Statement> {
   return {
     post: {
       create: role === 'admin',
@@ -147,4 +147,4 @@ permix.setup(permissions)
 This approach allows you to:
 - Keep permission logic separate from your Permix instance
 - Reuse permission templates across different parts of your application
-- Maintain full type safety with your Permix definition
+- Maintain full type safety with your Permix statement

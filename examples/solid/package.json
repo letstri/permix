@@ -6,16 +6,17 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "check-types": "tsc --noEmit",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "permix": "workspace:*",
-    "solid-js": "^1.9.10"
+    "solid-js": "^1.9.13"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
-    "vite": "^7.1.12",
-    "vite-plugin-solid": "^2.11.10"
+    "typescript": "^6.0.3",
+    "vite": "^8.0.14",
+    "vite-plugin-solid": "^2.11.12"
   }
 }

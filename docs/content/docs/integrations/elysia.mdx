@@ -57,7 +57,7 @@ const app = new Elysia()
 ```
 
 <Callout>
-The derive preserves full type safety from your Permix definition, ensuring your permission checks are type-safe.
+The derive preserves full type safety from your Permix statement, ensuring your permission checks are type-safe.
 </Callout>
 
 </Step>
@@ -167,7 +167,7 @@ By default, the middleware returns a 403 Forbidden response. You can customize t
 ### Basic Error Handler
 
 ```ts
-const permix = createPermix<Definition>({
+const permix = createPermix<Statement>({
   onForbidden: ({ context }) => {
     context.set.status = 403
     return { error: 'Custom forbidden message' }
@@ -180,7 +180,7 @@ const permix = createPermix<Definition>({
 You can also provide a handler that returns different responses based on the entity and actions:
 
 ```ts
-const permix = createPermix<Definition>({
+const permix = createPermix<Statement>({
   onForbidden: ({ context, entity, actions }) => {
     context.set.status = 403
 

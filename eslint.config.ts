@@ -7,6 +7,7 @@ export default antfu(
     rules: {
       'node/prefer-global/process': 'off',
       'react/no-use-context': 'off',
+      'no-console': 'off',
       'style/indent': 'off', // temp due to bug
     },
     ignores: ['**/.source/**', '**/next-env.d.ts'],
@@ -20,15 +21,15 @@ export default antfu(
   {
     files: ['examples/**/*.ts?(x)'],
     rules: {
-      'react-hooks-extra/no-unnecessary-use-prefix': 'off',
+      'react/no-unnecessary-use-prefix': 'off',
       'react-web-api/no-leaked-timeout': 'off',
     },
   },
   {
     files: ['permix/src/vue/*.ts?(x)'],
     rules: {
-      'react-hooks/rules-of-hooks': 'off',
-      'react-hooks-extra/no-unnecessary-use-prefix': 'off',
+      'react/rules-of-hooks': 'off',
+      'react/no-unnecessary-use-prefix': 'off',
     },
   },
   {

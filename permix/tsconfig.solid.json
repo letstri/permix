@@ -1,15 +1,10 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.solid.tsbuildinfo",
-    "target": "ES2022",
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
-    "module": "ES2022",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "noEmit": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
+    "lib": ["ESNext", "DOM", "DOM.Iterable"]
   },
-  "include": ["src/solid/*.ts", "src/solid/*.tsx"]
+  "include": ["src/solid/*.ts", "src/solid/*.tsx"],
+  "exclude": ["src/react/*.ts", "src/react/*.tsx"]
 }

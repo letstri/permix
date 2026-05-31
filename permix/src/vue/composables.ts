@@ -1,6 +1,6 @@
-import type { Permix, PermixDefinition } from '../core/create-permix'
+import type { Permix, Rules, Statement } from '../core'
 import { computed, inject } from 'vue'
-import { checkWithRules, getRules, validatePermix } from '../core/create-permix'
+import { createCheck } from '../core'
 import { PERMIX_CONTEXT_KEY } from './plugin'
 
 function usePermixContext() {
@@ -18,17 +18,21 @@ function usePermixContext() {
  *
  * @link https://permix.letstri.dev/docs/integrations/vue
  */
-export function usePermix<T extends PermixDefinition>(
+export function usePermix<T extends Statement>(
   permix: Permix<T>,
 ) {
-  validatePermix(permix)
-
   const context = usePermixContext()
 
-  validatePermix(context.value.permix)
-
-  const check: typeof permix.check = (...args) => {
-    return checkWithRules(context.value.rules ?? getRules(context.value.permix), ...args)
+  const check: Permix<T>['check'] = (...args) => {
+    const resolved = (context.value.rules ?? permix.getRules()) as Rules<T> | null
+    if (!resolved)
+      return false
+    try {
+      return createCheck<T>(resolved)(...args)
+    }
+    catch {
+      return false
+    }
   }
 
   return { check, isReady: computed(() => context.value.isReady) }

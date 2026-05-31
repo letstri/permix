@@ -1,4 +1,9 @@
+shellEmulator: true
+trustPolicy: no-downgrade
 packages:
   - permix
   - docs
   - examples/*
+allowBuilds:
+  esbuild: false
+  sharp: false

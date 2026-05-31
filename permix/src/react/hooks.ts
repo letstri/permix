@@ -1,11 +1,11 @@
-import type { Permix, PermixDefinition, PermixRules } from '../core/create-permix'
+import type { Permix, Rules, Statement } from '../core'
 import * as React from 'react'
-import { checkWithRules, getRules, validatePermix } from '../core/create-permix'
+import { createCheck } from '../core'
 
-export interface PermixContext<T extends PermixDefinition> {
+export interface PermixContext<T extends Statement> {
   permix: Permix<T>
   isReady: boolean
-  rules?: PermixRules<T>
+  rules: Rules<T> | null
 }
 
 export const Context = React.createContext<PermixContext<any>>(null!)
@@ -25,17 +25,20 @@ export function usePermixContext() {
  *
  * @link https://permix.letstri.dev/docs/integrations/react
  */
+export function usePermix<T extends Statement>(permix: Permix<T>) {
+  const { isReady, rules } = usePermixContext()
 
-export function usePermix<T extends PermixDefinition>(permix: Permix<T>) {
-  validatePermix(permix)
-
-  const { permix: permixContext, isReady, rules } = usePermixContext()
-
-  validatePermix(permixContext)
-
-  const check: typeof permix.check = React.useCallback((...args) => {
-    return checkWithRules(rules ?? getRules(permixContext), ...args)
-  }, [rules, permixContext])
+  const check: Permix<T>['check'] = React.useCallback((...args) => {
+    const resolved = (rules ?? permix.getRules()) as Rules<T> | null
+    if (!resolved)
+      return false
+    try {
+      return createCheck<T>(resolved)(...args)
+    }
+    catch {
+      return false
+    }
+  }, [rules, permix])
 
   return { check, isReady }
 }

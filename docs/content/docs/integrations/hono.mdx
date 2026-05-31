@@ -59,7 +59,7 @@ app.use(permix.setupMiddleware(({ c }) => {
 ```
 
 <Callout>
-The middleware preserves full type safety from your Permix definition, ensuring your permission checks are type-safe.
+The middleware preserves full type safety from your Permix statement, ensuring your permission checks are type-safe.
 </Callout>
 
 </Step>
@@ -165,7 +165,7 @@ By default, the middleware returns a 403 Forbidden response. You can customize t
 ### Basic Error Handler
 
 ```ts
-const permix = createPermix<Definition>({
+const permix = createPermix<Statement>({
   onForbidden: ({ c }) => {
     return c.json({ error: 'Custom forbidden message' }, 403)
   }
@@ -177,7 +177,7 @@ const permix = createPermix<Definition>({
 You can also provide a handler that returns different responses based on the entity and actions:
 
 ```ts
-const permix = createPermix<Definition>({
+const permix = createPermix<Statement>({
   onForbidden: ({ c, entity, actions }) => {
     if (entity === 'post' && actions.includes('create')) {
       return c.json({

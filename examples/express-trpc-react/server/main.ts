@@ -1,4 +1,4 @@
-import type { PermissionsDefinition } from '@/shared/permix'
+import type { PermissionsStatement } from '@/shared/permix'
 import { initTRPC, TRPCError } from '@trpc/server'
 import * as trpcExpress from '@trpc/server/adapters/express'
 import cors from 'cors'
@@ -13,11 +13,13 @@ app.use(cors())
 
 const t = initTRPC.context<{ extraInfo: string }>().create()
 
-export const permix = createPermix<PermissionsDefinition>({
-  forbiddenError: () => new TRPCError({
-    code: 'FORBIDDEN',
-    message: 'You do not have permission to access this resource',
-  }),
+export const permix = createPermix<PermissionsStatement>({
+  onForbidden: () => {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'You do not have permission to access this resource',
+    })
+  },
 })
 
 export const router = t.router
@@ -28,15 +30,13 @@ export const publicProcedure = t.procedure.use(({ next }) => {
   }
 
   return next({
-    ctx: {
-      permix: permix.setup(getRules(user.role)),
-    },
+    ctx: permix.setupContext(getRules(user.role)),
   })
 })
 
 export const appRouter = router({
   userList: publicProcedure
-    .use(permix.checkMiddleware('user', 'read'))
+    .use(permix.checkMiddleware('user.read'))
     // Imagine this is a database query
     .query(() => [
       {
@@ -51,7 +51,7 @@ export const appRouter = router({
       },
     ]),
   userWrite: publicProcedure
-    .use(permix.checkMiddleware('user', 'create'))
+    .use(permix.checkMiddleware('user.create'))
     .input(z.object({
       name: z.string(),
       email: z.email(),
@@ -74,6 +74,5 @@ app.use(
   }),
 )
 app.listen(3000, () => {
-  // eslint-disable-next-line no-console
   console.log('Server is running on port 3000')
 })

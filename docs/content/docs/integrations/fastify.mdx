@@ -55,7 +55,7 @@ fastify.register(permix.plugin(({ request, reply }) => {
 ```
 
 <Callout>
-The plugin preserves full type safety from your Permix definition, ensuring your permission checks are type-safe.
+The plugin preserves full type safety from your Permix statement, ensuring your permission checks are type-safe.
 </Callout>
 
 </Step>
@@ -158,7 +158,7 @@ By default, the plugin returns a 403 Forbidden response. You can customize this 
 ### Basic Error Handler
 
 ```ts
-const permix = createPermix<Definition>({
+const permix = createPermix<Statement>({
   onForbidden: ({ reply }) => {
     reply.status(403).send({
       error: 'Custom forbidden message',
@@ -172,7 +172,7 @@ const permix = createPermix<Definition>({
 You can also provide a handler that returns different responses based on the entity and actions:
 
 ```ts
-const permix = createPermix<Definition>({
+const permix = createPermix<Statement>({
   onForbidden: ({ reply, entity, actions }) => {
     if (entity === 'post' && actions.includes('create')) {
       reply.status(403).send({

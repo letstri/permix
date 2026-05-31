@@ -9,7 +9,7 @@ Instance is the main entry point for Permix that will check permissions in every
 
 ## TypeScript
 
-Permix is built with TypeScript, providing type safety and validation. Using TypeScript enables autocompletion and compile-time checks for your permission definitions.
+Permix is built with TypeScript, providing type safety and validation. Using TypeScript enables autocompletion and compile-time checks for your permission statements.
 
 ```ts twoslash title="/lib/permix.ts"
 import { createPermix } from 'permix'
@@ -130,21 +130,21 @@ const canEdit = permix.check('post', 'edit', somePost) // ✅ Valid
 
 When `dataRequired` is `true`, TypeScript will enforce that you must pass the data parameter when checking permissions for that entity. This is useful when your permission logic always depends on the entity data and you want to prevent accidental calls without the required data.
 
-#### `PermixDefinition`
+#### `PermixStatement`
 
-You can use `PermixDefinition` type to define your permissions separately from the instance.
+You can use `PermixStatement` type to define your permissions separately from the instance.
 
 ```ts twoslash title="/lib/permix.ts"
-import type { PermixDefinition, PermixRules } from 'permix'
+import type { PermixStatement, PermixRules } from 'permix'
 import { createPermix } from 'permix'
 
-type PermissionsDefinition = PermixDefinition<{
+type PermissionsStatement = PermixStatement<{
   post: {
     action: 'create' | 'edit'
   }
 }>
 
-async function getRules(): Promise<PermixRules<PermissionsDefinition>> {
+async function getRules(): Promise<PermixRules<PermissionsStatement>> {
   // get user or something like that
   return {
     post: {
@@ -154,7 +154,7 @@ async function getRules(): Promise<PermixRules<PermissionsDefinition>> {
   }
 }
 
-const permix = createPermix<PermissionsDefinition>()
+const permix = createPermix<PermissionsStatement>()
 
 permix.setup(await getRules())
 ```

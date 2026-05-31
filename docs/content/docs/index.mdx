@@ -57,7 +57,7 @@ const canReadPost = permix.check('post', 'read') // true
 It looks too simple, so here's a more interesting example:
 
 ```ts twoslash
-import type { PermixDefinition } from 'permix'
+import type { PermixStatement } from 'permix'
 import { createPermix } from 'permix'
 
 // You can take types from your database
@@ -79,8 +79,8 @@ interface Comment {
   authorId: string
 }
 
-// Create definition to describe your permissions
-type PermissionsDefinition = PermixDefinition<{
+// Create statement to describe your permissions
+type PermissionsStatement = PermixStatement<{
   post: {
     dataType: Post
     action: 'create' | 'read' | 'update' | 'delete'
@@ -91,7 +91,7 @@ type PermissionsDefinition = PermixDefinition<{
   }
 }>
 
-const permix = createPermix<PermissionsDefinition>()
+const permix = createPermix<PermissionsStatement>()
 
 // Define permissions for different users
 const editorPermissions = permix.template({

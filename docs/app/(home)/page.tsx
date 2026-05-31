@@ -74,7 +74,7 @@ export default function Page() {
               <h3 className="text-lg font-semibold! mt-6!">{item.title}</h3>
               <p
                 className="text-fd-muted-foreground"
-                // eslint-disable-next-line react-dom/no-dangerously-set-innerhtml
+                // eslint-disable-next-line react/dom-no-dangerously-set-innerhtml
                 dangerouslySetInnerHTML={{ __html: item.description }}
               />
             </div>

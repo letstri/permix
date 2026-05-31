@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createApp } from 'vue'
-import { createPermix } from '../core/create-permix'
+import { createPermix } from '../core'
 import { permixPlugin } from './plugin'
 
 describe('permixPlugin', () => {
@@ -16,7 +16,7 @@ describe('permixPlugin', () => {
 
   it('should not throw an error when permix instance is provided', () => {
     const app = createApp({})
-    const permix = createPermix()
+    const permix = createPermix<{ post: ['read'] }>()
 
     // Test that the plugin does not throw an error when permix instance is provided
     expect(() => {

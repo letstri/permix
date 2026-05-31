@@ -40,17 +40,13 @@ interface Context {
 // Initialize tRPC
 const t = initTRPC.context<Context>().create()
 
-// Create your Permix instance
+// Create your Permix instance with a custom context key
 const permix = createPermix<{
-  post: {
-    dataType: Post
-    action: 'create' | 'read' | 'update' | 'delete'
-  }
-}>()
+  post: ['create', 'read', 'update', 'delete']
+}>().contextKey('permissions')
 
 // Create a protected procedure with Permix
 const protectedProcedure = t.procedure.use(({ ctx, next }) => {
-  // You can access ctx.user or other properties to determine permissions
   const isAdmin = ctx.user.role === 'admin'
 
   const p = permix.setup({
@@ -64,14 +60,14 @@ const protectedProcedure = t.procedure.use(({ ctx, next }) => {
 
   return next({
     ctx: {
-      permix: p,
+      permissions: p,
     },
   })
 })
 ```
 
 <Callout>
-The middleware preserves the context and input types from your tRPC procedures, ensuring end-to-end type safety in your API.
+Call `.contextKey('name')` on the returned builder to set a custom context key — its literal type is inferred automatically. Omit it to use the default key `'permix'`. Pass `onForbidden` as an option to `createPermix` itself.
 </Callout>
 
 </Step>
@@ -85,32 +81,25 @@ Use the `checkMiddleware` function in your tRPC procedures to check permissions:
 ```ts
 const router = t.router({
   createPost: protectedProcedure
-    .use(permix.checkMiddleware('post', 'create'))
+    .use(permix.checkMiddleware('post.create'))
     .mutation(({ input }) => {
       // Create post logic here
       return { success: true }
     }),
 
   updatePost: protectedProcedure
-    .use(permix.checkMiddleware('post', ['read', 'update']))
+    .use(permix.checkMiddleware(c => c('post.read') && c('post.update')))
     .mutation(({ input }) => {
       // Update post logic here
       return { success: true }
     }),
 
   deletePost: protectedProcedure
-    .use(permix.checkMiddleware('post', 'delete'))
+    .use(permix.checkMiddleware('post.delete'))
     .mutation(({ input }) => {
       // Delete post logic here
       return { success: true }
     }),
-
-  adminAction: protectedProcedure
-    .use(permix.checkMiddleware('post', 'all'))
-    .query(() => {
-      // Admin-only action
-      return { success: true }
-    })
 })
 ```
 
@@ -120,19 +109,17 @@ const router = t.router({
 
 ## Accessing Permix in Procedures
 
-Permix is automatically added to your tRPC context, so you can access it directly:
+Permix is automatically added to your tRPC context under the key you specified, so you can access it directly:
 
 ```ts
 const router = t.router({
   getPosts: protectedProcedure
     .query(({ ctx }) => {
       // Check permissions manually
-      if (ctx.permix.check('post', 'read')) {
-        // User has permission to read posts
+      if (ctx.permissions.check('post.read')) {
         return getAllPosts()
       }
 
-      // If not explicitly blocked by middleware, you can handle permission failures here
       throw new TRPCError({
         code: 'FORBIDDEN',
         message: 'You do not have permission to read posts'
@@ -141,8 +128,10 @@ const router = t.router({
 })
 ```
 
-The `ctx.permix` object contains one method:
+The `ctx.permissions` object provides:
 - `check`: Synchronously check a permission
+- `dehydrate`: Serialize the current rules for client hydration
+- `template`: Create reusable permission templates
 
 </Step>
 
@@ -177,13 +166,13 @@ const userTemplate = permix.template({
 const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   const p = permix.setup(
     ctx.user.role === 'admin'
-      ? adminTemplate
-      : userTemplate
+      ? adminTemplate()
+      : userTemplate()
   )
 
   return next({
     ctx: {
-      permix: p,
+      permissions: p,
     },
   })
 })
@@ -195,45 +184,39 @@ const protectedProcedure = t.procedure.use(({ ctx, next }) => {
 
 ## Custom Error Handling
 
-By default, the middleware throws a `TRPCError` with code `FORBIDDEN`. You can customize this behavior by providing a `forbiddenError` option:
+By default, the middleware throws a `TRPCError` with code `FORBIDDEN`. You can customize this behavior with the `onForbidden` option, which is a terminal handler — it receives the middleware opts (including `next`) plus the check context, and controls the outcome:
 
-### Static Error
-
-```ts
-const permix = createPermix({
-  forbiddenError: new TRPCError({
-    code: 'FORBIDDEN',
-    message: 'Custom forbidden message',
-  })
-})
-```
-
-### Dynamic Error
-
-You can also provide a function that returns different errors based on the entity and actions:
+### Throw a Custom Error
 
 ```ts
-const permix = createPermix<Definition>({
-  forbiddenError: ({ entity, actions, ctx }) => {
-    if (entity === 'post' && actions.includes('create')) {
-      return new TRPCError({
-        code: 'FORBIDDEN',
-        message: `User ${ctx.user.id} doesn't have permission to ${actions.join('/')} a ${entity}`,
-      })
-    }
-
-    return new TRPCError({
+const permix = createPermix<Statement>({
+  onForbidden: ({ path, ctx }) => {
+    throw new TRPCError({
       code: 'FORBIDDEN',
-      message: 'You do not have permission to perform this action',
+      message: `User ${ctx.user.id} doesn't have permission for ${path}`,
     })
   },
-})
+}).contextKey('permissions')
 ```
 
-The `forbiddenError` handler receives:
+### Allow Through
+
+You can also let denied requests through by calling `next()`:
+
+```ts
+const permix = createPermix<Statement>({
+  onForbidden: ({ path, next }) => {
+    console.warn(`Permission denied for ${path}, allowing through`)
+    return next()
+  },
+}).contextKey('permissions')
+```
+
+The `onForbidden` handler receives:
+- `path`: The permission path that was checked (e.g. `'post.create'`)
+- `data`: Optional data passed to the check
 - `ctx`: Your tRPC context object
-- `entity`: The entity that was checked
-- `actions`: Array of actions that were checked
+- `next`: The middleware `next` function — call it to allow the request through
 
 ## Advanced Usage
 
@@ -243,7 +226,6 @@ You can use async functions in your permission setup:
 
 ```ts
 const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
-  // Fetch user permissions from database
   const userPermissions = await getUserPermissions(ctx.user.id)
 
   const p = permix.setup({
@@ -257,33 +239,8 @@ const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
 
   return next({
     ctx: {
-      permix: p,
+      permissions: p,
     },
   })
-})
-```
-
-### Dynamic Data-Based Permissions
-
-You can check permissions based on the specific data being accessed:
-
-```ts
-const router = t.router({
-  updatePost: protectedProcedure
-    .input(z.object({ postId: z.string() }))
-    .mutation(async ({ input, ctx }) => {
-      const post = await getPostById(input.postId)
-
-      // Check if user can update this specific post
-      if (ctx.permix.check('post', 'update', post)) {
-        // Update post logic
-        return { success: true }
-      }
-
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You cannot update this specific post'
-      })
-    })
 })
 ```

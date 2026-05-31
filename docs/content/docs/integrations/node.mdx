@@ -84,7 +84,7 @@ server.listen(3000, () => {
 ```
 
 <Callout>
-The middleware preserves full type safety from your Permix definition, ensuring your permission checks are type-safe.
+The middleware preserves full type safety from your Permix statement, ensuring your permission checks are type-safe.
 </Callout>
 
 </Step>
@@ -181,7 +181,7 @@ By default, the middleware returns a 403 Forbidden response if the user doesn't 
 ### Basic Error Handler
 
 ```ts
-const permix = createPermix<Definition>({
+const permix = createPermix<Statement>({
   onForbidden: ({ res }) => {
     res.statusCode = 403
     res.setHeader('Content-Type', 'application/json')
@@ -195,7 +195,7 @@ const permix = createPermix<Definition>({
 You can also provide a handler that returns different responses based on the entity and actions:
 
 ```ts
-const permix = createPermix<Definition>({
+const permix = createPermix<Statement>({
   onForbidden: ({ res, entity, actions }) => {
     res.statusCode = 403
     res.setHeader('Content-Type', 'application/json')

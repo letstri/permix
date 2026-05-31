@@ -19,7 +19,7 @@ export default function App() {
     }
 
     // Call experimental API...
-    // eslint-disable-next-line no-console
+
     console.log('Calling experimental API...')
   }
 

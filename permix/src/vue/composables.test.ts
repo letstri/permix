@@ -1,15 +1,13 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import { createApp, defineComponent, onBeforeMount, onMounted, ref } from 'vue'
-import { createPermix } from '../core/create-permix'
+import { createPermix } from '../core'
 import { permixPlugin, usePermix } from './index'
 
 describe('composables', () => {
   it('should throw error when plugin is not installed', () => {
     const permix = createPermix<{
-      post: {
-        action: 'read'
-      }
+      post: ['read']
     }>()
 
     const TestWrapper = defineComponent({
@@ -25,10 +23,7 @@ describe('composables', () => {
 
   it('should work with custom hook', () => {
     const permix = createPermix<{
-      post: {
-        dataType: { id: string }
-        action: 'create' | 'read'
-      }
+      post: ['create', 'read']
     }>()
 
     permix.setup({
@@ -54,16 +49,13 @@ describe('composables', () => {
 
     const { check } = wrapper.vm
 
-    expect(check('post', 'create')).toBe(true)
-    expect(check('post', 'read')).toBe(false)
+    expect(check('post.create')).toBe(true)
+    expect(check('post.read')).toBe(false)
   })
 
   it('should work with DOM rerender', async () => {
     const permix = createPermix<{
-      post: {
-        dataType: { id: string }
-        action: 'create' | 'read'
-      }
+      post: [{ name: 'create', type: { id: string } }, 'read']
     }>()
 
     permix.setup({
@@ -83,8 +75,8 @@ describe('composables', () => {
       },
       template: `
         <div>
-          <span data-testid="create">{{ check('post', 'create', post) }}</span>
-          <span data-testid="read">{{ check('post', 'read') }}</span>
+          <span data-testid="create">{{ check('post.create', post) }}</span>
+          <span data-testid="read">{{ check('post.read') }}</span>
         </div>
       `,
     })
@@ -117,10 +109,7 @@ describe('composables', () => {
 
   it('should check isReady', async () => {
     const permix = createPermix<{
-      post: {
-        dataType: { id: string }
-        action: 'create' | 'read'
-      }
+      post: ['create', 'read']
     }>()
 
     const TestWrapper = defineComponent({
@@ -153,9 +142,7 @@ describe('composables', () => {
 
   it('should work with setup inside onBeforeMount', async () => {
     const permix = createPermix<{
-      post: {
-        action: 'create'
-      }
+      post: ['create']
     }>()
 
     const TestWrapper = defineComponent({
@@ -186,9 +173,7 @@ describe('composables', () => {
 
   it('should work with setup inside onMounted', async () => {
     const permix = createPermix<{
-      post: {
-        action: 'create'
-      }
+      post: ['create']
     }>()
 
     const TestWrapper = defineComponent({

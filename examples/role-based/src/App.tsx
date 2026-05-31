@@ -13,7 +13,6 @@ export default function App() {
     if (!permix.check('post', 'create')) // You still can use the permix instance to check permissions
       return
 
-    // eslint-disable-next-line no-console
     console.log('Creating a post')
   }
 
