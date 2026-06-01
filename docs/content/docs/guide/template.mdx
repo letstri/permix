@@ -8,7 +8,7 @@ description: Learn how to define permissions using templates
 Permix provides a `template` method that allows you to define permissions in a separate location from where they are set up. This is useful for organizing permission definitions and reusing them across different parts of your application.
 
 <Callout>
-Templates are validated when they are created, ensuring your permission definitions are correct before runtime.
+Templates are type-checked at compile time, ensuring your permission definitions match the instance definition.
 </Callout>
 
 ## Basic Usage
@@ -62,7 +62,7 @@ const permix = createPermix<{
 }>()
 
 // @errors: 2353
-// This will throw an error
+// This will cause a TypeScript error
 const invalidTemplate = permix.template({
   post: {
     edit: true
@@ -94,7 +94,7 @@ const userPermissions = permix.template(({ id: userId }: User) => ({
 }))
 
 // Setup based on user role
-function setupPermissions() {
+async function setupPermissions() {
   const user = await getUser()
   const permissionsMap = {
     editor: () => editorPermissions(),

@@ -102,7 +102,7 @@ permix.setup({
 
 ### Required
 
-By default, a `type` on an action makes the data argument optional in `check`. Set `typeRequired: true` to require it.
+By default, a `type` on an action makes the data argument optional in `check`. Set `required: true` to require it.
 
 ```ts twoslash
 import { createPermix } from 'permix'
@@ -118,7 +118,7 @@ interface Comment {
 }
 
 const permix = createPermix<{
-  post: [{ name: 'update', type: Post, typeRequired: true }]
+  post: [{ name: 'update', type: Post, required: true }]
   comment: [{ name: 'update', type: Comment }]
 }>()
 
@@ -200,15 +200,13 @@ await loadUserPermissions('user-123')
 
 ## Getting Rules
 
-You can get the current rules from an existing Permix instance using the `getRules` function:
+You can get the current rules from an existing Permix instance using the `getRules` method:
 
 ```ts
-import { getRules } from 'permix'
-
 // Get current rules
-const rules = getRules(permix)
+const rules = permix.getRules()
 ```
 
 <Callout>
-The `getRules` function returns the exact rules object that was set using `setup`, including any permission functions.
+The `getRules` method returns the exact rules object that was set using `setup`, including any permission functions.
 </Callout>

@@ -31,6 +31,10 @@ permix.check('post.read') // true
 
 Permix has other powerful features, so here's check out the [docs](https://permix.letstri.dev/docs) or the [examples](https://github.com/letstri/permix/tree/main/examples) directory.
 
+## Cursor skills
+
+Copy [skills/](skills/README.md) into your app’s `.cursor/skills/` so AI assistants follow Permix patterns (setup, check, React, server middleware, SSR).
+
 ## License
 
 MIT License - see the [LICENSE](https://github.com/letstri/permix/blob/main/LICENSE) file for details

@@ -56,12 +56,12 @@ describe('createPermix', () => {
     expect(permix.check('post.create')).toBe(false)
   })
 
-  it('should require data argument when action declares typeRequired: true', () => {
+  it('should require data argument when action declares required: true', () => {
     interface Post { authorId: string }
 
     const permix = createPermix<{
       post: [
-        { name: 'create', type: Post, typeRequired: true },
+        { name: 'create', type: Post, required: true },
       ]
     }>()
 
@@ -311,7 +311,7 @@ describe('deep rules', () => {
     const permix = createPermix<{
       user: [
         'read',
-        { name: 'write', type: { authorId: string }, typeRequired: true },
+        { name: 'write', type: { authorId: string }, required: true },
       ]
       workspace: {
         customer: ['write']
@@ -435,7 +435,7 @@ describe('deep rules', () => {
     it('should evaluate data rules without check data when dehydrating', () => {
       const permix = createPermix<{
         user: [
-          { name: 'write', type: { authorId: string }, typeRequired: true },
+          { name: 'write', type: { authorId: string }, required: true },
         ]
       }>()
 

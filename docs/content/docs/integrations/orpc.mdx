@@ -163,16 +163,12 @@ const userTemplate = permix.template({
 
 // Use templates in your middleware
 const protectedMiddleware = orpcPermix.use(({ context, next }) => {
-  const p = permix.setup(
-    context.user.role === 'admin'
-      ? adminTemplate()
-      : userTemplate()
-  )
-
   return next({
-    context: {
-      permissions: p
-    }
+    context: permix.setupContext(
+      context.user.role === 'admin'
+        ? adminTemplate()
+        : userTemplate()
+    ),
   })
 })
 ```

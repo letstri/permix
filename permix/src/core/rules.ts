@@ -2,7 +2,7 @@ import type { Action, ActionName, Definition } from './definitions'
 import { callRuleWithoutData } from './check'
 
 type ActionRule<A extends Action>
-  = A extends { type: infer T, typeRequired: true } ? (data: T) => boolean
+  = A extends { type: infer T, required: true } ? (data: T) => boolean
     : A extends { type: infer T } ? ((data?: T) => boolean) | boolean
       : boolean | (() => boolean)
 

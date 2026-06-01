@@ -10,7 +10,7 @@ import { createTemplate } from './template'
 export type { DehydratedState, Rules } from './rules'
 
 type ActionArgs<A extends Action>
-  = A extends { type: infer T, typeRequired: true } ? [T]
+  = A extends { type: infer T, required: true } ? [T]
     : A extends { type: infer T } ? [T?]
       : []
 
@@ -78,7 +78,7 @@ export interface Permix<D extends Definition> {
    *
    * - **Dot-path** — check a single action at a leaf path. Pass extra
    *   arguments after the path when the matched action declares `type`
-   *   (required when `typeRequired: true`, optional otherwise).
+   *   (required when `required: true`, optional otherwise).
    * - **Special token** — `'~any'` returns `true` if **any** rule in the tree
    *   (including dynamic ones called with no data) is truthy; `'~all'` returns
    *   `true` only if **every** rule is truthy. Prefix with a dot-path to scope
@@ -263,7 +263,7 @@ export interface Permix<D extends Definition> {
  *   post: [
  *     'create',
  *     'read',
- *     { name: 'edit', type: { authorId: string }, typeRequired: true },
+ *     { name: 'edit', type: { authorId: string }, required: true },
  *   ]
  * }>()
  * permix.setup({

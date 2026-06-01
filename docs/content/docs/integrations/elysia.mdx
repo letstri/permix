@@ -42,24 +42,23 @@ const permix = createPermix<{
 
 // Initialize Elysia
 const app = new Elysia()
-  // Derive your permission rules
-  .derive(({ headers }) => {
-    // You can access body or other properties to determine permissions
-    const isAuthorized = !!headers.authorization?.slice(7)
+  .onBeforeHandle(permix.setupMiddleware(({ context }) => {
+    // You can access headers or other properties to determine permissions
+    const isAuthorized = !!context.headers.authorization?.slice(7)
 
-    return permix.derive({
+    return {
       post: {
         create: true,
         read: true,
         update: isAuthorized,
         delete: isAuthorized
       }
-    })
-  })
+    }
+  }))
 ```
 
 <Callout>
-The derive preserves full type safety from your Permix definition, ensuring your permission checks are type-safe.
+The middleware preserves full type safety from your Permix definition, ensuring your permission checks are type-safe.
 </Callout>
 
 </Step>
@@ -68,14 +67,14 @@ The derive preserves full type safety from your Permix definition, ensuring your
 
 ## Checking Permissions
 
-Use the `checkHandler` function in your Elysia routes to check permissions:
+Use the `checkMiddleware` function in your Elysia routes to check permissions:
 
 ```ts
 app.post('/posts', () => {
   // Create post logic here
   return { success: true }
 }, {
-  beforeHandle: permix.checkHandler('post', 'create')
+  beforeHandle: permix.checkMiddleware('post.create')
 })
 
 // Check multiple actions
@@ -83,7 +82,7 @@ app.put('/posts/:id', () => {
   // Update post logic here
   return { success: true }
 }, {
-  beforeHandle: permix.checkHandler('post', ['read', 'update'])
+  beforeHandle: permix.checkMiddleware(c => c('post.read') && c('post.update'))
 })
 
 // Check all actions
@@ -91,7 +90,7 @@ app.delete('/posts/:id', () => {
   // Delete post logic here
   return { success: true }
 }, {
-  beforeHandle: permix.checkHandler('post', 'all')
+  beforeHandle: permix.checkMiddleware('post.~all')
 })
 
 // Check any action
@@ -99,7 +98,7 @@ app.get('/posts', () => {
   // Get posts logic here
   return { posts: getAllPosts() }
 }, {
-  beforeHandle: permix.checkHandler('post', 'any')
+  beforeHandle: permix.checkMiddleware('post.~any')
 })
 ```
 
@@ -109,12 +108,14 @@ app.get('/posts', () => {
 
 ## Accessing Permix Directly
 
-You can access the Permix instance directly in your route handlers using the context:
+You can access the Permix instance directly in your route handlers using `get` or `getOrThrow`:
 
 ```ts
-app.get('/posts', ({ permix }) => {
+app.get('/posts', (context) => {
+  const { check } = permix.getOrThrow(context)
+
   // Check permissions manually
-  if (permix.check('post', 'read')) {
+  if (check('post.read')) {
     // User has permission to read posts
     return { posts: getAllPosts() }
   } else {
@@ -123,7 +124,7 @@ app.get('/posts', ({ permix }) => {
 })
 ```
 
-The `get` function returns the Permix instance with available methods.
+The `get` function returns the Permix instance with available methods, or `null` if the middleware has not run yet.
 
 </Step>
 
@@ -155,15 +156,13 @@ const userTemplate = permix.template({
 })
 
 // Use templates in your middleware
-app.derive(({ headers }) => {
-  const user = await getUserFromDb(headers.authorization.slice(7))
+app.onBeforeHandle(permix.setupMiddleware(async ({ context }) => {
+  const user = await getUserFromDb(context.headers.authorization?.slice(7))
 
-  return permix.derive(
-    user?.role === 'admin'
-      ? adminTemplate
-      : userTemplate
-  )
-})
+  return user?.role === 'admin'
+    ? adminTemplate()
+    : userTemplate()
+}))
 ```
 
 </Step>
@@ -187,16 +186,16 @@ const permix = createPermix<Definition>({
 
 ### Dynamic Error Handler
 
-You can also provide a handler that returns different responses based on the entity and actions:
+You can also provide a handler that returns different responses based on the checked path:
 
 ```ts
 const permix = createPermix<Definition>({
-  onForbidden: ({ context, entity, actions }) => {
+  onForbidden: ({ context, path }) => {
     context.set.status = 403
 
-    if (entity === 'post' && actions.includes('create')) {
+    if (path === 'post.create') {
       return {
-        error: `You don't have permission to ${actions.join('/')} a ${entity}`
+        error: `You don't have permission for ${path}`
       }
     }
 
@@ -209,8 +208,8 @@ const permix = createPermix<Definition>({
 
 The `onForbidden` handler receives:
 - `context`: Elysia Context object
-- `entity`: The entity that was checked
-- `actions`: Array of actions that were checked
+- `path`: The permission path that was checked (or `null` for callback checks)
+- `data`: Optional entity data passed to the check
 
 ## Advanced Usage
 
@@ -219,20 +218,20 @@ The `onForbidden` handler receives:
 You can use async functions in your permission setup:
 
 ```ts
-app.derive(async ({ headers }) => {
+app.onBeforeHandle(permix.setupMiddleware(async ({ context }) => {
   // Fetch user permissions from database
-  const userId = headers.authorization?.slice(7)
+  const userId = context.headers.authorization?.slice(7)
   const userPermissions = await getUserPermissions(userId)
 
-  return permix.derive({
+  return {
     post: {
       create: userPermissions.canCreatePosts,
       read: userPermissions.canReadPosts,
       update: userPermissions.canUpdatePosts,
       delete: userPermissions.canDeletePosts
     }
-  })
-})
+  }
+}))
 ```
 
 ### Dynamic Data-Based Permissions
@@ -240,12 +239,13 @@ app.derive(async ({ headers }) => {
 You can check permissions based on the specific data being accessed:
 
 ```ts
-app.put('/posts/:id', async ({ params, permix }) => {
-  const postId = params.id
+app.put('/posts/:id', async (context) => {
+  const postId = context.params.id
   const post = await getPostById(postId)
+  const { check } = permix.getOrThrow(context)
 
   // Check if user can update this specific post
-  if (permix.check('post', 'update', post)) {
+  if (check('post.update', post)) {
     // Update post logic
     return { success: true }
   } else {

@@ -26,8 +26,8 @@ permix.hookOnce('setup', () => {
   console.log('Permissions were updated once')
 })
 
-// Calling `setup` method triggers the `setup` event
-// and `ready` event if called on the client side
+// Calling `setup` triggers the `setup` event
+// and `ready` on the first successful setup
 permix.setup({
   post: {
     create: true,
@@ -38,6 +38,5 @@ permix.setup({
 
 Available events:
 
-- `setup` - Triggered when permissions are updated through the `setup` method.
-- `ready` - Triggered when the permissions are ready to be used.
-- `hydrate` - Triggered when the permissions are hydrated from the server.
+- `setup` - Triggered when permissions are updated through the `setup` method or `hydrate()`.
+- `ready` - Triggered once when the instance first becomes ready (first `setup()`, or initial rules passed to `createPermix`). `hydrate()` alone does not trigger `ready`.

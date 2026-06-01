@@ -73,25 +73,25 @@ The middleware preserves full type safety from your Permix definition, ensuring 
 Use the `checkMiddleware` function in your Hono routes to check permissions:
 
 ```ts
-app.post('/posts', permix.checkMiddleware('post', 'create'), (c) => {
+app.post('/posts', permix.checkMiddleware('post.create'), (c) => {
   // Create post logic here
   return c.json({ success: true })
 })
 
 // Check multiple actions
-app.put('/posts/:id', permix.checkMiddleware('post', ['read', 'update']), (c) => {
+app.put('/posts/:id', permix.checkMiddleware(c => c('post.read') && c('post.update')), (c) => {
   // Update post logic here
   return c.json({ success: true })
 })
 
 // Check all actions
-app.delete('/posts/:id', permix.checkMiddleware('post', 'all'), (c) => {
+app.delete('/posts/:id', permix.checkMiddleware('post.~all'), (c) => {
   // Delete post logic here
   return c.json({ success: true })
 })
 
 // Check any action
-app.get('/posts', permix.checkMiddleware('post', 'any'), (c) => {
+app.get('/posts', permix.checkMiddleware('post.~any'), (c) => {
   // Get posts logic here
   return c.json({ posts: getAllPosts() })
 })
@@ -110,7 +110,7 @@ app.get('/posts', (c) => {
   const { check } = permix.get(c)
 
   // Check permissions manually
-  if (check('post', 'read')) {
+  if (check('post.read')) {
     // User has permission to read posts
     return c.json({ posts: getAllPosts() })
   } else {
@@ -155,10 +155,10 @@ app.use(permix.setupMiddleware(({ c }) => {
   const user = c.get('user')
 
   if (user?.role === 'admin') {
-    return adminTemplate
+    return adminTemplate()
   }
 
-  return userTemplate
+  return userTemplate()
 }))
 ```
 
@@ -186,10 +186,10 @@ You can also provide a handler that returns different responses based on the ent
 
 ```ts
 const permix = createPermix<Definition>({
-  onForbidden: ({ c, entity, actions }) => {
-    if (entity === 'post' && actions.includes('create')) {
+  onForbidden: ({ c, path }) => {
+    if (path === 'post.create') {
       return c.json({
-        error: `You don't have permission to ${actions.join('/')} a ${entity}`
+        error: `You don't have permission for ${path}`
       }, 403)
     }
 
@@ -202,8 +202,8 @@ const permix = createPermix<Definition>({
 
 The `onForbidden` handler receives:
 - `c`: Hono Context object
-- `entity`: The entity that was checked
-- `actions`: Array of actions that were checked
+- `path`: The permission path that was checked (or `null` for callback checks)
+- `data`: Optional entity data passed to the check
 
 ## Advanced Usage
 
@@ -240,7 +240,7 @@ app.put('/posts/:id', async (c) => {
   const { check } = permix.get(c)
 
   // Check if user can update this specific post
-  if (check('post', 'update', post)) {
+  if (check('post.update', post)) {
     // Update post logic
     return c.json({ success: true })
   } else {

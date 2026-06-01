@@ -160,16 +160,12 @@ const userTemplate = permix.template({
 
 // Use templates in your middleware
 const protectedProcedure = t.procedure.use(({ ctx, next }) => {
-  const p = permix.setup(
-    ctx.user.role === 'admin'
-      ? adminTemplate()
-      : userTemplate()
-  )
-
   return next({
-    ctx: {
-      permissions: p,
-    },
+    ctx: permix.setupContext(
+      ctx.user.role === 'admin'
+        ? adminTemplate()
+        : userTemplate()
+    ),
   })
 })
 ```

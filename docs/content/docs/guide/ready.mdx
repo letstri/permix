@@ -8,14 +8,14 @@ description: Learn how to use the `isReady()` method to check if permissions are
 Sometimes you need to know when permissions are ready to use. For example, you might want to wait for permissions to be ready before rendering a component. That's where the `isReady()` and `isReadyAsync()` methods come in.
 
 <Callout type="warn">
-Note that `isReady()` and `isReadyAsync()` will always return `false` on server-side. It only becomes `true` after the first successful call to `setup()` on the client.
+`hydrate()` alone does **not** make the instance ready. You must call `setup()` after hydration to restore function-based rules and mark the instance as ready.
 </Callout>
 
 ## Usage
 
 ### Basic
 
-Permix provides an `isReady()` method to check if permissions have been properly initialized on the client side:
+Permix provides an `isReady()` method to check if permissions have been properly initialized:
 
 ```ts twoslash
 import { createPermix } from 'permix'
@@ -47,7 +47,7 @@ const permix = createPermix()
 async function init() {
   await permix.isReadyAsync()
   // Permissions are now ready to use
-  const canCreate = permix.check('post', 'create')
+  const canCreate = permix.check('post.create')
 }
 ```
 
@@ -60,7 +60,7 @@ Read more about [hydration](/docs/guide/hydration) to learn how to transfer perm
 </Callout>
 
 ```ts
-import { dehydrate, hydrate, createPermix } from 'permix'
+import { createPermix } from 'permix'
 import { permix } from './permix'
 
 permix.setup({
@@ -71,16 +71,23 @@ permix.setup({
 })
 
 // Dehydrate permissions on the server
-const state = dehydrate(permix)
+const state = permix.dehydrate()
 // { post: { create: true, read: false } }
 
 // Rehydrate permissions on the client
-hydrate(permix, state)
+permix.hydrate(state)
 
-const canRead = permix.check('post', 'read', { isPublic: true }) // false
+const canRead = permix.check('post.read', { isPublic: true }) // false — not ready yet
 
-permix.hook('ready', (state) => {
-  const canRead = permix.check('post', 'read', { isPublic: true })
+permix.setup({
+  post: {
+    create: true,
+    read: post => post.isPublic
+  }
+})
+
+permix.hook('ready', () => {
+  const canRead = permix.check('post.read', { isPublic: true })
   console.log(canRead) // true
 })
 ```

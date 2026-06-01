@@ -43,7 +43,7 @@ const permix = createPermix<{
 }>()
 
 // Set up the plugin with your permission rules
-fastify.register(permix.plugin(({ request, reply }) => {
+await fastify.register(permix.setupMiddleware(({ request, reply }) => {
   // You can access request.user or other properties to determine permissions
   return {
     post: {
@@ -65,32 +65,32 @@ The plugin preserves full type safety from your Permix definition, ensuring your
 
 ## Checking Permissions
 
-Use the `checkHandler` function in your Fastify routes to check permissions:
+Use the `checkMiddleware` function in your Fastify routes to check permissions:
 
 ```ts
 fastify.post('/posts', {
-  preHandler: permix.checkHandler('post', 'create'),
+  preHandler: permix.checkMiddleware('post.create'),
 }, (request, reply) => {
   reply.send({ success: true })
 })
 
 // Check multiple actions
 fastify.put('/posts/:id', {
-  preHandler: permix.checkHandler('post', ['read', 'update']),
+  preHandler: permix.checkMiddleware(c => c('post.read') && c('post.update')),
 }, (request, reply) => {
   reply.send({ success: true })
 })
 
 // Check all actions
 fastify.delete('/posts/:id', {
-  preHandler: permix.checkHandler('post', 'all'),
+  preHandler: permix.checkMiddleware('post.~all'),
 }, (request, reply) => {
   reply.send({ success: true })
 })
 
 // Check any action
 fastify.get('/posts', {
-  preHandler: permix.checkHandler('post', 'any'),
+  preHandler: permix.checkMiddleware('post.~any'),
 }, (request, reply) => {
   reply.send({ posts: getAllPosts() })
 })
@@ -106,10 +106,10 @@ You can access the Permix instance directly in your route handlers using the `ge
 
 ```ts
 fastify.get('/posts', (request, reply) => {
-  const { check } = permix.get(request, reply)
+  const { check } = permix.get(request)
 
   // Check permissions manually
-  if (check('post', 'read')) {
+  if (check('post.read')) {
     // User has permission to read posts
     reply.send({ posts: getAllPosts() })
   } else {
@@ -139,10 +139,10 @@ const adminTemplate = permix.template({
 })
 
 // Use the template in your middleware
-fastify.register(permix.plugin(({ request }) => {
+await fastify.register(permix.setupMiddleware(({ request }) => {
   // You can still customize the template based on request data
   if (request.user?.role === 'admin') {
-    return adminTemplate
+    return adminTemplate()
   }
 
   return {
@@ -177,14 +177,14 @@ const permix = createPermix<Definition>({
 
 ### Dynamic Error Handler
 
-You can also provide a handler that returns different responses based on the entity and actions:
+You can also provide a handler that returns different responses based on the checked path:
 
 ```ts
 const permix = createPermix<Definition>({
-  onForbidden: ({ reply, entity, actions }) => {
-    if (entity === 'post' && actions.includes('create')) {
+  onForbidden: ({ reply, path }) => {
+    if (path === 'post.create') {
       reply.status(403).send({
-        error: `You don't have permission to ${actions.join('/')} a ${entity}`,
+        error: `You don't have permission for ${path}`,
       })
       return
     }
@@ -199,8 +199,8 @@ const permix = createPermix<Definition>({
 The `onForbidden` handler receives:
 - `request`: Fastify Request object
 - `reply`: Fastify Reply object
-- `entity`: The entity that was checked
-- `actions`: Array of actions that were checked
+- `path`: The permission path that was checked (or `null` for callback checks)
+- `data`: Optional entity data passed to the check
 
 ## Advanced Usage
 
@@ -209,7 +209,7 @@ The `onForbidden` handler receives:
 You can use async functions in your permission setup:
 
 ```ts
-fastify.register(permix.plugin(async ({ request }) => {
+await fastify.register(permix.setupMiddleware(async ({ request }) => {
   // Fetch user permissions from database
   const userPermissions = await getUserPermissions(request.user.id)
 
@@ -232,10 +232,10 @@ fastify.put('/posts/:id', {
   preHandler: async (request, reply) => {
     const post = await getPostById(request.params.id)
 
-    const { check } = permix.get(request, reply)
+    const { check } = permix.get(request)
 
     // Check if user can update this specific post
-    if (check('post', 'update', post)) {
+    if (check('post.update', post)) {
       return
     } else {
       reply.status(403).send({ error: 'You cannot update this post' })

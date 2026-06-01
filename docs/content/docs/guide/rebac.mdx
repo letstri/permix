@@ -46,8 +46,8 @@ interface Doc {
 const permix = createPermix<{
   doc: [
     'read',
-    { name: 'update', type: Doc, typeRequired: true },
-    { name: 'delete', type: Doc, typeRequired: true },
+    { name: 'update', type: Doc, required: true },
+    { name: 'delete', type: Doc, required: true },
   ]
 }>()
 
@@ -88,8 +88,8 @@ interface User {
 
 const permix = createPermix<{
   doc: [
-    { name: 'read', type: Doc, typeRequired: true },
-    { name: 'update', type: Doc, typeRequired: true },
+    { name: 'read', type: Doc, required: true },
+    { name: 'update', type: Doc, required: true },
   ]
 }>()
 
@@ -156,9 +156,9 @@ function hasShare(docId: string, userId: string, minLevel: ShareLevel): boolean 
 
 const permix = createPermix<{
   doc: [
-    { name: 'read', type: Doc, typeRequired: true },
-    { name: 'update', type: Doc, typeRequired: true },
-    { name: 'admin', type: Doc, typeRequired: true },
+    { name: 'read', type: Doc, required: true },
+    { name: 'update', type: Doc, required: true },
+    { name: 'admin', type: Doc, required: true },
   ]
 }>()
 

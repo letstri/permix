@@ -9,14 +9,16 @@ const initCode = `import { createPermix } from 'permix'
 interface Post {
   id: string
   published: boolean
+  authorId: string
 }
 
 // Create the permix instance
 export const permix = createPermix<{
-  post: {
-    dataType: Post
-    action: 'create' | 'update' | 'delete'
-  }
+  post: [
+    { name: 'create', type: Post },
+    { name: 'edit', type: Post },
+    { name: 'delete', type: Post },
+  ]
 }>()`
 
 const setupCode = `import { permix } from './permix'
@@ -36,12 +38,12 @@ permix.setup({
 const usageCode = `import { permix } from './permix'
 
 // Can I delete any post?
-permix.check('post', 'delete')
+permix.check('post.delete')
 
 const post = await fetchPost()
 
 // Can I edit this post?
-permix.check('post', 'edit', post)`
+permix.check('post.edit', post)`
 
 export const Route = createFileRoute('/')({
   component: Home,

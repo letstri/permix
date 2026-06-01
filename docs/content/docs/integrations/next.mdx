@@ -299,6 +299,7 @@ Returns an object with the following methods:
 | `setup(rules)` | Set the per-request permission rules. Resolve any async data (session, etc.) before calling. |
 | `check(...args)` | Check a permission against the current request's rules. Same signature as the core `check`. |
 | `get()` | Return the underlying [`Permix<D>`](/docs/guide/instance) instance for the current request. |
+| `getRules()` | Return the current rules object for the request-scoped instance, or `null`. |
 | `dehydrate()` | Serialize the current request's rules to JSON (for `<PermixHydrate>` on the client). |
 | `template(rules)` | Create a reusable rule set. Same as the core [`template`](/docs/guide/template). |
 

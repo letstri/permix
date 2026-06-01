@@ -104,35 +104,6 @@ The returned instance is a regular Permix object, so every API you already know 
 
 <Step>
 
-## Generating Baseline Rules
-
-The Drizzle integration adds a `generateRules` helper that produces a fully-populated rules object covering every table in the schema. It accepts three shapes:
-
-```ts
-permix.setup(permix.generateRules(true))
-
-permix.setup(permix.generateRules({ read: true }))
-
-permix.setup(permix.generateRules((table, action) => {
-  if (table === 'users')
-    return action !== 'delete'
-  return action === 'read'
-}))
-```
-
-Combine it with `template` to define reusable presets:
-
-```ts
-const adminTemplate = permix.template(permix.generateRules(true))
-const guestTemplate = permix.template(permix.generateRules({ read: true }))
-
-permix.setup(adminTemplate())
-```
-
-</Step>
-
-<Step>
-
 ## Customising Actions
 
 If CRUD isn't quite what you want, pass an explicit `actions` tuple. Use `as const` so the literal action names flow through to your check sites:

@@ -76,7 +76,7 @@ And then you can use the `Check` component in your templates:
     reverse: Will flip the logic of the permission check
     otherwise: Will show this if a user doesn't have permission
   -->
-  <Check entity="entity" action="action" :data="data" reverse>
+  <Check path="entity.action" :data="data" reverse>
     Will show this if a user have permission
     <template #otherwise>
       Will show this if a user doesn't have permission
@@ -109,10 +109,10 @@ const { check, isReady } = usePermix(permix)
   <div>
     <div v-if="!isReady">Loading permissions...</div>
     <template v-else>
-      <button v-if="check('post', 'edit', props.post)">Edit Post</button>
+      <button v-if="check('post.edit', props.post)">Edit Post</button>
       <p v-else>You don't have permission to edit this post</p>
     </template>
-    <Check entity="post" action="edit" :data="props.post">
+    <Check path="post.edit" :data="props.post">
       Can I edit this post?
       <template #otherwise>
         You don't have permission to edit this post

@@ -1,7 +1,7 @@
 export interface ActionSpec {
   name: string
   type?: unknown
-  typeRequired?: boolean
+  required?: boolean
 }
 
 export type Action = string | ActionSpec

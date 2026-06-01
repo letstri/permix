@@ -25,7 +25,7 @@ Permix instance accepts a generic type to define permissions.
 
 #### Actions
 
-List of action names for the entity. Use a tuple of strings for simple actions, or action spec objects (`{ name, type?, typeRequired? }`) when an action needs a typed entity.
+List of action names for the entity. Use a tuple of strings for simple actions, or action spec objects (`{ name, type?, required? }`) when an action needs a typed entity.
 
 ```ts twoslash title="/lib/permix-actions.ts"
 import { createPermix } from 'permix'
@@ -78,13 +78,13 @@ const canEdit = permix.check('post.edit') // false
 const canEditWithPost = permix.check('post.edit', somePost) // true
 ```
 
-#### `typeRequired`
+#### `required`
 
 <Callout>
 Not required, defaults to `false`.
 </Callout>
 
-By default, when an action declares a `type`, the data argument in `check` is optional. Set `typeRequired: true` to require data for that action.
+By default, when an action declares a `type`, the data argument in `check` is optional. Set `required: true` to require data for that action.
 
 ```ts twoslash title="/lib/permix-type-required.ts"
 import { createPermix } from 'permix'
@@ -97,7 +97,7 @@ interface Post {
 
 const permix = createPermix<{
   post: [
-    { name: 'create', type: Post, typeRequired: true },
+    { name: 'create', type: Post, required: true },
     { name: 'edit', type: Post },
   ]
 }>()
@@ -121,7 +121,20 @@ const canCreate = permix.check('post.create')
 const canEdit = permix.check('post.edit', somePost) // ✅ Valid
 ```
 
-When `typeRequired` is `true`, TypeScript requires the data argument for that action. Use this when permission logic always depends on entity data.
+When `required` is `true`, TypeScript requires the data argument for that action. Use this when permission logic always depends on entity data.
+
+#### Flat definition
+
+You can also define permissions as a flat tuple without nesting:
+
+```ts twoslash title="/lib/permix-flat.ts"
+import { createPermix } from 'permix'
+
+const permix = createPermix<['read', 'write']>()
+
+permix.setup({ read: true, write: false })
+permix.check('read') // true
+```
 
 #### `Definition`
 
@@ -148,6 +161,24 @@ async function getRules(): Promise<Rules<PermissionsDefinition>> {
 const permix = createPermix<PermissionsDefinition>()
 
 permix.setup(await getRules())
+```
+
+#### `$inferPath`
+
+Use `$inferPath` to derive permission path types from an instance without restating the definition:
+
+```ts title="/lib/permix-infer-path.ts"
+import { createPermix } from 'permix'
+
+const permix = createPermix<{
+  user: ['create']
+  job: ['remove']
+}>()
+
+type PermissionPath = typeof permix.$inferPath
+// 'user.create' | 'job.remove'
+
+const path: PermissionPath = 'user.create'
 ```
 
 ### Return type

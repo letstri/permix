@@ -75,11 +75,10 @@ And then you can use the `Check` component in your components:
 export default function Page() {
   return (
     <Check
-      entity="entity"
-      action="action"
+      path="entity.action"
       data={data}
-      otherwise={<p>Will show this if a user doesn't have permission</p>} // Will show this if a user doesn't have permission
-      reverse // Will flip the logic of the permission check
+      otherwise={<p>Will show this if a user doesn't have permission</p>}
+      reverse
     >
       Will show this if a user has permission
     </Check>
@@ -104,7 +103,7 @@ export default function Page() {
   const post = usePost()
   const { check, isReady } = usePermix(permix)
 
-  const canEdit = () => check('post', 'edit', post)
+  const canEdit = () => check('post.edit', post)
 
   return (
     <>
@@ -117,7 +116,7 @@ export default function Page() {
             ) : (
               <p>You don't have permission to edit this post</p>
             )}
-            <Check entity="post" action="create">
+            <Check path="post.create">
               Can I create a post inside the Check component?
             </Check>
           </div>

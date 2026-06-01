@@ -4,9 +4,9 @@ import { shares } from './data.js'
 
 export const permix = createPermix<{
   doc: [
-    { name: 'read', type: Doc, typeRequired: true },
-    { name: 'update', type: Doc, typeRequired: true },
-    { name: 'admin', type: Doc, typeRequired: true },
+    { name: 'read', type: Doc, required: true },
+    { name: 'update', type: Doc, required: true },
+    { name: 'admin', type: Doc, required: true },
   ]
 }>()
 

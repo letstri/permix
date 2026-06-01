@@ -92,7 +92,13 @@ You can also attach `setupMiddleware()` to a specific server route's `middleware
 
 ## Type the router context
 
-So `get(context)` is fully typed inside `beforeLoad` and loaders, declare the context key on your root route with `createRootRouteWithContext`:
+So `get(context)` is fully typed inside `beforeLoad` and loaders, declare the context key on your root route with `createRootRouteWithContext`. Chain `.contextKey('permix')` when creating the integration so the key matches your router context type:
+
+```tsx title="src/lib/permix.ts"
+import { createPermix } from 'permix/tanstack-start'
+
+export const permix = createPermix<PermissionsDefinition>().contextKey('permix')
+```
 
 ```tsx title="src/routes/__root.tsx"
 import type { Permix } from 'permix'
@@ -306,6 +312,7 @@ Returns an object with the following methods:
 | `checkMiddleware(...args)` | A **function** middleware that enforces a permission check before a server function's handler. |
 | `get(context)` | Read the request-scoped [`Permix<D>`](/docs/guide/instance) instance from a context object, or `null` if missing. |
 | `getOrThrow(context)` | Like `get`, but throws `PermixNotFoundError` when the instance is missing. |
+| `getRules(context)` | Return the current rules object for the request-scoped instance, or `null`. |
 | `dehydrate(context)` | Serialize the current request's rules to JSON (for `<PermixHydrate>` on the client). |
 | `template(rules)` | Create a reusable rule set. Same as the core [`template`](/docs/guide/template). |
 | `contextKey(key)` | Set a custom context key (string or symbol). Chainable; returns the same helper. |

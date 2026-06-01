@@ -47,7 +47,7 @@ const server = http.createServer(async (req, res) => {
   const path = url.pathname
   const method = req.method || 'GET'
 
-  const context = { req, res }
+  const next = () => {}
 
   // Setup Permix with permission rules
   await permix.setupMiddleware(({ req }) => {
@@ -62,17 +62,17 @@ const server = http.createServer(async (req, res) => {
         delete: isAdmin
       }
     }
-  })(context)
+  })(req, res, next)
 
   // Route handling
   if (path === '/posts' && method === 'POST') {
-    await permix.checkMiddleware('post', 'create')(context)
+    await permix.checkMiddleware('post.create')(req, res, next)
   }
   else if (path.startsWith('/posts/') && method === 'PUT') {
-    await permix.checkMiddleware('post', ['read', 'update'])(context)
+    await permix.checkMiddleware(c => c('post.read') && c('post.update'))(req, res, next)
   }
   else if (path.startsWith('/posts/') && method === 'DELETE') {
-    await permix.checkMiddleware('post', 'delete')(context)
+    await permix.checkMiddleware('post.delete')(req, res, next)
   }
   else {
     res.statusCode = 404
@@ -99,13 +99,13 @@ Use the `checkMiddleware` function to check permissions for specific routes:
 
 ```ts
 // Check a single action
-await permix.checkMiddleware('post', 'create')(context)
+await permix.checkMiddleware('post.create')(req, res, next)
 
 // Check multiple actions
-await permix.checkMiddleware('post', ['read', 'update'])(context)
+await permix.checkMiddleware(c => c('post.read') && c('post.update'))(req, res, next)
 
 // Check all actions
-await permix.checkMiddleware('post', 'all')(context)
+await permix.checkMiddleware('post.~all')(req, res, next)
 ```
 
 </Step>
@@ -118,10 +118,10 @@ You can access the Permix instance directly in your request handlers using the `
 
 ```ts
 http.createServer((req, res) => {
-  const { check } = permix.get(req, res)
+  const { check } = permix.get(req)
 
   // User has permission to read posts
-  if (check('post', 'read')) {
+  if (check('post.read')) {
     res.statusCode = 200
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify({ posts: getAllPosts() }))
@@ -161,15 +161,15 @@ const userTemplate = permix.template({
 })
 
 // Use templates in your middleware
-permix.setupMiddleware(({ req }) => {
+await permix.setupMiddleware(({ req }) => {
   const isAdmin = req.headers['x-user-role'] === 'admin'
 
   if (isAdmin) {
-    return adminTemplate
+    return adminTemplate()
   }
 
-  return userTemplate
-})(context)
+  return userTemplate()
+})(req, res, next)
 ```
 
 </Step>
@@ -198,13 +198,13 @@ You can also provide a handler that returns different responses based on the ent
 
 ```ts
 const permix = createPermix<Definition>({
-  onForbidden: ({ res, entity, actions }) => {
+  onForbidden: ({ res, path }) => {
     res.statusCode = 403
     res.setHeader('Content-Type', 'application/json')
 
-    if (entity === 'post' && actions.includes('create')) {
+    if (path === 'post.create') {
       res.end(JSON.stringify({
-        error: `You don't have permission to ${actions.join('/')} a ${entity}`
+        error: `You don't have permission for ${path}`
       }))
       return
     }
@@ -219,8 +219,8 @@ const permix = createPermix<Definition>({
 The `onForbidden` handler receives:
 - `req`: Node.js IncomingMessage object
 - `res`: Node.js ServerResponse object
-- `entity`: The entity that was checked
-- `actions`: Array of actions that were checked
+- `path`: The permission path that was checked (or `null` for callback checks)
+- `data`: Optional entity data passed to the check
 
 ## Advanced Usage
 
@@ -244,7 +244,7 @@ permix.setupMiddleware(async ({ req }) => {
       delete: userPermissions.canDeletePosts
     }
   }
-})(context)
+})(req, res, next)
 ```
 
 ### Dynamic Data-Based Permissions
@@ -265,10 +265,10 @@ http.createServer(async (req, res) => {
     const post = await getPostById(postId)
 
     // Get Permix instance
-    const { check } = permix.get(req, res)
+    const { check } = permix.get(req)
 
     // Check if user can update this specific post
-    if (check('post', 'update', post)) {
+    if (check('post.update', post)) {
       // Process update...
       res.statusCode = 200
       res.setHeader('Content-Type', 'application/json')

@@ -68,22 +68,22 @@ The middleware preserves full type safety from your Permix definition, ensuring 
 Use the `checkMiddleware` function in your Express routes to check permissions:
 
 ```ts
-app.post('/posts', permix.checkMiddleware('post', 'create'), (req, res) => {
+app.post('/posts', permix.checkMiddleware('post.create'), (req, res) => {
   res.json({ success: true })
 })
 
 // Check multiple actions
-app.put('/posts/:id', permix.checkMiddleware('post', ['read', 'update']), (req, res) => {
+app.put('/posts/:id', permix.checkMiddleware(c => c('post.read') && c('post.update')), (req, res) => {
   res.json({ success: true })
 })
 
 // Check all actions
-app.delete('/posts/:id', permix.checkMiddleware('post', 'all'), (req, res) => {
+app.delete('/posts/:id', permix.checkMiddleware('post.~all'), (req, res) => {
   res.json({ success: true })
 })
 
 // Check any action
-app.get('/posts', permix.checkMiddleware('post', 'any'), (req, res) => {
+app.get('/posts', permix.checkMiddleware('post.~any'), (req, res) => {
   res.json({ posts: getAllPosts() })
 })
 ```
@@ -98,10 +98,10 @@ You can access the Permix instance directly in your route handlers using the `ge
 
 ```ts
 app.get('/posts', (req, res) => {
-  const { check } = permix.get(req, res)
+  const { check } = permix.get(req)
 
   // Check permissions manually
-  if (check('post', 'read')) {
+  if (check('post.read')) {
     // User has permission to read posts
     res.json({ posts: getAllPosts() })
   } else {
@@ -134,7 +134,7 @@ const adminTemplate = permix.template({
 app.use(permix.setupMiddleware(({ req }) => {
   // You can still customize the template based on request data
   if (req.user?.role === 'admin') {
-    return adminTemplate
+    return adminTemplate()
   }
 
   return {
@@ -169,14 +169,14 @@ const permix = createPermix<Definition>({
 
 ### Dynamic Error Handler
 
-You can also provide a handler that returns different responses based on the entity and actions:
+You can also provide a handler that returns different responses based on the checked path:
 
 ```ts
 const permix = createPermix<Definition>({
-  onForbidden: ({ res, entity, actions }) => {
-    if (entity === 'post' && actions.includes('create')) {
+  onForbidden: ({ res, path }) => {
+    if (path === 'post.create') {
       res.status(403).json({
-        error: `You don't have permission to ${actions.join('/')} a ${entity}`,
+        error: `You don't have permission for ${path}`,
       })
       return
     }
@@ -191,8 +191,8 @@ const permix = createPermix<Definition>({
 The `onForbidden` handler receives:
 - `req`: Express Request object
 - `res`: Express Response object
-- `entity`: The entity that was checked
-- `actions`: Array of actions that were checked
+- `path`: The permission path that was checked (or `null` for callback checks)
+- `data`: Optional entity data passed to the check
 
 ## Advanced Usage
 
@@ -223,10 +223,10 @@ You can check permissions based on the specific data being accessed:
 app.put('/posts/:id', async (req, res, next) => {
   const post = await getPostById(req.params.id)
 
-  const { check } = permix.get(req, res)
+  const { check } = permix.get(req)
 
   // Check if user can update this specific post
-  if (check('post', 'update', post)) {
+  if (check('post.update', post)) {
     next()
   } else {
     res.status(403).json({ error: 'You cannot update this post' })
