@@ -3,7 +3,7 @@ import type { Permix, RulesPaths } from './permix'
 import { describe, expectTypeOf, it } from 'vitest'
 
 describe('mergePermix', () => {
-  it('should merge two disjoint raw statements', () => {
+  it('should merge two disjoint raw definitions', () => {
     interface A { post: ['create', 'read'] }
     interface B { comment: ['write', 'delete'] }
 
@@ -25,7 +25,7 @@ describe('mergePermix', () => {
     expectTypeOf<Paths>().toEqualTypeOf<'post.create' | 'post.read' | 'post.update'>()
   })
 
-  it('should extract statement from Permix instances', () => {
+  it('should extract definition from Permix instances', () => {
     type P1 = Permix<{ user: ['invite'] }>
     type P2 = Permix<{ post: ['create'] }>
 
@@ -35,7 +35,7 @@ describe('mergePermix', () => {
     expectTypeOf<Paths>().toEqualTypeOf<'user.invite' | 'post.create'>()
   })
 
-  it('should mix Permix instances and raw statements', () => {
+  it('should mix Permix instances and raw definitions', () => {
     type P = Permix<{ user: ['invite'] }>
     interface D { post: ['create'] }
 
@@ -45,7 +45,7 @@ describe('mergePermix', () => {
     expectTypeOf<Paths>().toEqualTypeOf<'user.invite' | 'post.create'>()
   })
 
-  it('should nest for 3+ statements', () => {
+  it('should nest for 3+ definitions', () => {
     interface A { post: ['create'] }
     interface B { comment: ['write'] }
     interface C { user: ['invite'] }

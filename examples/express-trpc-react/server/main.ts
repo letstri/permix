@@ -1,4 +1,4 @@
-import type { PermissionsStatement } from '@/shared/permix'
+import type { PermissionsDefinition } from '@/shared/permix'
 import { initTRPC, TRPCError } from '@trpc/server'
 import * as trpcExpress from '@trpc/server/adapters/express'
 import cors from 'cors'
@@ -13,7 +13,7 @@ app.use(cors())
 
 const t = initTRPC.context<{ extraInfo: string }>().create()
 
-export const permix = createPermix<PermissionsStatement>({
+export const permix = createPermix<PermissionsDefinition>({
   onForbidden: () => {
     throw new TRPCError({
       code: 'FORBIDDEN',

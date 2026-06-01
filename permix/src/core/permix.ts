@@ -1,6 +1,6 @@
 import type { CheckArgs } from './check'
+import type { Action, ActionName, Definition } from './definitions'
 import type { DehydratedState, Rules } from './rules'
-import type { Action, ActionName, Statement } from './statements'
 import { createCheck } from './check'
 import { PermixNotReadyError } from './errors'
 import { createHooks } from './hooks'
@@ -12,7 +12,7 @@ export type { DehydratedState, Rules } from './rules'
 type ActionArgs<A extends Action>
   = A extends { type: infer T, typeRequired: true } ? [T]
     : A extends { type: infer T } ? [T?]
-    : []
+      : []
 
 type ActionByName<A extends Action, N extends string>
   = A extends unknown ? ActionName<A> extends N ? A : never : never
@@ -24,16 +24,17 @@ export type RulesPaths<D, Prefix extends string = '', N extends unknown[] = Dept
   = N extends [unknown, ...infer Rest]
     ? D extends readonly Action[]
       ? `${Prefix}${ActionName<D[number]>}`
-      : { [K in keyof D & string]: D[K] extends Statement ? RulesPaths<D[K], `${Prefix}${K}.`, Rest> : never }[keyof D & string]
+      : { [K in keyof D & string]: D[K] extends Definition ? RulesPaths<D[K], `${Prefix}${K}.`, Rest> : never }[keyof D & string]
     : never
 
 export type SpecialSymbol = '~any' | '~all'
 
 export type SpecialPath<D, Prefix extends string = '', N extends unknown[] = Depth>
   = N extends [unknown, ...infer Rest]
-  ? `${Prefix}${SpecialSymbol}` | (D extends readonly Action[]
-        ? never
-        : { [K in keyof D & string]: D[K] extends Statement ? SpecialPath<D[K], `${Prefix}${K}.`, Rest> : never }[keyof D & string])
+    // eslint-disable-next-line style/indent-binary-ops
+    ? `${Prefix}${SpecialSymbol}` | (D extends readonly Action[]
+      ? never
+      : { [K in keyof D & string]: D[K] extends Definition ? SpecialPath<D[K], `${Prefix}${K}.`, Rest> : never }[keyof D & string])
     : never
 
 export type DataAtPath<D, P extends string, N extends unknown[] = Depth>
@@ -45,7 +46,7 @@ export type DataAtPath<D, P extends string, N extends unknown[] = Depth>
         : never
     : never
 
-export type CheckerFn<D extends Statement>
+export type CheckerFn<D extends Definition>
   = <P extends RulesPaths<D>>(path: P, ...data: DataAtPath<D, P>) => boolean
 
 export interface PermixHooks {
@@ -53,7 +54,7 @@ export interface PermixHooks {
   ready: () => void
 }
 
-export interface Permix<D extends Statement> {
+export interface Permix<D extends Definition> {
   /**
    * Provide the rules for this Permix instance. Must be called before `check()`.
    *
@@ -205,7 +206,7 @@ export interface Permix<D extends Statement> {
   /**
    * Type-only helper that resolves to the union of every valid permission path
    * for this Permix instance (e.g. `'user.create' | 'post.read'`). Use it with
-   * `typeof` to derive permission-path types without restating the statement.
+   * `typeof` to derive permission-path types without restating the definition.
    *
    * @example Single path
    * ```ts
@@ -233,16 +234,16 @@ export interface Permix<D extends Statement> {
 /**
  * Create a type-safe Permix instance.
  *
- * @template D - A {@link Statement} describing the permission tree.
+ * @template D - A {@link Definition} describing the permission tree.
  *
- * @example Flat statement
+ * @example Flat definition
  * ```ts
  * const permix = createPermix<['read', 'write']>()
  * permix.setup({ read: true, write: false })
  * permix.check('read') // true
  * ```
  *
- * @example Nested statement
+ * @example Nested definition
  * ```ts
  * const permix = createPermix<{
  *   post: ['create', 'read']
@@ -276,7 +277,7 @@ export interface Permix<D extends Statement> {
  * permix.check('post.edit', { authorId: '1' }) // true/false
  * ```
  */
-export function createPermix<D extends Statement>(initialRules?: Rules<D>): Permix<D> {
+export function createPermix<D extends Definition>(initialRules?: Rules<D>): Permix<D> {
   let rules: Rules<D> | null = initialRules ?? null
   let ready = !!initialRules
   const hooks = createHooks<PermixHooks>()

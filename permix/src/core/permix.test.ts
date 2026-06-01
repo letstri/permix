@@ -344,321 +344,321 @@ describe('deep rules', () => {
     expect(permix.check(c => c('workspace.customer.write'))).toBe(true)
   })
 
-describe('hydration', () => {
-  it('should hydrate permissions from JSON state', () => {
-    const permix = createPermix<{
-      post: ['create', 'read']
-    }>()
+  describe('hydration', () => {
+    it('should hydrate permissions from JSON state', () => {
+      const permix = createPermix<{
+        post: ['create', 'read']
+      }>()
 
-    permix.hydrate({
-      post: {
-        create: true,
-        read: false,
-      },
+      permix.hydrate({
+        post: {
+          create: true,
+          read: false,
+        },
+      })
+
+      expect(permix.check('post.create')).toBe(true)
+      expect(permix.check('post.read')).toBe(false)
     })
 
-    expect(permix.check('post.create')).toBe(true)
-    expect(permix.check('post.read')).toBe(false)
-  })
+    it('should handle nested entities', () => {
+      const permix = createPermix<{
+        post: ['create', 'read', 'update']
+        comment: ['write', 'delete']
+      }>()
 
-  it('should handle nested entities', () => {
-    const permix = createPermix<{
-      post: ['create', 'read', 'update']
-      comment: ['write', 'delete']
-    }>()
+      permix.hydrate({
+        post: {
+          create: true,
+          read: true,
+          update: false,
+        },
+        comment: {
+          write: true,
+          delete: false,
+        },
+      })
 
-    permix.hydrate({
-      post: {
-        create: true,
-        read: true,
-        update: false,
-      },
-      comment: {
-        write: true,
-        delete: false,
-      },
+      expect(permix.check('post.create')).toBe(true)
+      expect(permix.check('post.update')).toBe(false)
+      expect(permix.check('comment.write')).toBe(true)
+      expect(permix.check('comment.delete')).toBe(false)
     })
 
-    expect(permix.check('post.create')).toBe(true)
-    expect(permix.check('post.update')).toBe(false)
-    expect(permix.check('comment.write')).toBe(true)
-    expect(permix.check('comment.delete')).toBe(false)
-  })
+    it('should dehydrate permissions to JSON state', () => {
+      const permix = createPermix<{
+        post: ['create', 'read']
+      }>()
 
-  it('should dehydrate permissions to JSON state', () => {
-    const permix = createPermix<{
-      post: ['create', 'read']
-    }>()
+      permix.setup({
+        post: {
+          create: true,
+          read: false,
+        },
+      })
 
-    permix.setup({
-      post: {
-        create: true,
-        read: false,
-      },
+      const dehydratedState = permix.dehydrate()
+
+      expect(dehydratedState).toEqual({
+        post: {
+          create: true,
+          read: false,
+        },
+      })
+
+      permix.hydrate(dehydratedState)
+
+      expect(permix.check('post.create')).toBe(true)
+      expect(permix.check('post.read')).toBe(false)
     })
 
-    const dehydratedState = permix.dehydrate()
+    it('should evaluate function rules when dehydrating', () => {
+      const permix = createPermix<{
+        post: ['create', 'read']
+      }>()
 
-    expect(dehydratedState).toEqual({
-      post: {
-        create: true,
-        read: false,
-      },
+      permix.setup({
+        post: {
+          create: () => true,
+          read: () => false,
+        },
+      })
+
+      const dehydrated = permix.dehydrate()
+      expect(dehydrated).toEqual({ post: { create: true, read: false } })
+
+      permix.hydrate(dehydrated)
+      expect(permix.check('post.create')).toBe(true)
+      expect(permix.check('post.read')).toBe(false)
     })
 
-    permix.hydrate(dehydratedState)
+    it('should evaluate data rules without check data when dehydrating', () => {
+      const permix = createPermix<{
+        user: [
+          { name: 'write', type: { authorId: string }, typeRequired: true },
+        ]
+      }>()
 
-    expect(permix.check('post.create')).toBe(true)
-    expect(permix.check('post.read')).toBe(false)
-  })
+      permix.setup({
+        user: {
+          write: data => data.authorId === '1',
+        },
+      })
 
-  it('should evaluate function rules when dehydrating', () => {
-    const permix = createPermix<{
-      post: ['create', 'read']
-    }>()
-
-    permix.setup({
-      post: {
-        create: () => true,
-        read: () => false,
-      },
+      expect(permix.dehydrate()).toEqual({ user: { write: false } })
     })
 
-    const dehydrated = permix.dehydrate()
-    expect(dehydrated).toEqual({ post: { create: true, read: false } })
+    it('should throw when dehydrating without setup', () => {
+      const permix = createPermix<{
+        post: ['create']
+      }>()
 
-    permix.hydrate(dehydrated)
-    expect(permix.check('post.create')).toBe(true)
-    expect(permix.check('post.read')).toBe(false)
-  })
-
-  it('should evaluate data rules without check data when dehydrating', () => {
-    const permix = createPermix<{
-      user: [
-        { name: 'write', type: { authorId: string }, typeRequired: true },
-      ]
-    }>()
-
-    permix.setup({
-      user: {
-        write: data => data.authorId === '1',
-      },
+      expect(() => permix.dehydrate()).toThrow(PermixNotReadyError)
     })
 
-    expect(permix.dehydrate()).toEqual({ user: { write: false } })
-  })
+    it('should transfer state from server to client instance', () => {
+      const permixServer = createPermix<{
+        post: ['create', 'read']
+      }>()
 
-  it('should throw when dehydrating without setup', () => {
-    const permix = createPermix<{
-      post: ['create']
-    }>()
+      permixServer.setup({
+        post: {
+          create: true,
+          read: false,
+        },
+      })
 
-    expect(() => permix.dehydrate()).toThrow(PermixNotReadyError)
-  })
+      const dehydrated = permixServer.dehydrate()
+      const permixClient = createPermix<{
+        post: ['create', 'read']
+      }>()
 
-  it('should transfer state from server to client instance', () => {
-    const permixServer = createPermix<{
-      post: ['create', 'read']
-    }>()
+      permixClient.hydrate(dehydrated)
 
-    permixServer.setup({
-      post: {
-        create: true,
-        read: false,
-      },
+      expect(permixClient.check('post.create')).toBe(true)
+      expect(permixClient.check('post.read')).toBe(false)
     })
 
-    const dehydrated = permixServer.dehydrate()
-    const permixClient = createPermix<{
-      post: ['create', 'read']
-    }>()
+    it('should dehydrate deep nested rules', () => {
+      const permix = createPermix<{
+        workspace: {
+          guest: ['write']
+          user: ['write2']
+        }
+      }>()
 
-    permixClient.hydrate(dehydrated)
+      permix.setup({
+        workspace: {
+          guest: { write: false },
+          user: { write2: true },
+        },
+      })
 
-    expect(permixClient.check('post.create')).toBe(true)
-    expect(permixClient.check('post.read')).toBe(false)
-  })
-
-  it('should dehydrate deep nested rules', () => {
-    const permix = createPermix<{
-      workspace: {
-        guest: ['write']
-        user: ['write2']
-      }
-    }>()
-
-    permix.setup({
-      workspace: {
-        guest: { write: false },
-        user: { write2: true },
-      },
-    })
-
-    expect(permix.dehydrate()).toEqual({
-      workspace: {
-        guest: { write: false },
-        user: { write2: true },
-      },
+      expect(permix.dehydrate()).toEqual({
+        workspace: {
+          guest: { write: false },
+          user: { write2: true },
+        },
+      })
     })
   })
-})
 
-describe('template', () => {
-  it('should define static permissions with template', () => {
-    const permix = createPermix<{
-      post: ['create', 'read']
-      comment: ['create', 'read', 'update']
-    }>()
+  describe('template', () => {
+    it('should define static permissions with template', () => {
+      const permix = createPermix<{
+        post: ['create', 'read']
+        comment: ['create', 'read', 'update']
+      }>()
 
-    const adminPermissions = permix.template({
-      post: {
-        create: true,
-        read: true,
-      },
-      comment: {
-        create: true,
-        read: true,
-        update: true,
-      },
+      const adminPermissions = permix.template({
+        post: {
+          create: true,
+          read: true,
+        },
+        comment: {
+          create: true,
+          read: true,
+          update: true,
+        },
+      })
+
+      expect(adminPermissions()).toEqual({
+        post: { create: true, read: true },
+        comment: { create: true, read: true, update: true },
+      })
+
+      permix.setup(adminPermissions())
+      expect(permix.check('post.create')).toBe(true)
     })
 
-    expect(adminPermissions()).toEqual({
-      post: { create: true, read: true },
-      comment: { create: true, read: true, update: true },
+    it('should work with dynamic template function', () => {
+      const permix = createPermix<{
+        post: ['create', 'read']
+      }>()
+
+      const rolePermissions = permix.template(({ role }: { role: string }) => ({
+        post: {
+          create: role === 'admin',
+          read: true,
+        },
+      }))
+
+      permix.setup(rolePermissions({ role: 'admin' }))
+      expect(permix.check('post.create')).toBe(true)
+
+      permix.setup(rolePermissions({ role: 'viewer' }))
+      expect(permix.check('post.create')).toBe(false)
+      expect(permix.check('post.read')).toBe(true)
+    })
+  })
+
+  describe('hooks', () => {
+    it('should call setup hook every time setup is called', () => {
+      const permix = createPermix<{
+        post: ['create', 'read']
+      }>()
+
+      const fn = vi.fn()
+      permix.hook('setup', fn)
+
+      permix.setup({ post: { create: true, read: true } })
+      permix.setup({ post: { create: false, read: true } })
+
+      expect(fn).toHaveBeenCalledTimes(2)
     })
 
-    permix.setup(adminPermissions())
-    expect(permix.check('post.create')).toBe(true)
+    it('should call hookOnce only once', () => {
+      const permix = createPermix<{
+        post: ['create', 'read']
+      }>()
+
+      const fn = vi.fn()
+      permix.hookOnce('setup', fn)
+
+      permix.setup({ post: { create: true, read: true } })
+      permix.setup({ post: { create: false, read: true } })
+
+      expect(fn).toHaveBeenCalledTimes(1)
+    })
+
+    it('should fire ready only on the first setup call', () => {
+      const permix = createPermix<{
+        post: ['create', 'read']
+      }>()
+
+      const fn = vi.fn()
+      permix.hook('ready', fn)
+
+      permix.setup({ post: { create: true, read: true } })
+      permix.setup({ post: { create: false, read: true } })
+
+      expect(fn).toHaveBeenCalledTimes(1)
+    })
+
+    it('should not become ready on hydrate, only on setup', () => {
+      const permix = createPermix<{
+        post: ['create', 'read']
+      }>()
+
+      const fn = vi.fn()
+      permix.hook('ready', fn)
+
+      permix.hydrate({ post: { create: true, read: false } })
+
+      expect(fn).toHaveBeenCalledTimes(0)
+      expect(permix.isReady()).toBe(false)
+      // check still works with hydrated booleans even though not ready
+      expect(permix.check('post.create')).toBe(true)
+
+      permix.setup({ post: { create: true, read: false } })
+
+      expect(fn).toHaveBeenCalledTimes(1)
+      expect(permix.isReady()).toBe(true)
+    })
+
+    it('should return removal function from hook', () => {
+      const permix = createPermix<{
+        post: ['create']
+      }>()
+
+      const fn = vi.fn()
+      const remove = permix.hook('setup', fn)
+
+      permix.setup({ post: { create: true } })
+      expect(fn).toHaveBeenCalledTimes(1)
+
+      remove()
+      permix.setup({ post: { create: false } })
+      expect(fn).toHaveBeenCalledTimes(1)
+    })
+
+    it('should report isReady correctly', () => {
+      const permix = createPermix<{
+        post: ['create']
+      }>()
+
+      expect(permix.isReady()).toBe(false)
+      permix.setup({ post: { create: true } })
+      expect(permix.isReady()).toBe(true)
+    })
+
+    it('should resolve isReadyAsync immediately if already ready', async () => {
+      const permix = createPermix<{
+        post: ['create']
+      }>({ post: { create: true } })
+
+      await expect(permix.isReadyAsync()).resolves.toBeUndefined()
+    })
+
+    it('should resolve isReadyAsync once setup is called', async () => {
+      const permix = createPermix<{
+        post: ['create']
+      }>()
+
+      const promise = permix.isReadyAsync()
+      permix.setup({ post: { create: true } })
+
+      await expect(promise).resolves.toBeUndefined()
+    })
   })
-
-  it('should work with dynamic template function', () => {
-    const permix = createPermix<{
-      post: ['create', 'read']
-    }>()
-
-    const rolePermissions = permix.template(({ role }: { role: string }) => ({
-      post: {
-        create: role === 'admin',
-        read: true,
-      },
-    }))
-
-    permix.setup(rolePermissions({ role: 'admin' }))
-    expect(permix.check('post.create')).toBe(true)
-
-    permix.setup(rolePermissions({ role: 'viewer' }))
-    expect(permix.check('post.create')).toBe(false)
-    expect(permix.check('post.read')).toBe(true)
-  })
-})
-
-describe('hooks', () => {
-  it('should call setup hook every time setup is called', () => {
-    const permix = createPermix<{
-      post: ['create', 'read']
-    }>()
-
-    const fn = vi.fn()
-    permix.hook('setup', fn)
-
-    permix.setup({ post: { create: true, read: true } })
-    permix.setup({ post: { create: false, read: true } })
-
-    expect(fn).toHaveBeenCalledTimes(2)
-  })
-
-  it('should call hookOnce only once', () => {
-    const permix = createPermix<{
-      post: ['create', 'read']
-    }>()
-
-    const fn = vi.fn()
-    permix.hookOnce('setup', fn)
-
-    permix.setup({ post: { create: true, read: true } })
-    permix.setup({ post: { create: false, read: true } })
-
-    expect(fn).toHaveBeenCalledTimes(1)
-  })
-
-  it('should fire ready only on the first setup call', () => {
-    const permix = createPermix<{
-      post: ['create', 'read']
-    }>()
-
-    const fn = vi.fn()
-    permix.hook('ready', fn)
-
-    permix.setup({ post: { create: true, read: true } })
-    permix.setup({ post: { create: false, read: true } })
-
-    expect(fn).toHaveBeenCalledTimes(1)
-  })
-
-  it('should not become ready on hydrate, only on setup', () => {
-    const permix = createPermix<{
-      post: ['create', 'read']
-    }>()
-
-    const fn = vi.fn()
-    permix.hook('ready', fn)
-
-    permix.hydrate({ post: { create: true, read: false } })
-
-    expect(fn).toHaveBeenCalledTimes(0)
-    expect(permix.isReady()).toBe(false)
-    // check still works with hydrated booleans even though not ready
-    expect(permix.check('post.create')).toBe(true)
-
-    permix.setup({ post: { create: true, read: false } })
-
-    expect(fn).toHaveBeenCalledTimes(1)
-    expect(permix.isReady()).toBe(true)
-  })
-
-  it('should return removal function from hook', () => {
-    const permix = createPermix<{
-      post: ['create']
-    }>()
-
-    const fn = vi.fn()
-    const remove = permix.hook('setup', fn)
-
-    permix.setup({ post: { create: true } })
-    expect(fn).toHaveBeenCalledTimes(1)
-
-    remove()
-    permix.setup({ post: { create: false } })
-    expect(fn).toHaveBeenCalledTimes(1)
-  })
-
-  it('should report isReady correctly', () => {
-    const permix = createPermix<{
-      post: ['create']
-    }>()
-
-    expect(permix.isReady()).toBe(false)
-    permix.setup({ post: { create: true } })
-    expect(permix.isReady()).toBe(true)
-  })
-
-  it('should resolve isReadyAsync immediately if already ready', async () => {
-    const permix = createPermix<{
-      post: ['create']
-    }>({ post: { create: true } })
-
-    await expect(permix.isReadyAsync()).resolves.toBeUndefined()
-  })
-
-  it('should resolve isReadyAsync once setup is called', async () => {
-    const permix = createPermix<{
-      post: ['create']
-    }>()
-
-    const promise = permix.isReadyAsync()
-    permix.setup({ post: { create: true } })
-
-    await expect(promise).resolves.toBeUndefined()
-  })
-})
 })

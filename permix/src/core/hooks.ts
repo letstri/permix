@@ -18,10 +18,10 @@ export function createHooks<T extends { [K in keyof T]: HookFn } = Record<string
     return () => {
       const list = hooks.get(name)
       if (!list)
-return
+        return
       const index = list.indexOf(fn)
       if (index !== -1)
-list.splice(index, 1)
+        list.splice(index, 1)
     }
   }
 
@@ -37,16 +37,16 @@ list.splice(index, 1)
   const removeHook = <K extends keyof T>(name: K, fn: T[K]): void => {
     const list = hooks.get(name)
     if (!list)
-return
+      return
     const index = list.indexOf(fn)
     if (index !== -1)
-list.splice(index, 1)
+      list.splice(index, 1)
   }
 
   const callHook = <K extends keyof T>(name: K, ...args: Parameters<T[K]>): void => {
     const list = hooks.get(name)
     if (!list)
-return
+      return
     for (const fn of [...list]) {
       fn(...args)
     }

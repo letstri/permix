@@ -36,9 +36,7 @@ To create a base instance, you need to provide a schema as a generic type to `cr
 import { createPermix } from 'permix'
 
 export const permix = createPermix<{
-  post: {
-    action: 'create' | 'read' | 'update' | 'delete'
-  }
+  post: ['create', 'read', 'update', 'delete']
 }>()
 
 // ...

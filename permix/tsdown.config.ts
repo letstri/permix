@@ -16,8 +16,6 @@ export default defineConfig({
     './src/fastify/index.ts',
     './src/solid/index.ts',
     './src/effect/index.ts',
-    './src/better-auth/index.ts',
-    './src/better-auth/client.ts',
     './src/drizzle/index.ts',
     './src/drizzle/legacy/index.ts',
   ],

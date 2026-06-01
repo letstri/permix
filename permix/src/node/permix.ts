@@ -1,8 +1,8 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
+import type { Definition } from '../core/definitions'
 import type { Rules } from '../core/permix'
-import type { Statement } from '../core/statements'
 import type { MaybePromise } from '../utils'
 import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
 
@@ -16,7 +16,7 @@ export interface MiddlewareContext {
   next: NextFunction
 }
 
-export interface PermixOptions<D extends Statement> {
+export interface PermixOptions<D extends Definition> {
   /**
    * Called when a `checkMiddleware` denies the request. Defaults to a 403 JSON
    * response of `{ error: 'Forbidden' }`.
@@ -24,7 +24,7 @@ export interface PermixOptions<D extends Statement> {
   onForbidden?: (params: CheckContext<D> & MiddlewareContext) => MaybePromise<void>
 }
 
-function buildPermix<D extends Statement>(
+function buildPermix<D extends Definition>(
   resolveKey: () => string | symbol,
   options: PermixOptions<D> = {},
 ) {
@@ -49,7 +49,7 @@ function buildPermix<D extends Statement>(
 
   function setupMiddleware(
     callbackOrRules: ((context: MiddlewareContext) => MaybePromise<Rules<D>>) | Rules<D
->,
+    >,
   ): Handler {
     return async (req, res, next) => {
       const rules = typeof callbackOrRules === 'function'
@@ -114,7 +114,7 @@ function buildPermix<D extends Statement>(
  *
  * @link https://permix.letstri.dev/docs/integrations/node
  */
-export function createPermix<D extends Statement>(options: PermixOptions<D> = {}) {
+export function createPermix<D extends Definition>(options: PermixOptions<D> = {}) {
   let key: string | symbol = Symbol('permix')
   const permix = buildPermix<D>(() => key, options)
 
@@ -126,4 +126,4 @@ export function createPermix<D extends Statement>(options: PermixOptions<D> = {}
   })
 }
 
-export type NodePermix<D extends Statement> = ReturnType<typeof createPermix<D>>
+export type NodePermix<D extends Definition> = ReturnType<typeof createPermix<D>>

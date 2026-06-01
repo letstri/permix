@@ -1,4 +1,4 @@
-import type { ValidateStatement } from '../core'
+import type { ValidateDefinition } from '../core'
 import { Hono } from 'hono'
 import { describe, expect, it } from 'vitest'
 import { PermixNotFoundError } from '../core'
@@ -9,17 +9,17 @@ interface Post {
   authorId: string
 }
 
-type PermissionsStatement = ValidateStatement<{
+type PermissionsDefinition = ValidateDefinition<{
   post: ['create', 'read', 'update']
   user: ['delete']
 }>
 
-type PostWithData = ValidateStatement<{
+type PostWithData = ValidateDefinition<{
   post: [{ name: 'create', type: Post }]
 }>
 
 describe('createPermix', () => {
-  const permix = createPermix<PermissionsStatement>()
+  const permix = createPermix<PermissionsDefinition>()
 
   it('should throw ts error', () => {
     // @ts-expect-error path does not exist
@@ -57,7 +57,7 @@ describe('createPermix', () => {
   })
 
   it('should work with custom error handler', async () => {
-    const permix = createPermix<PermissionsStatement>({
+    const permix = createPermix<PermissionsDefinition>({
       onForbidden: ({ c }) => c.json({ error: 'Custom error' }, 403),
     })
 
@@ -76,7 +76,7 @@ describe('createPermix', () => {
   })
 
   it('should work with custom error and params', async () => {
-    const permix = createPermix<PermissionsStatement>({
+    const permix = createPermix<PermissionsDefinition>({
       onForbidden: ({ c, path }) => c.json({ error: `You do not have permission for ${path}` }, 403),
     })
 
@@ -170,8 +170,8 @@ describe('createPermix', () => {
   })
 
   it('should let two factories with different keys coexist on the same context', async () => {
-    const admin = createPermix<PermissionsStatement>().contextKey('admin')
-    const guest = createPermix<PermissionsStatement>().contextKey('guest')
+    const admin = createPermix<PermissionsDefinition>().contextKey('admin')
+    const guest = createPermix<PermissionsDefinition>().contextKey('guest')
 
     const app = new Hono()
 
@@ -198,7 +198,7 @@ describe('createPermix', () => {
 })
 
 describe('get / getOrThrow', () => {
-  const permix = createPermix<PermissionsStatement>()
+  const permix = createPermix<PermissionsDefinition>()
 
   it('should return null when setupMiddleware has not run', async () => {
     const app = new Hono()
@@ -254,7 +254,7 @@ describe('get / getOrThrow', () => {
 
 describe('checkMiddleware without setupMiddleware', () => {
   it('should throw PermixNotFoundError and reach Hono error middleware', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     const app = new Hono()
 

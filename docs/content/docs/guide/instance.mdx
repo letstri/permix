@@ -9,15 +9,13 @@ Instance is the main entry point for Permix that will check permissions in every
 
 ## TypeScript
 
-Permix is built with TypeScript, providing type safety and validation. Using TypeScript enables autocompletion and compile-time checks for your permission statements.
+Permix is built with TypeScript, providing type safety and validation. Using TypeScript enables autocompletion and compile-time checks for your permission definitions.
 
-```ts twoslash title="/lib/permix.ts"
+```ts twoslash title="/lib/permix-basic.ts"
 import { createPermix } from 'permix'
 
 const permix = createPermix<{
-  post: {
-    action: 'create' | 'edit'
-  }
+  post: ['create', 'edit']
 }>()
 ```
 
@@ -25,30 +23,28 @@ const permix = createPermix<{
 
 Permix instance accepts a generic type to define permissions.
 
-#### `action`
+#### Actions
 
-Union type of all actions you want to check on the entity.
+List of action names for the entity. Use a tuple of strings for simple actions, or action spec objects (`{ name, type?, typeRequired? }`) when an action needs a typed entity.
 
-```ts twoslash title="/lib/permix.ts"
+```ts twoslash title="/lib/permix-actions.ts"
 import { createPermix } from 'permix'
 
 const permix = createPermix<{
-  post: {
-    action: 'create' | 'edit'
+  post: ['create', 'edit']
 //  ^^^^^^
-  }
 }>()
 ```
 
-#### `dataType`
+#### `type`
 
 <Callout>
 Not required, but recommended.
 </Callout>
 
-To define a type of your entities, you can pass the `dataType` property to a generic type. This is useful if you want to check permissions on a specific entity otherwise the type will be `unknown`.
+To type-check entity data in rule callbacks and `check`, add a `type` field on the action spec. Without it, callback data is `unknown`.
 
-```ts twoslash title="/lib/permix.ts"
+```ts twoslash title="/lib/permix-type.ts"
 import { createPermix } from 'permix'
 
 interface Post {
@@ -58,11 +54,10 @@ interface Post {
 }
 
 const permix = createPermix<{
-  post: {
-    dataType: Post
-//  ^^^^^^^^
-    action: 'create' | 'edit'
-  }
+  post: [
+    { name: 'create', type: Post },
+    { name: 'edit', type: Post },
+  ]
 }>()
 
 permix.setup({
@@ -79,19 +74,19 @@ const somePost: Post = {
   content: 'Hello World'
 }
 
-const canEdit = permix.check('post', 'edit') // false
-const canEditWithPost = permix.check('post', 'edit', somePost) // true
+const canEdit = permix.check('post.edit') // false
+const canEditWithPost = permix.check('post.edit', somePost) // true
 ```
 
-#### `dataRequired`
+#### `typeRequired`
 
 <Callout>
 Not required, defaults to `false`.
 </Callout>
 
-By default, when you define a `dataType`, the data parameter in permission checks is optional. You can make it required by setting `dataRequired: true`. This ensures that permission checks for that entity must always include the data parameter.
+By default, when an action declares a `type`, the data argument in `check` is optional. Set `typeRequired: true` to require data for that action.
 
-```ts twoslash title="/lib/permix.ts"
+```ts twoslash title="/lib/permix-type-required.ts"
 import { createPermix } from 'permix'
 
 interface Post {
@@ -101,18 +96,16 @@ interface Post {
 }
 
 const permix = createPermix<{
-  post: {
-    dataType: Post
-    dataRequired: true
-//  ^^^^^^^^^^^^
-    action: 'create' | 'edit'
-  }
+  post: [
+    { name: 'create', type: Post, typeRequired: true },
+    { name: 'edit', type: Post },
+  ]
 }>()
 
 permix.setup({
   post: {
-    create: true,
-    edit: post => post.author === 'John Doe'
+    create: () => true,
+    edit: post => post?.author === 'John Doe'
 //        ^?
   }
 })
@@ -123,28 +116,26 @@ const somePost: Post = {
   content: 'Hello World'
 }
 
-// @errors: 2554
-const canCreate = permix.check('post', 'create')
-const canEdit = permix.check('post', 'edit', somePost) // ✅ Valid
+// @errors: 2345
+const canCreate = permix.check('post.create')
+const canEdit = permix.check('post.edit', somePost) // ✅ Valid
 ```
 
-When `dataRequired` is `true`, TypeScript will enforce that you must pass the data parameter when checking permissions for that entity. This is useful when your permission logic always depends on the entity data and you want to prevent accidental calls without the required data.
+When `typeRequired` is `true`, TypeScript requires the data argument for that action. Use this when permission logic always depends on entity data.
 
-#### `PermixStatement`
+#### `Definition`
 
-You can use `PermixStatement` type to define your permissions separately from the instance.
+You can define your permission tree in a separate type alias and reuse it with `Rules`.
 
-```ts twoslash title="/lib/permix.ts"
-import type { PermixStatement, PermixRules } from 'permix'
+```ts twoslash title="/lib/permix-definition.ts"
+import type { Definition, Rules } from 'permix'
 import { createPermix } from 'permix'
 
-type PermissionsStatement = PermixStatement<{
-  post: {
-    action: 'create' | 'edit'
-  }
-}>
+type PermissionsDefinition = {
+  post: ['create', 'edit']
+}
 
-async function getRules(): Promise<PermixRules<PermissionsStatement>> {
+async function getRules(): Promise<Rules<PermissionsDefinition>> {
   // get user or something like that
   return {
     post: {
@@ -154,7 +145,7 @@ async function getRules(): Promise<PermixRules<PermissionsStatement>> {
   }
 }
 
-const permix = createPermix<PermissionsStatement>()
+const permix = createPermix<PermissionsDefinition>()
 
 permix.setup(await getRules())
 ```
@@ -163,7 +154,7 @@ permix.setup(await getRules())
 
 Each Permix instance provides a list of methods to manage and check permissions. These methods are documented in detail on their separate pages.
 
-```ts twoslash title="/lib/permix.ts"
+```ts twoslash title="/lib/permix-methods.ts"
 import { createPermix } from 'permix'
 
 const permix = createPermix()
@@ -185,13 +176,11 @@ const permix = createPermix()
 
 You can provide initial rules when creating a Permix instance. This allows you to set up permissions immediately without calling `setup` separately.
 
-```ts twoslash title="/lib/permix.ts"
+```ts twoslash title="/lib/permix-initial.ts"
 import { createPermix } from 'permix'
 
 const permix = createPermix<{
-  post: {
-    action: 'create' | 'edit'
-  }
+  post: ['create', 'edit']
 }>({
   post: {
     create: true,
@@ -200,19 +189,17 @@ const permix = createPermix<{
 })
 
 // Permissions are immediately available
-console.log(permix.check('post', 'create')) // true
+console.log(permix.check('post.create')) // true
 console.log(permix.isReady()) // true
 ```
 
 This is equivalent to:
 
-```ts twoslash title="/lib/permix.ts"
+```ts twoslash title="/lib/permix-initial-setup.ts"
 import { createPermix } from 'permix'
 
 const permix = createPermix<{
-  post: {
-    action: 'create' | 'edit'
-  }
+  post: ['create', 'edit']
 }>()
 
 permix.setup({

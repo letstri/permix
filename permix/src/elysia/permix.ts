@@ -1,8 +1,8 @@
 import type { Context } from 'elysia'
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
+import type { Definition } from '../core/definitions'
 import type { Rules, RulesPaths } from '../core/permix'
-import type { Statement } from '../core/statements'
 import type { MaybePromise } from '../utils'
 import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
 
@@ -10,7 +10,7 @@ export interface MiddlewareContext {
   context: Context
 }
 
-export interface PermixOptions<D extends Statement> {
+export interface PermixOptions<D extends Definition> {
   /**
    * Called when a `checkMiddleware` denies the request. Defaults to a 403 JSON
    * response of `{ error: 'Forbidden' }`.
@@ -18,7 +18,7 @@ export interface PermixOptions<D extends Statement> {
   onForbidden?: (params: CheckContext<D> & MiddlewareContext) => MaybePromise<any>
 }
 
-function buildPermix<D extends Statement>(
+function buildPermix<D extends Definition>(
   resolveKey: () => string | symbol,
   options: PermixOptions<D> = {},
 ) {
@@ -99,7 +99,7 @@ function buildPermix<D extends Statement>(
  *
  * @link https://permix.letstri.dev/docs/integrations/elysia
  */
-export function createPermix<D extends Statement>(options: PermixOptions<D> = {}) {
+export function createPermix<D extends Definition>(options: PermixOptions<D> = {}) {
   let key: string | symbol = Symbol('permix')
   const permix = buildPermix<D>(() => key, options)
 
@@ -111,4 +111,4 @@ export function createPermix<D extends Statement>(options: PermixOptions<D> = {}
   })
 }
 
-export type ElysiaPermix<D extends Statement> = ReturnType<typeof createPermix<D>>
+export type ElysiaPermix<D extends Definition> = ReturnType<typeof createPermix<D>>

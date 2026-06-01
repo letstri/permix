@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { ValidateStatement } from '../core'
+import type { ValidateDefinition } from '../core'
 import { describe, expect, it, vi } from 'vitest'
 import { PermixNotFoundError } from '../core'
 import { createPermix } from './permix'
@@ -9,12 +9,12 @@ interface Post {
   authorId: string
 }
 
-type PermissionsStatement = ValidateStatement<{
+type PermissionsDefinition = ValidateDefinition<{
   post: ['create', 'read', 'update']
   user: ['delete']
 }>
 
-type PostWithData = ValidateStatement<{
+type PostWithData = ValidateDefinition<{
   post: [{ name: 'create', type: Post }]
 }>
 
@@ -37,7 +37,7 @@ function createMockNext() {
 }
 
 describe('createPermix', () => {
-  const permix = createPermix<PermissionsStatement>()
+  const permix = createPermix<PermissionsDefinition>()
 
   it('should throw ts error', () => {
     // @ts-expect-error path does not exist
@@ -78,7 +78,7 @@ describe('createPermix', () => {
   })
 
   it('should work with custom error handler', async () => {
-    const permix = createPermix<PermissionsStatement>({
+    const permix = createPermix<PermissionsDefinition>({
       onForbidden: ({ res }) => {
         res.statusCode = 403
         res.setHeader('Content-Type', 'application/json')
@@ -102,7 +102,7 @@ describe('createPermix', () => {
   })
 
   it('should work with custom error and params', async () => {
-    const permix = createPermix<PermissionsStatement>({
+    const permix = createPermix<PermissionsDefinition>({
       onForbidden: ({ res, path }) => {
         res.statusCode = 403
         res.setHeader('Content-Type', 'application/json')
@@ -144,7 +144,7 @@ describe('createPermix', () => {
   })
 
   it('should work with checker callback form', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     const req = createMockRequest()
     const res = createMockResponse()
@@ -196,8 +196,8 @@ describe('createPermix', () => {
   })
 
   it('should let two factories with different keys coexist on the same request', async () => {
-    const admin = createPermix<PermissionsStatement>().contextKey('admin')
-    const guest = createPermix<PermissionsStatement>().contextKey('guest')
+    const admin = createPermix<PermissionsDefinition>().contextKey('admin')
+    const guest = createPermix<PermissionsDefinition>().contextKey('guest')
 
     const req = createMockRequest()
     const res = createMockResponse()
@@ -226,8 +226,8 @@ describe('createPermix', () => {
   })
 
   it('should default to a per-instance symbol so two factories without a key do not collide', async () => {
-    const first = createPermix<PermissionsStatement>()
-    const second = createPermix<PermissionsStatement>()
+    const first = createPermix<PermissionsDefinition>()
+    const second = createPermix<PermissionsDefinition>()
 
     const req = createMockRequest()
     const res = createMockResponse()
@@ -255,7 +255,7 @@ describe('createPermix', () => {
 
   it('should accept an explicit symbol key', async () => {
     const key = Symbol('my-permix')
-    const permix = createPermix<PermissionsStatement>().contextKey(key)
+    const permix = createPermix<PermissionsDefinition>().contextKey(key)
 
     const req = createMockRequest()
     const res = createMockResponse()
@@ -271,7 +271,7 @@ describe('createPermix', () => {
 })
 
 describe('get / getOrThrow', () => {
-  const permix = createPermix<PermissionsStatement>()
+  const permix = createPermix<PermissionsDefinition>()
 
   it('should return null when setupMiddleware has not run', () => {
     const req = createMockRequest()
@@ -300,7 +300,7 @@ describe('get / getOrThrow', () => {
 
 describe('checkMiddleware without setupMiddleware', () => {
   it('should call next(PermixNotFoundError)', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     const req = createMockRequest()
     const res = createMockResponse()
@@ -315,7 +315,7 @@ describe('checkMiddleware without setupMiddleware', () => {
 
 describe('onForbidden receives next', () => {
   it('should allow onForbidden to forward errors via next(err)', async () => {
-    const permix = createPermix<PermissionsStatement>({
+    const permix = createPermix<PermissionsDefinition>({
       onForbidden: ({ next, path }) => {
         next(new Error(`Forbidden: ${path}`))
       },
@@ -338,12 +338,12 @@ describe('onForbidden receives next', () => {
 
 describe('key exposure', () => {
   it('should expose the key on the factory return', () => {
-    const permix = createPermix<PermissionsStatement>().contextKey('custom-key')
+    const permix = createPermix<PermissionsDefinition>().contextKey('custom-key')
     expect(permix.key).toBe('custom-key')
   })
 
   it('should expose a symbol key when using default', () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
     expect(typeof permix.key).toBe('symbol')
   })
 })

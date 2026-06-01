@@ -19,7 +19,7 @@ Before getting started with oRPC integration, make sure you've completed the ini
 
 Here's a basic example of how to use the Permix middleware with oRPC:
 
-```ts twoslash
+```ts
 import { os } from '@orpc/server'
 import { createPermix } from 'permix/orpc'
 
@@ -192,7 +192,7 @@ By default, the middleware throws an `ORPCError` with code `FORBIDDEN`. You can 
 ### Throw a Custom Error
 
 ```ts
-const permix = createPermix<Statement>({
+const permix = createPermix<Definition>({
   onForbidden: ({ path, context }) => {
     throw new ORPCError('FORBIDDEN', {
       message: `User ${context.user.id} doesn't have permission for ${path}`
@@ -206,7 +206,7 @@ const permix = createPermix<Statement>({
 You can also let denied requests through by calling `next()`:
 
 ```ts
-const permix = createPermix<Statement>({
+const permix = createPermix<Definition>({
   onForbidden: ({ path, next }) => {
     console.warn(`Permission denied for ${path}, allowing through`)
     return next()

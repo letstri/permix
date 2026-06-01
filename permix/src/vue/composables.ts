@@ -1,4 +1,4 @@
-import type { Permix, Rules, Statement } from '../core'
+import type { Definition, Permix, Rules } from '../core'
 import { computed, inject } from 'vue'
 import { createCheck } from '../core'
 import { PERMIX_CONTEXT_KEY } from './plugin'
@@ -18,7 +18,7 @@ function usePermixContext() {
  *
  * @link https://permix.letstri.dev/docs/integrations/vue
  */
-export function usePermix<T extends Statement>(
+export function usePermix<T extends Definition>(
   permix: Permix<T>,
 ) {
   const context = usePermixContext()

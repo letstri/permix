@@ -1,15 +1,15 @@
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
+import type { Definition } from '../core/definitions'
 import type { Rules, RulesPaths } from '../core/permix'
-import type { Statement } from '../core/statements'
 import { ORPCError, os } from '@orpc/server'
 import { createCheckContext, createPermix as createPermixCore, createTemplate } from '../core'
 
-export interface PermixOptions<D extends Statement> {
+export interface PermixOptions<D extends Definition> {
   onForbidden?: (params: CheckContext<D> & { context: Record<string, any>, next: (...args: any[]) => any }) => any
 }
 
-function buildPermix<D extends Statement, const Key extends string>(
+function buildPermix<D extends Definition, const Key extends string>(
   resolveKey: () => string,
   options: PermixOptions<D> = {},
 ) {
@@ -77,7 +77,7 @@ function buildPermix<D extends Statement, const Key extends string>(
  *
  * @link https://permix.letstri.dev/docs/integrations/orpc
  */
-export function createPermix<D extends Statement>(options: PermixOptions<D> = {}) {
+export function createPermix<D extends Definition>(options: PermixOptions<D> = {}) {
   let key: string = 'permix'
   const permix = buildPermix<D, 'permix'>(() => key, options)
 
@@ -89,4 +89,4 @@ export function createPermix<D extends Statement>(options: PermixOptions<D> = {}
   })
 }
 
-export type OrpcPermix<D extends Statement> = ReturnType<typeof createPermix<D>>
+export type OrpcPermix<D extends Definition> = ReturnType<typeof createPermix<D>>

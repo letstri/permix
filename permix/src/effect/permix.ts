@@ -1,7 +1,7 @@
 import type { PermixNotReadyError, PermixRuleNotDefinedError } from '../core'
 import type { CheckArgs } from '../core/check'
+import type { Definition } from '../core/definitions'
 import type { DehydratedState, Permix as PermixCore, PermixHooks, Rules, RulesPaths } from '../core/permix'
-import type { Statement } from '../core/statements'
 import { Context, Effect, Layer } from 'effect'
 import { createPermix as createPermixCore, createTemplate } from '../core'
 
@@ -23,7 +23,7 @@ let counter = 0
  *
  * @link https://permix.letstri.dev/docs/integrations/effect
  */
-export function createPermix<D extends Statement>(options: PermixOptions = {}) {
+export function createPermix<D extends Definition>(options: PermixOptions = {}) {
   const id = options.id ?? `permix/effect#${counter++}`
 
   const Tag = Context.GenericTag<PermixCore<D>>(id)
@@ -134,7 +134,7 @@ export function createPermix<D extends Statement>(options: PermixOptions = {}) {
   }
 
   /**
-   * Create a reusable permission template scoped to this factory's Statement.
+   * Create a reusable permission template scoped to this factory's Definition.
    */
   function template<T = void>(rules: Rules<D> | ((param: T) => Rules<D>)) {
     return createTemplate<D, T>(rules)
@@ -159,4 +159,4 @@ export function createPermix<D extends Statement>(options: PermixOptions = {}) {
   }
 }
 
-export type EffectPermix<D extends Statement> = ReturnType<typeof createPermix<D>>
+export type EffectPermix<D extends Definition> = ReturnType<typeof createPermix<D>>

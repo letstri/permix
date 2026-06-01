@@ -17,9 +17,7 @@ To quick start you only need to write the following code:
 import { createPermix } from 'permix'
 
 const permix = createPermix<{
-  post: {
-    action: 'read'
-  }
+  post: ['read']
 }>()
 
 permix.setup({
@@ -28,7 +26,7 @@ permix.setup({
   }
 })
 
-permix.check('post', 'read') // true
+permix.check('post.read') // true
 ```
 
 Permix has other powerful features, so here's check out the [docs](https://permix.letstri.dev/docs) or the [examples](https://github.com/letstri/permix/tree/main/examples) directory.

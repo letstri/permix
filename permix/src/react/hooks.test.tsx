@@ -1,5 +1,5 @@
 import { render, renderHook, waitFor } from '@testing-library/react'
-import React from 'react'
+import * as React from 'react'
 import { describe, expect, it } from 'vitest'
 import { createPermix } from '../core'
 import { PermixProvider, usePermix } from './index'

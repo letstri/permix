@@ -19,7 +19,7 @@ Before getting started with Node.js integration, make sure you've completed the 
 
 Here's a basic example of how to use the Permix middleware with a Node.js HTTP server:
 
-```ts twoslash
+```ts
 import http from 'node:http'
 import { createPermix } from 'permix/node'
 
@@ -32,10 +32,12 @@ interface Post {
 
 // Create your Permix instance
 const permix = createPermix<{
-  post: {
-    dataType: Post
-    action: 'create' | 'read' | 'update' | 'delete'
-  }
+  post: [
+    { name: 'create', type: Post },
+    { name: 'read', type: Post },
+    { name: 'update', type: Post },
+    { name: 'delete', type: Post },
+  ]
 }>()
 
 // Create an HTTP server
@@ -84,7 +86,7 @@ server.listen(3000, () => {
 ```
 
 <Callout>
-The middleware preserves full type safety from your Permix statement, ensuring your permission checks are type-safe.
+The middleware preserves full type safety from your Permix definition, ensuring your permission checks are type-safe.
 </Callout>
 
 </Step>
@@ -181,7 +183,7 @@ By default, the middleware returns a 403 Forbidden response if the user doesn't 
 ### Basic Error Handler
 
 ```ts
-const permix = createPermix<Statement>({
+const permix = createPermix<Definition>({
   onForbidden: ({ res }) => {
     res.statusCode = 403
     res.setHeader('Content-Type', 'application/json')
@@ -195,7 +197,7 @@ const permix = createPermix<Statement>({
 You can also provide a handler that returns different responses based on the entity and actions:
 
 ```ts
-const permix = createPermix<Statement>({
+const permix = createPermix<Definition>({
   onForbidden: ({ res, entity, actions }) => {
     res.statusCode = 403
     res.setHeader('Content-Type', 'application/json')

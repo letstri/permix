@@ -26,6 +26,7 @@
     "typescript",
     "react",
     "vue",
+    "solid",
     "type-safe",
     "rbac",
     "security",
@@ -86,21 +87,13 @@
       "types": "./dist/drizzle/index.d.mts",
       "import": "./dist/drizzle/index.mjs"
     },
-    "./effect": {
-      "types": "./dist/effect/index.d.mts",
-      "import": "./dist/effect/index.mjs"
-    },
-    "./better-auth": {
-      "types": "./dist/better-auth/index.d.mts",
-      "import": "./dist/better-auth/index.mjs"
-    },
-    "./better-auth/client": {
-      "types": "./dist/better-auth/client.d.mts",
-      "import": "./dist/better-auth/client.mjs"
-    },
     "./drizzle/legacy": {
       "types": "./dist/drizzle/legacy/index.d.mts",
       "import": "./dist/drizzle/legacy/index.mjs"
+    },
+    "./effect": {
+      "types": "./dist/effect/index.d.mts",
+      "import": "./dist/effect/index.mjs"
     }
   },
   "main": "./dist/core/index.mjs",
@@ -121,7 +114,6 @@
   "peerDependencies": {
     "@orpc/server": ">=1",
     "@trpc/server": ">=11",
-    "better-auth": ">=1",
     "drizzle-orm": ">=0.30.0 || >=1.0.0-rc.3",
     "effect": ">=3",
     "elysia": ">=1",
@@ -139,9 +131,6 @@
       "optional": true
     },
     "@trpc/server": {
-      "optional": true
-    },
-    "better-auth": {
       "optional": true
     },
     "drizzle-orm": {
@@ -190,7 +179,6 @@
     "@vitest/coverage-v8": "^4.1.7",
     "@vue/test-utils": "^2.4.10",
     "babel-preset-solid": "^1.9.12",
-    "better-auth": "^1.6.11",
     "drizzle-orm": "1.0.0-rc.3",
     "effect": "^3.21.2",
     "happy-dom": "^20.9.0",

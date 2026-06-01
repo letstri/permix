@@ -22,10 +22,10 @@ Permix provides two instance methods for handling hydration:
 import { createPermix } from 'permix'
 
 const permix = createPermix<{
-  post: {
-    dataType: { isPublic: boolean }
-    action: 'create' | 'read'
-  }
+  post: [
+    { name: 'create', type: { isPublic: boolean } },
+    { name: 'read', type: { isPublic: boolean } },
+  ]
 }>()
 
 // Set up initial permissions
@@ -55,9 +55,7 @@ import { createPermix } from 'permix'
 
 const app = express()
 const permix = createPermix<{
-  post: {
-    action: 'create' | 'read'
-  }
+  post: ['create', 'read']
 }>()
 
 app.get('/', (req, res) => {

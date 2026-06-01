@@ -1,4 +1,4 @@
-import type { CheckArgs, DataAtPath, DehydratedState, Permix, RulesPaths, Statement } from '../core'
+import type { CheckArgs, DataAtPath, Definition, DehydratedState, Permix, RulesPaths } from '../core'
 import type { PermixContext } from './hooks'
 import * as React from 'react'
 import { Context, usePermix, usePermixContext } from './hooks'
@@ -8,7 +8,7 @@ import { Context, usePermix, usePermixContext } from './hooks'
  *
  * @link https://permix.letstri.dev/docs/integrations/react
  */
-export function PermixProvider<D extends Statement>({
+export function PermixProvider<D extends Definition>({
   children,
   permix,
 }: { children: React.ReactNode, permix: Permix<D> }) {
@@ -45,7 +45,7 @@ export function PermixHydrate({ children, state }: { children: React.ReactNode, 
   return children
 }
 
-export interface CheckProps<D extends Statement, P extends RulesPaths<D>> {
+export interface CheckProps<D extends Definition, P extends RulesPaths<D>> {
   path: P
   data?: DataAtPath<D, P>[0]
   children: React.ReactNode
@@ -53,12 +53,11 @@ export interface CheckProps<D extends Statement, P extends RulesPaths<D>> {
   reverse?: boolean
 }
 
-export interface PermixComponents<D extends Statement> {
+export interface PermixComponents<D extends Definition> {
   Check: <P extends RulesPaths<D>>(props: CheckProps<D, P>) => React.ReactNode
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
-export function createComponents<D extends Statement>(permix: Permix<D>): PermixComponents<D> {
+export function createComponents<D extends Definition>(permix: Permix<D>): PermixComponents<D> {
   function Check<P extends RulesPaths<D>>({
     children,
     path,

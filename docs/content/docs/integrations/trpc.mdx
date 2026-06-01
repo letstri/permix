@@ -19,7 +19,7 @@ Before getting started with tRPC integration, make sure you've completed the ini
 
 Here's a basic example of how to use the Permix middleware with tRPC:
 
-```ts twoslash
+```ts
 import { initTRPC } from '@trpc/server'
 import { createPermix } from 'permix/trpc'
 
@@ -189,7 +189,7 @@ By default, the middleware throws a `TRPCError` with code `FORBIDDEN`. You can c
 ### Throw a Custom Error
 
 ```ts
-const permix = createPermix<Statement>({
+const permix = createPermix<Definition>({
   onForbidden: ({ path, ctx }) => {
     throw new TRPCError({
       code: 'FORBIDDEN',
@@ -204,7 +204,7 @@ const permix = createPermix<Statement>({
 You can also let denied requests through by calling `next()`:
 
 ```ts
-const permix = createPermix<Statement>({
+const permix = createPermix<Definition>({
   onForbidden: ({ path, next }) => {
     console.warn(`Permission denied for ${path}, allowing through`)
     return next()

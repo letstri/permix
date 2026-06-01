@@ -5,7 +5,7 @@ function assert(label: string, actual: boolean, expected: boolean) {
   const status = actual === expected ? 'PASS' : 'FAIL'
   console.log(`  [${status}] ${label}: ${actual} (expected ${expected})`)
   if (actual !== expected)
-process.exitCode = 1
+    process.exitCode = 1
 }
 
 // --- Scenario 1: Ownership ---

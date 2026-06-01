@@ -9,6 +9,7 @@ import {
 import { notFound } from 'next/navigation'
 import { getMDXComponents } from '@/app/mdx-components'
 import { LLMCopyButton, ViewOptions } from '@/components/ai/page-actions'
+import { Mermaid } from '@/components/mdx/mermaid'
 import { source } from '@/lib/source'
 
 export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
@@ -36,6 +37,7 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
         <MDX
           components={getMDXComponents({
             a: createRelativeLink(source, page),
+            Mermaid,
           })}
         />
       </DocsBody>

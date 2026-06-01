@@ -102,16 +102,6 @@ const program = Effect.gen(function* () {
 Effect.runPromise(program.pipe(Effect.provide(PermixLive)))
 ```
 
-### Callback form
-
-Compose multiple checks with boolean logic:
-
-```ts
-const canManagePost = permix.check(
-  c => c('post.create') && c('post.read'),
-)
-```
-
 </Step>
 
 <Step>
@@ -262,8 +252,8 @@ Effect.runPromise(
 You can create multiple Permix instances with different `id` values. They coexist on the same Effect context without conflict:
 
 ```ts
-const admin = createPermix<Statement>({ id: 'admin' })
-const guest = createPermix<Statement>({ id: 'guest' })
+const admin = createPermix<Definition>({ id: 'admin' })
+const guest = createPermix<Definition>({ id: 'guest' })
 
 const program = Effect.gen(function* () {
   const adminCreate = yield* admin.check('post.create')

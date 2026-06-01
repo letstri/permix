@@ -32,9 +32,9 @@ export type Action = string | ActionSpec
  * }
  * ```
  */
-export type Statement = readonly Action[] | { [key: string]: Statement }
+export type Definition = readonly Action[] | { [key: string]: Definition }
 
-export type ValidateStatement<D extends Statement> = D & ([Extract<Statement, string>] extends [never] ? unknown : Extract<Statement, string>)
+export type ValidateDefinition<D extends Definition> = D & ([Extract<Definition, string>] extends [never] ? unknown : Extract<Definition, string>)
 
 /**
  * Resolve an {@link Action} to its string name — the bare string for plain
@@ -43,4 +43,4 @@ export type ValidateStatement<D extends Statement> = D & ([Extract<Statement, st
 export type ActionName<A extends Action>
   = A extends string ? A
     : A extends { name: infer N extends string } ? N
-    : never
+      : never

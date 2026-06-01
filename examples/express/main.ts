@@ -1,14 +1,14 @@
-import type { ValidateStatement } from 'permix'
+import type { ValidateDefinition } from 'permix'
 import express from 'express'
 import { createPermix } from 'permix/express'
 
 const app = express()
 
-type PermissionsStatement = ValidateStatement<{
+type PermissionsDefinition = ValidateDefinition<{
   user: ['read', 'write']
 }>
 
-const permix = createPermix<PermissionsStatement>({
+const permix = createPermix<PermissionsDefinition>({
   onForbidden: ({ res }) => {
     res.status(403).json({ error: 'You do not have permission to access this resource' })
   },

@@ -1,4 +1,4 @@
-import type { ValidateStatement } from '../core'
+import type { ValidateDefinition } from '../core'
 import { Context, Effect } from 'effect'
 import { describe, expect, it } from 'vitest'
 import { PermixNotReadyError, PermixRuleNotDefinedError } from '../core'
@@ -9,18 +9,18 @@ interface Post {
   authorId: string
 }
 
-type PermissionsStatement = ValidateStatement<{
+type PermissionsDefinition = ValidateDefinition<{
   post: ['create', 'read', 'update']
   user: ['delete']
 }>
 
-type PostWithData = ValidateStatement<{
+type PostWithData = ValidateDefinition<{
   post: [{ name: 'create', type: Post }]
 }>
 
 describe('createPermix', () => {
   it('should allow access when permission is granted', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     const program = Effect.gen(function* () {
       return yield* permix.check('post.create')
@@ -37,7 +37,7 @@ describe('createPermix', () => {
   })
 
   it('should deny access when permission is not granted', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     const program = Effect.gen(function* () {
       return yield* permix.check('post.create')
@@ -54,7 +54,7 @@ describe('createPermix', () => {
   })
 
   it('should work with layerSetup and dynamic rules from another service', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     interface User { id: string, role: 'admin' | 'member' }
     class CurrentUser extends Context.Tag('CurrentUser')<CurrentUser, User>() {}
@@ -123,7 +123,7 @@ describe('createPermix', () => {
   })
 
   it('should work with checker callback form', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     const program = Effect.gen(function* () {
       return yield* permix.check(c => c('post.create') && c('post.read'))
@@ -149,7 +149,7 @@ describe('createPermix', () => {
   })
 
   it('should dehydrate permissions', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     const program = Effect.gen(function* () {
       return yield* permix.dehydrate()
@@ -169,7 +169,7 @@ describe('createPermix', () => {
   })
 
   it('should work with template', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     const adminTemplate = permix.template({
       post: { create: true, read: true, update: true },
@@ -188,8 +188,8 @@ describe('createPermix', () => {
   })
 
   it('should let two instances with different ids coexist', async () => {
-    const admin = createPermix<PermissionsStatement>({ id: 'admin' })
-    const guest = createPermix<PermissionsStatement>({ id: 'guest' })
+    const admin = createPermix<PermissionsDefinition>({ id: 'admin' })
+    const guest = createPermix<PermissionsDefinition>({ id: 'guest' })
 
     const program = Effect.gen(function* () {
       return {
@@ -215,14 +215,14 @@ describe('createPermix', () => {
   })
 
   it('should assign unique ids by default', () => {
-    const a = createPermix<PermissionsStatement>()
-    const b = createPermix<PermissionsStatement>()
+    const a = createPermix<PermissionsDefinition>()
+    const b = createPermix<PermissionsDefinition>()
 
     expect(a.id).not.toBe(b.id)
   })
 
   it('should setup rules at runtime starting from an empty layer', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     const program = Effect.gen(function* () {
       const before = yield* permix.isReady()
@@ -244,7 +244,7 @@ describe('createPermix', () => {
   })
 
   it('should hydrate from a dehydrated state', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     const program = Effect.gen(function* () {
       yield* permix.hydrate({
@@ -264,7 +264,7 @@ describe('createPermix', () => {
   })
 
   it('should read the current rules with getRules', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     const rules = {
       post: { create: true, read: true, update: false },
@@ -285,7 +285,7 @@ describe('createPermix', () => {
   })
 
   it('should resolve isReadyAsync once setup runs', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     const program = Effect.gen(function* () {
       yield* permix.setup({
@@ -302,7 +302,7 @@ describe('createPermix', () => {
   })
 
   it('should surface PermixNotReadyError when hydrate throws', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     // Verify the error channel is typed — Effect.flip compiles only when
     // the error type includes PermixNotReadyError.
@@ -319,7 +319,7 @@ describe('createPermix', () => {
   })
 
   it('should surface PermixNotReadyError when dehydrate is called before setup', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     const error = await Effect.runPromise(
       Effect.flip(
@@ -331,7 +331,7 @@ describe('createPermix', () => {
   })
 
   it('should surface PermixNotReadyError when check is called before setup', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     const error = await Effect.runPromise(
       Effect.flip(
@@ -343,7 +343,7 @@ describe('createPermix', () => {
   })
 
   it('should surface PermixRuleNotDefinedError when rule path is not in rules', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     const error = await Effect.runPromise(
       Effect.flip(
@@ -363,7 +363,7 @@ describe('createPermix', () => {
   })
 
   it('should fire a hook when setup runs', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     let called = 0
 

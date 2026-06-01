@@ -1,9 +1,11 @@
+minimumReleaseAgeExclude:
+  - vite@8.0.16
 shellEmulator: true
-trustPolicy: no-downgrade
 packages:
   - permix
   - docs
   - examples/*
 allowBuilds:
+  better-sqlite3: true
   esbuild: false
   sharp: false

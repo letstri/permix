@@ -1,5 +1,5 @@
 import type { JSX } from 'solid-js'
-import type { CheckArgs, DataAtPath, DehydratedState, Permix, RulesPaths, Statement } from '../core'
+import type { CheckArgs, DataAtPath, Definition, DehydratedState, Permix, RulesPaths } from '../core'
 import type { PermixContext } from './hooks'
 import { createEffect, createMemo, onCleanup } from 'solid-js'
 import { createStore } from 'solid-js/store'
@@ -10,7 +10,7 @@ import { Context, usePermix, usePermixContext } from './hooks'
  *
  * @link https://permix.letstri.dev/docs/integrations/solid
  */
-export function PermixProvider<D extends Statement>(props: {
+export function PermixProvider<D extends Definition>(props: {
   children: JSX.Element
   permix: Permix<D>
 }): JSX.Element {
@@ -45,7 +45,7 @@ export function PermixHydrate(props: { children: JSX.Element, state: DehydratedS
   return props.children
 }
 
-export interface CheckProps<D extends Statement, P extends RulesPaths<D>> {
+export interface CheckProps<D extends Definition, P extends RulesPaths<D>> {
   path: P
   data?: DataAtPath<D, P>[0]
   children: JSX.Element
@@ -53,11 +53,11 @@ export interface CheckProps<D extends Statement, P extends RulesPaths<D>> {
   reverse?: boolean
 }
 
-export interface PermixComponents<D extends Statement> {
+export interface PermixComponents<D extends Definition> {
   Check: <P extends RulesPaths<D>>(props: CheckProps<D, P>) => JSX.Element
 }
 
-export function createComponents<D extends Statement>(permix: Permix<D>): PermixComponents<D> {
+export function createComponents<D extends Definition>(permix: Permix<D>): PermixComponents<D> {
   function Check<P extends RulesPaths<D>>(props: CheckProps<D, P>): JSX.Element {
     const context = usePermix(permix)
     const hasPermission = createMemo(() => context.check(...([props.path, props.data] as unknown as CheckArgs<D>)))

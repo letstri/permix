@@ -1,8 +1,8 @@
-import type { Permix, Rules, Statement } from '../core'
+import type { Definition, Permix, Rules } from '../core'
 import { createContext, useContext } from 'solid-js'
 import { createCheck } from '../core'
 
-export interface PermixContext<T extends Statement> {
+export interface PermixContext<T extends Definition> {
   permix: Permix<T>
   isReady: boolean
   rules: Rules<T> | null
@@ -25,7 +25,7 @@ export function usePermixContext() {
  *
  * @link https://permix.letstri.dev/docs/integrations/solid
  */
-export function usePermix<T extends Statement>(permix: Permix<T>) {
+export function usePermix<T extends Definition>(permix: Permix<T>) {
   const context = usePermixContext()
 
   const check: Permix<T>['check'] = (...args) => {

@@ -13,7 +13,7 @@ export const permix = createPermix<{
 function hasShare(docId: string, userId: string, minLevel: ShareLevel): boolean {
   const level = shares.get(docId)?.get(userId)
   if (!level)
-return false
+    return false
 
   const rank: Record<ShareLevel, number> = { read: 0, write: 1, admin: 2 }
   return rank[level] >= rank[minLevel]

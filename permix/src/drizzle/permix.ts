@@ -13,7 +13,7 @@ export type DefaultDrizzleAction = (typeof DEFAULT_DRIZZLE_ACTIONS)[number]
 /**
  * Keys of `S` that Drizzle v1 considers "schema entries" — i.e. tables and
  * views. Anything else (a `defineRelations(...)` object, plain helpers, enums,
- * etc.) is filtered out so the generated statement only contains real
+ * etc.) is filtered out so the generated definition only contains real
  * permissioned entities.
  *
  * Powered by Drizzle's own `ExtractTablesFromSchema` type.
@@ -22,14 +22,14 @@ export type DrizzleTableKeys<S extends Record<string, unknown>>
   = keyof ExtractTablesFromSchema<S> & string
 
 /**
- * Builds a Permix {@link import('../core/statements').Statement} from a
+ * Builds a Permix {@link import('../core/definitions').Definition} from a
  * Drizzle schema object, assigning the same `actions` tuple to every table
  * (or view) that lives in the schema.
  *
  * `[...Actions]` strips the `readonly` modifier from the tuple so the result
- * matches Permix's `Statement` leaf type (a mutable `Action[]`).
+ * matches Permix's `Definition` leaf type (a mutable `Action[]`).
  */
-export type DrizzleStatement<
+export type DrizzleDefinition<
   S extends Record<string, unknown>,
   Actions extends readonly string[] = readonly DefaultDrizzleAction[],
 > = {
@@ -61,7 +61,7 @@ export interface CreateDrizzlePermixOptions<Actions extends readonly string[]> {
 export interface DrizzlePermix<
   S extends Record<string, unknown>,
   Actions extends readonly string[],
-> extends PermixCore<DrizzleStatement<S, Actions>> {
+> extends PermixCore<DrizzleDefinition<S, Actions>> {
   /**
    * The list of action names that were generated for every table.
    */
@@ -122,7 +122,7 @@ export function createPermix<
 
   const tables = Object.keys(extractTablesFromSchema(schema)) as DrizzleTableKeys<S>[]
 
-  type D = DrizzleStatement<S, Actions>
+  type D = DrizzleDefinition<S, Actions>
 
   const permix = createPermixCore<D>()
 

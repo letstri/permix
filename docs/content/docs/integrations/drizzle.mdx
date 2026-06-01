@@ -1,6 +1,6 @@
 ---
 title: Drizzle
-description: Auto-generate a Permix statement and CRUD rules from your Drizzle schema
+description: Auto-generate a Permix definition and CRUD rules from your Drizzle schema
 ---
 
 ## Overview
@@ -12,7 +12,7 @@ Two entry points are exposed so you can choose the one that matches your install
 | Import path              | Drizzle version            | Notes                                                                              |
 | ------------------------ | -------------------------- | ---------------------------------------------------------------------------------- |
 | `permix/drizzle`         | **v1** (`>=1.0.0-rc`)      | Uses Drizzle's official `extractTablesFromSchema` helper. Detects tables and views. |
-| `permix/drizzle/v0`      | **v0** (`>=0.30 <1`)       | Detects tables only via `is(value, Table)`.                                        |
+| `permix/drizzle/legacy`  | **v0** (`>=0.30 <1`)       | Detects tables only via `is(value, Table)`.                                        |
 
 Both entry points expose the same API surface, so migrating between them is a one-line import change once you upgrade Drizzle.
 
@@ -30,7 +30,7 @@ Define your Drizzle schema as usual, then create a Permix instance from it.
 
 ### Drizzle v1
 
-```ts twoslash
+```ts twoslash title="/lib/drizzle-v1.ts"
 import { defineRelations } from 'drizzle-orm'
 import { integer, pgTable, serial, text } from 'drizzle-orm/pg-core'
 import { createPermix } from 'permix/drizzle'
@@ -65,10 +65,10 @@ permix.check('posts.delete') // false
 
 ### Drizzle v0
 
-```ts twoslash
-import { relations } from 'drizzle-orm'
+```ts twoslash title="/lib/drizzle-legacy.ts"
+import { relations } from 'drizzle-orm/_relations'
 import { integer, pgTable, serial, text } from 'drizzle-orm/pg-core'
-import { createPermix } from 'permix/drizzle/v0'
+import { createPermix } from 'permix/drizzle/legacy'
 
 const users = pgTable('users', {
   id: serial('id').primaryKey(),

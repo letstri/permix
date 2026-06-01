@@ -1,9 +1,9 @@
+import type { Definition } from './definitions'
 import type { CheckerFn, DataAtPath, RulesPaths, SpecialPath, SpecialSymbol } from './permix'
 import type { Rules } from './rules'
-import type { Statement } from './statements'
 import { PermixNotReadyError, PermixRuleNotDefinedError } from './errors'
 
-export type CheckArgs<D extends Statement>
+export type CheckArgs<D extends Definition>
   = | { [P in RulesPaths<D>]: [path: P, ...data: DataAtPath<D, P>] }[RulesPaths<D>]
     | [special: SpecialPath<D>]
     | [callback: (c: CheckerFn<D>) => boolean]
@@ -81,7 +81,7 @@ function walk(rules: Rules<any>, args: unknown[]): boolean {
   throw new PermixRuleNotDefinedError(path)
 }
 
-export function createCheck<D extends Statement>(rules: Rules<D> | null | (() => Rules<D> | null)) {
+export function createCheck<D extends Definition>(rules: Rules<D> | null | (() => Rules<D> | null)) {
   return (...args: CheckArgs<D>): boolean => {
     const r = typeof rules === 'function' ? rules() : rules
 
@@ -95,12 +95,12 @@ export function createCheck<D extends Statement>(rules: Rules<D> | null | (() =>
   }
 }
 
-export interface CheckContext<D extends Statement> {
+export interface CheckContext<D extends Definition> {
   path: RulesPaths<D> | SpecialPath<D> | null
   data?: unknown
 }
 
-export function createCheckContext<D extends Statement>(...params: CheckArgs<D>): CheckContext<D> {
+export function createCheckContext<D extends Definition>(...params: CheckArgs<D>): CheckContext<D> {
   const first = params[0]
 
   if (typeof first === 'function')

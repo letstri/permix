@@ -1,4 +1,4 @@
-import type { ValidateStatement } from '../core'
+import type { ValidateDefinition } from '../core'
 import { Elysia } from 'elysia'
 import { describe, expect, it } from 'vitest'
 import { PermixNotFoundError } from '../core'
@@ -9,17 +9,17 @@ interface Post {
   authorId: string
 }
 
-type PermissionsStatement = ValidateStatement<{
+type PermissionsDefinition = ValidateDefinition<{
   post: ['create', 'read', 'update']
   user: ['delete']
 }>
 
-type PostWithData = ValidateStatement<{
+type PostWithData = ValidateDefinition<{
   post: [{ name: 'create', type: Post }]
 }>
 
 describe('createPermix', () => {
-  const permix = createPermix<PermissionsStatement>()
+  const permix = createPermix<PermissionsDefinition>()
 
   it('should throw ts error', () => {
     // @ts-expect-error path does not exist
@@ -57,7 +57,7 @@ describe('createPermix', () => {
   })
 
   it('should work with custom error handler', async () => {
-    const permix = createPermix<PermissionsStatement>({
+    const permix = createPermix<PermissionsDefinition>({
       onForbidden: ({ context }) => {
         context.set.status = 403
         return { error: 'Custom error' }
@@ -79,7 +79,7 @@ describe('createPermix', () => {
   })
 
   it('should work with custom error and params', async () => {
-    const permix = createPermix<PermissionsStatement>({
+    const permix = createPermix<PermissionsDefinition>({
       onForbidden: ({ context, path }) => {
         context.set.status = 403
         return { error: `You do not have permission for ${path}` }
@@ -167,8 +167,8 @@ describe('createPermix', () => {
   })
 
   it('should let two factories with different keys coexist on the same context', async () => {
-    const admin = createPermix<PermissionsStatement>().contextKey('admin')
-    const guest = createPermix<PermissionsStatement>().contextKey('guest')
+    const admin = createPermix<PermissionsDefinition>().contextKey('admin')
+    const guest = createPermix<PermissionsDefinition>().contextKey('guest')
 
     const app = new Elysia()
       .onBeforeHandle(admin.setupMiddleware(() => ({
@@ -197,7 +197,7 @@ describe('createPermix', () => {
 })
 
 describe('get / getOrThrow', () => {
-  const permix = createPermix<PermissionsStatement>()
+  const permix = createPermix<PermissionsDefinition>()
 
   it('should return null when setupMiddleware has not run', async () => {
     const app = new Elysia()
@@ -244,7 +244,7 @@ describe('get / getOrThrow', () => {
 
 describe('checkMiddleware without setupMiddleware', () => {
   it('should throw PermixNotFoundError and reach Elysia error handler', async () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
 
     const app = new Elysia()
       .onError(({ error, set }) => {
@@ -269,12 +269,12 @@ describe('checkMiddleware without setupMiddleware', () => {
 
 describe('key exposure', () => {
   it('should expose the key on the factory return', () => {
-    const permix = createPermix<PermissionsStatement>().contextKey('custom-key')
+    const permix = createPermix<PermissionsDefinition>().contextKey('custom-key')
     expect(permix.key).toBe('custom-key')
   })
 
   it('should expose a symbol key when using default', () => {
-    const permix = createPermix<PermissionsStatement>()
+    const permix = createPermix<PermissionsDefinition>()
     expect(typeof permix.key).toBe('symbol')
   })
 })

@@ -1,4 +1,4 @@
-import type { ValidateStatement } from '../core'
+import type { ValidateDefinition } from '../core'
 import { initTRPC, TRPCError } from '@trpc/server'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
@@ -10,7 +10,7 @@ interface Context {
   }
 }
 
-type Def = ValidateStatement<{
+type Def = ValidateDefinition<{
   post: ['create', 'read', 'update']
   user: ['delete']
 }>

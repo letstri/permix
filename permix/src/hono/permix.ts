@@ -1,8 +1,8 @@
 import type { Context, MiddlewareHandler } from 'hono'
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
+import type { Definition } from '../core/definitions'
 import type { Rules } from '../core/permix'
-import type { Statement } from '../core/statements'
 import type { MaybePromise } from '../utils'
 import { createMiddleware } from 'hono/factory'
 import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
@@ -11,7 +11,7 @@ export interface MiddlewareContext {
   c: Context
 }
 
-export interface PermixOptions<D extends Statement> {
+export interface PermixOptions<D extends Definition> {
   /**
    * Called when a `checkMiddleware` denies the request. Defaults to a 403 JSON
    * response of `{ error: 'Forbidden' }`.
@@ -19,7 +19,7 @@ export interface PermixOptions<D extends Statement> {
   onForbidden?: (params: CheckContext<D> & MiddlewareContext) => MaybePromise<Response>
 }
 
-function buildPermix<D extends Statement>(
+function buildPermix<D extends Definition>(
   resolveKey: () => string,
   options: PermixOptions<D> = {},
 ) {
@@ -104,7 +104,7 @@ function buildPermix<D extends Statement>(
  *
  * @link https://permix.letstri.dev/docs/integrations/hono
  */
-export function createPermix<D extends Statement>(options: PermixOptions<D> = {}) {
+export function createPermix<D extends Definition>(options: PermixOptions<D> = {}) {
   let key: string = Symbol('permix') as unknown as string
   const permix = buildPermix<D>(() => key, options)
 
@@ -117,4 +117,4 @@ export function createPermix<D extends Statement>(options: PermixOptions<D> = {}
 }
 
 /** Convenience type for the object returned by {@link createPermix}. */
-export type HonoPermix<D extends Statement> = ReturnType<typeof createPermix<D>>
+export type HonoPermix<D extends Definition> = ReturnType<typeof createPermix<D>>

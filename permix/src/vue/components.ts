@@ -1,8 +1,8 @@
 import type { SetupContext, SlotsType, VNode } from 'vue'
-import type { CheckArgs, Permix, Statement } from '../core'
+import type { CheckArgs, Definition, Permix } from '../core'
 import { usePermix } from './composables'
 
-export interface CheckProps<D extends Statement> {
+export interface CheckProps<D extends Definition> {
   path: CheckArgs<D>[0]
   data?: CheckArgs<D>[1]
   reverse?: boolean
@@ -13,14 +13,14 @@ type CheckContext = SetupContext<any, SlotsType<{
   otherwise?: void
 }>>
 
-export interface PermixComponents<D extends Statement> {
+export interface PermixComponents<D extends Definition> {
   Check: (
     props: CheckProps<D>,
     context: CheckContext,
   ) => VNode | VNode[] | undefined
 }
 
-export function createComponents<D extends Statement>(permix: Permix<D>): PermixComponents<D> {
+export function createComponents<D extends Definition>(permix: Permix<D>): PermixComponents<D> {
   function Check(
     props: CheckProps<D>,
     context: CheckContext,

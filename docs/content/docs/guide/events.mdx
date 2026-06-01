@@ -13,9 +13,7 @@ You can register event handlers using the `hook` and `hookOnce` methods:
 
 ```ts
 const permix = createPermix<{
-  post: {
-    action: 'create' | 'read'
-  }
+  post: ['create', 'read']
 }>()
 
 // The handler will be called every time setup is executed

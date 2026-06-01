@@ -1,4 +1,4 @@
-import type { ValidateStatement } from '../core'
+import type { ValidateDefinition } from '../core'
 import { ORPCError, os } from '@orpc/server'
 import { RPCHandler } from '@orpc/server/fetch'
 import { describe, expect, it } from 'vitest'
@@ -11,7 +11,7 @@ interface Context {
   }
 }
 
-type Def = ValidateStatement<{
+type Def = ValidateDefinition<{
   post: ['create', 'read', 'update']
   user: ['delete']
 }>

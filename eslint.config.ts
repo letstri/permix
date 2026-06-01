@@ -6,17 +6,12 @@ export default antfu(
     react: true,
     rules: {
       'node/prefer-global/process': 'off',
+      'pnpm/yaml-enforce-settings': 'off',
       'react/no-use-context': 'off',
       'no-console': 'off',
-      'style/indent': 'off', // temp due to bug
-    },
-    ignores: ['**/.source/**', '**/next-env.d.ts'],
-  },
-  {
-    files: ['docs/**/*.ts?(x)'],
-    rules: {
       'react-refresh/only-export-components': 'off',
     },
+    ignores: ['**/.source/**', '**/next-env.d.ts'],
   },
   {
     files: ['examples/**/*.ts?(x)'],
@@ -36,7 +31,6 @@ export default antfu(
     files: ['permix/src/solid/*.ts?(x)', 'examples/solid/**/*.ts?(x)'],
     rules: {
       'react/no-context-provider': 'off',
-      'react-refresh/only-export-components': 'off',
       'react/no-missing-key': 'off',
     },
   },
