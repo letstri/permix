@@ -1,0 +1,131 @@
+---
+title: Svelte
+description: Learn how to use Permix with Svelte applications
+---
+
+## Overview
+
+Permix provides official Svelte integration through the `PermixProvider` component and `usePermix` hook. This allows you to manage permissions reactively in your Svelte app using runes.
+
+<Callout>
+Before getting started with Svelte integration, make sure you've completed the initial setup steps in the [Quick Start](/docs/quick-start) guide. Svelte integration requires Svelte 5.
+</Callout>
+
+<Steps>
+
+<Step>
+
+## Setup
+
+First, wrap your application with the `PermixProvider`:
+
+```svelte title="App.svelte"
+<script lang="ts">
+  import { PermixProvider } from 'permix/svelte'
+  import { permix } from './lib/permix'
+
+  let { children } = $props()
+</script>
+
+<PermixProvider {permix}>
+  {@render children()}
+</PermixProvider>
+```
+
+<Callout>
+Remember to always pass the same Permix instance to both the `PermixProvider` and `usePermix` hook to maintain type safety.
+</Callout>
+
+</Step>
+
+<Step>
+
+## Hook
+
+For checking permissions in your components, you can use the `usePermix` hook. And to avoid importing the hook and Permix instance in every component, you can create a custom utility:
+
+```ts title="lib/use-permissions.ts"
+import { usePermix } from 'permix/svelte'
+import { permix } from './permix'
+
+export function usePermissions() {
+  return usePermix(permix)
+}
+```
+
+</Step>
+
+<Step>
+
+## Components
+
+If you prefer using components, you can import the `createComponents` function from `permix/svelte` and create checking components:
+
+```ts title="lib/permix.ts"
+import { createComponents } from 'permix/svelte'
+
+// ...
+
+export const { Check } = createComponents(permix)
+```
+
+And then you can use the `Check` component in your components. The default content is rendered when a user has permission, and the `otherwise` snippet is rendered when they don't:
+
+```svelte title="Page.svelte"
+<script lang="ts">
+  import { Check } from './lib/permix'
+</script>
+
+<!--
+  reverse: Will flip the logic of the permission check
+  otherwise: Will show this if a user doesn't have permission
+-->
+<Check path="post.create" reverse>
+  Will show this if a user has permission
+  {#snippet otherwise()}
+    Will show this if a user doesn't have permission
+  {/snippet}
+</Check>
+```
+
+</Step>
+
+<Step>
+
+## Usage
+
+Use the `usePermix` hook and checking components in your components:
+
+```svelte title="Page.svelte"
+<script lang="ts">
+  import { usePermix } from 'permix/svelte'
+  import { permix } from './lib/permix'
+  import { Check } from './lib/permix'
+
+  let { post } = $props()
+
+  const permissions = usePermix(permix)
+</script>
+
+<div>
+  {#if !permissions.isReady}
+    <div>Loading permissions...</div>
+  {:else if permissions.check('post.edit', post)}
+    <button>Edit Post</button>
+  {:else}
+    <p>You don't have permission to edit this post</p>
+  {/if}
+
+  <Check path="post.create">
+    Can I create a post inside the Check component?
+  </Check>
+</div>
+```
+
+<Callout>
+`usePermix` returns an object with a reactive `isReady` getter and a `check` method. Access them directly on the returned object (for example `permissions.isReady`) to keep reactivity — don't destructure `isReady`.
+</Callout>
+
+</Step>
+
+</Steps>

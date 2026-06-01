@@ -46,7 +46,7 @@ Skipping client `setup` after hydrate leaves dynamic/ReBAC checks wrong.
 ## React
 
 ```tsx
-import { PermixHydrate, PermixProvider } from 'permix/react'
+import { DehydratedState, PermixHydrate, PermixProvider } from 'permix/react'
 
 function App({ dehydratedState }: { dehydratedState: DehydratedState<typeof schema> }) {
   return (

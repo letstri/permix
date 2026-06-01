@@ -1,12 +1,12 @@
 ---
 name: permix-frontend
 description: >-
-  Integrates Permix in React, Vue, or Solid: Provider, usePermix, createComponents,
+  Integrates Permix in React, Vue, Solid, or Svelte: Provider, usePermix, createComponents,
   isReady, setup after login. Use when building UI permission gates, hooks, or
-  permix/react, permix/vue, permix/solid in a frontend app.
+  permix/react, permix/vue, permix/solid, permix/svelte in a frontend app.
 ---
 
-# Permix — frontend (React / Vue / Solid)
+# Permix — frontend (React / Vue / Solid / Svelte)
 
 Pick the package subpath for your framework. Pattern is the same: one shared `permix` instance, call `setup` when the user is known, wrap the tree, check in components.
 
@@ -107,6 +107,27 @@ Use composables from `permix/vue` (same `setup` / `check` / `isReady` flow as Re
 Docs: https://permix.letstri.dev/docs/integrations/solid
 
 Provider + hooks from `permix/solid`; mirror the React steps above.
+
+## Svelte
+
+Docs: https://permix.letstri.dev/docs/integrations/svelte
+
+Requires Svelte 5. Provider + hooks from `permix/svelte`; mirror the React steps above.
+
+```svelte
+<script lang="ts">
+  import { PermixProvider } from 'permix/svelte'
+  import { permix } from './lib/permix'
+
+  let { children } = $props()
+</script>
+
+<PermixProvider {permix}>
+  {@render children()}
+</PermixProvider>
+```
+
+`usePermix(permix)` returns `{ check, isReady }` where `isReady` is a reactive getter — access it as `permissions.isReady` (don't destructure). `createComponents(permix)` returns a typed `Check` component that uses `children` / `otherwise` snippets.
 
 ## UX guidelines
 

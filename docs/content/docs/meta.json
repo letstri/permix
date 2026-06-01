@@ -19,6 +19,7 @@
     "integrations/tanstack-start",
     "integrations/vue",
     "integrations/solid",
+    "integrations/svelte",
     "integrations/node",
     "integrations/server",
     "integrations/trpc",
