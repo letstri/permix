@@ -1,0 +1,234 @@
+---
+title: Better Auth
+description: Generate a type-safe Permix instance from a Better Auth access control statement and roles
+---
+
+## Overview
+
+[Better Auth](https://better-auth.com)'s organization plugin ships an [access control](https://better-auth.com/docs/plugins/organization#access-control) system built around `createAccessControl`. You declare a `statement` (resources mapped to actions) and create roles from it with `ac.newRole(...)`.
+
+Permix's Better Auth integration takes that same access controller and produces a fully type-safe Permix instance: every resource in the statement becomes a permission entity with its declared actions. A `roleToRules` helper converts Better Auth role(s) — by object **or** by name — straight into Permix rules, so you can drive `check()` from the role(s) attached to the current session.
+
+<Callout>
+Before getting started with the Better Auth integration, make sure you've completed the initial setup steps in the [Quick Start](/docs/quick-start) guide.
+</Callout>
+
+<Callout type="info">
+Better Auth is declared as an optional peer dependency. Import access control helpers from `better-auth/plugins/access` to keep bundle sizes small.
+</Callout>
+
+<Steps>
+
+<Step>
+
+## Define your access control
+
+Create your access controller and roles once, in a shared file you can import on both the server and the client — exactly as you already do for Better Auth.
+
+```ts twoslash title="/auth/permissions.ts"
+import { createAccessControl } from 'better-auth/plugins/access'
+
+/**
+ * Use `as const` so TypeScript can infer the action literals.
+ */
+const statement = {
+  project: ['create', 'share', 'update', 'delete'],
+  organization: ['update', 'delete'],
+} as const
+
+export const ac = createAccessControl(statement)
+
+export const member = ac.newRole({
+  project: ['create'],
+})
+
+export const admin = ac.newRole({
+  project: ['create', 'update'],
+  organization: ['update'],
+})
+
+export const owner = ac.newRole({
+  project: ['create', 'share', 'update', 'delete'],
+  organization: ['update', 'delete'],
+})
+```
+
+</Step>
+
+<Step>
+
+## Create the Permix instance
+
+Pass the access controller and roles to `createPermix` using object syntax. The returned instance is a regular Permix object, so every API you already know — `check`, `setup`, `template`, `dehydrate`, `hydrate`, `hook`, `isReady`, etc. — is available unchanged.
+
+```ts twoslash title="/auth/permix.ts"
+// @filename: permissions.ts
+import { createAccessControl } from 'better-auth/plugins/access'
+
+const statement = {
+  project: ['create', 'share', 'update', 'delete'],
+  organization: ['update', 'delete'],
+} as const
+
+export const ac = createAccessControl(statement)
+export const member = ac.newRole({ project: ['create'] })
+export const admin = ac.newRole({ project: ['create', 'update'], organization: ['update'] })
+export const owner = ac.newRole({ project: ['create', 'share', 'update', 'delete'], organization: ['update', 'delete'] })
+// @filename: permix.ts
+// ---cut---
+import { createPermix } from 'permix/better-auth'
+import { ac, admin, member, owner } from './permissions'
+
+export const permix = createPermix({
+  ac,
+  roles: { owner, admin, member },
+})
+```
+
+The definition mirrors your statement: `permix.check('project.create')`, `permix.check('organization.delete')`, and so on.
+
+</Step>
+
+<Step>
+
+## Generating rules from roles
+
+`roleToRules` turns Better Auth role(s) into a fully-populated Permix rules object. An action is `true` when granted by **any** of the supplied roles, otherwise `false`. It accepts a role object, a role **name** (when you passed `roles`), or an array mixing both.
+
+```ts twoslash
+// @filename: permissions.ts
+import { createAccessControl } from 'better-auth/plugins/access'
+const statement = { project: ['create', 'share', 'update', 'delete'], organization: ['update', 'delete'] } as const
+export const ac = createAccessControl(statement)
+export const member = ac.newRole({ project: ['create'] })
+export const admin = ac.newRole({ project: ['create', 'update'], organization: ['update'] })
+export const owner = ac.newRole({ project: ['create', 'share', 'update', 'delete'], organization: ['update', 'delete'] })
+// @filename: permix.ts
+import { createPermix } from 'permix/better-auth'
+import { ac, admin, member, owner } from './permissions'
+export const permix = createPermix({ ac, roles: { owner, admin, member } })
+// @filename: usage.ts
+// ---cut---
+import { admin } from './permissions'
+import { permix } from './permix'
+
+// By role name (type-checked against the `roles` you provided)
+permix.setup(permix.roleToRules('admin'))
+
+// By role object
+permix.setup(permix.roleToRules(admin))
+
+// Union multiple roles (OR of all granted actions)
+permix.setup(permix.roleToRules(['member', 'admin']))
+
+permix.check('project.update') // true
+permix.check('project.delete') // false
+```
+
+Better Auth stores a member's roles as a comma-separated string (e.g. `"admin,sale"`). Split it before passing it in:
+
+```ts
+permix.setup(permix.roleToRules(member.role.split(',')))
+```
+
+</Step>
+
+<Step>
+
+## Server side
+
+On the server, resolve the active member's role from the session and set up Permix per request.
+
+```ts title="/server/get-permix.ts"
+import { headers } from 'next/headers'
+import { auth } from '@/lib/auth'
+import { permix } from '@/auth/permix'
+
+export async function getPermix() {
+  const member = await auth.api.getActiveMember({
+    headers: await headers(),
+  })
+
+  // `member.role` is a comma-separated string, e.g. "admin" or "admin,sale"
+  permix.setup(permix.roleToRules(member?.role?.split(',') ?? []))
+
+  return permix
+}
+
+// Usage in a route / server action
+const permix = await getPermix()
+
+if (!permix.check('project.delete')) {
+  throw new Error('Forbidden')
+}
+```
+
+If you maintain a single long-lived instance, create a fresh Permix per request (or use the [server helpers](/docs/integrations/node)) to avoid leaking rules between users.
+
+</Step>
+
+<Step>
+
+## Client side
+
+Use the same shared `permix` instance on the client. Read the active member's role from Better Auth's client hooks and set up Permix once it's available.
+
+```tsx title="/components/permix-provider.tsx"
+import { useEffect } from 'react'
+import { authClient } from '@/lib/auth-client'
+import { permix } from '@/auth/permix'
+
+export function PermixProvider({ children }: { children: React.ReactNode }) {
+  const { data: member } = authClient.useActiveMember()
+
+  useEffect(() => {
+    permix.setup(permix.roleToRules(member?.role?.split(',') ?? []))
+  }, [member?.role])
+
+  return children
+}
+```
+
+Then gate UI with Permix's [React integration](/docs/integrations/react):
+
+```tsx
+import { usePermix } from 'permix/react'
+import { permix } from '@/auth/permix'
+
+function DeleteButton() {
+  const { check } = usePermix(permix)
+
+  if (!check('project.delete'))
+    return null
+
+  return <button>Delete project</button>
+}
+```
+
+For SSR you can serialize the server rules with `permix.dehydrate()` and restore them on the client with `permix.hydrate()` — see [Hydration](/docs/guide/hydration).
+
+</Step>
+
+<Step>
+
+## Discovering resources and roles at runtime
+
+The instance exposes the original statement, the resource list, and the roles you provided — handy for building admin UIs or seeding rules dynamically:
+
+```ts
+permix.statements // { project: [...], organization: [...] }
+permix.resources  // ['project', 'organization']
+permix.roles      // { owner, admin, member }
+```
+
+</Step>
+
+</Steps>
+
+## Notes
+
+- `createPermix` accepts the access controller from `createAccessControl` (not the raw statement). Reusing `ac` keeps Permix and Better Auth in perfect sync.
+- `roleToRules` reads each role's granted actions and produces a boolean for every action in the statement, so the resulting rules object is always complete.
+- Passing a role **name** requires the `roles` option; otherwise only role objects are accepted. Unknown names throw a clear `[Permix]` error.
+- Better Auth is an optional peer dependency — install it only if you use `permix/better-auth`, and import access helpers from `better-auth/plugins/access`.
+- The permission keys are your **statement resource names**, so you check `project.create`, matching what you declared in `createAccessControl`.

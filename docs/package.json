@@ -11,6 +11,9 @@
     "postinstall": "fumadocs-mdx"
   },
   "dependencies": {
+    "@mdx-js/loader": "^3.1.1",
+    "@mdx-js/react": "^3.1.1",
+    "@next/mdx": "^16.2.6",
     "@remixicon/react": "^4.9.0",
     "@tailwindcss/postcss": "^4.3.0",
     "@vercel/analytics": "^2.0.1",
@@ -38,6 +41,7 @@
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.5.0",
+    "better-auth": "^1.6.13",
     "drizzle-orm": "1.0.0-rc.3",
     "elysia": ">=1.4.28",
     "express": ">=5",
