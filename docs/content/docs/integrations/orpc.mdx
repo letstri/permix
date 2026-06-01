@@ -47,21 +47,17 @@ const permix = createPermix<{
 const protectedMiddleware = orpcPermix.use(({ context, next }) => {
   const isAdmin = context.user.role === 'admin'
 
-  const p = permix.setup({
-    post: {
-      create: true,
-      read: true,
-      update: isAdmin
-    },
-    user: {
-      delete: isAdmin
-    }
-  })
-
   return next({
-    context: {
-      permissions: p
-    }
+    context: permix.setupContext({
+      post: {
+        create: true,
+        read: true,
+        update: isAdmin
+      },
+      user: {
+        delete: isAdmin
+      }
+    })
   })
 })
 ```
@@ -230,21 +226,17 @@ You can use async functions in your permission setup:
 const protectedMiddleware = orpcPermix.use(async ({ context, next }) => {
   const userPermissions = await getUserPermissions(context.user.id)
 
-  const p = permix.setup({
-    post: {
-      create: userPermissions.canCreatePosts,
-      read: userPermissions.canReadPosts,
-      update: userPermissions.canUpdatePosts
-    },
-    user: {
-      delete: userPermissions.canDeleteUsers
-    }
-  })
-
   return next({
-    context: {
-      permissions: p
-    }
+    context: permix.setupContext({
+      post: {
+        create: userPermissions.canCreatePosts,
+        read: userPermissions.canReadPosts,
+        update: userPermissions.canUpdatePosts
+      },
+      user: {
+        delete: userPermissions.canDeleteUsers
+      }
+    })
   })
 })
 ```

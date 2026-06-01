@@ -49,19 +49,15 @@ const permix = createPermix<{
 const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   const isAdmin = ctx.user.role === 'admin'
 
-  const p = permix.setup({
-    post: {
-      create: true,
-      read: true,
-      update: isAdmin,
-      delete: isAdmin
-    }
-  })
-
   return next({
-    ctx: {
-      permissions: p,
-    },
+    ctx: permix.setupContext({
+      post: {
+        create: true,
+        read: true,
+        update: isAdmin,
+        delete: isAdmin
+      }
+    })
   })
 })
 ```
@@ -228,19 +224,15 @@ You can use async functions in your permission setup:
 const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   const userPermissions = await getUserPermissions(ctx.user.id)
 
-  const p = permix.setup({
-    post: {
-      create: userPermissions.canCreatePosts,
-      read: userPermissions.canReadPosts,
-      update: userPermissions.canUpdatePosts,
-      delete: userPermissions.canDeletePosts
-    }
-  })
-
   return next({
-    ctx: {
-      permissions: p,
-    },
+    ctx: permix.setupContext({
+      post: {
+        create: userPermissions.canCreatePosts,
+        read: userPermissions.canReadPosts,
+        update: userPermissions.canUpdatePosts,
+        delete: userPermissions.canDeletePosts
+      }
+    })
   })
 })
 ```
