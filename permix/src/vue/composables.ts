@@ -18,9 +18,7 @@ function usePermixContext() {
  *
  * @link https://permix.letstri.dev/docs/integrations/vue
  */
-export function usePermix<T extends Definition>(
-  permix: Permix<T>,
-) {
+export function usePermix<T extends Definition>(permix: Pick<Permix<T>, 'getRules' | 'check'>) {
   const context = usePermixContext()
 
   const check: Permix<T>['check'] = (...args) => {

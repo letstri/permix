@@ -42,6 +42,10 @@ function buildPermix<D extends Definition, const Key extends string>(
     })
   }
 
+  function getRules(context: Record<string, PermixCore<D> | undefined>): Rules<D> | null {
+    return context[resolveKey()]?.getRules() ?? null
+  }
+
   function template<T = void>(rules: Rules<D> | ((param: T) => Rules<D>)) {
     return createTemplate<D, T>(rules)
   }
@@ -49,6 +53,7 @@ function buildPermix<D extends Definition, const Key extends string>(
   return {
     setupContext,
     checkMiddleware,
+    getRules,
     template,
     get key() {
       return resolveKey()

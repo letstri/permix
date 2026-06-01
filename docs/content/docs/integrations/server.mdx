@@ -1,0 +1,297 @@
+---
+title: Server
+description: Learn how to use Permix with web-standard fetch-style servers
+---
+
+## Overview
+
+Permix provides a framework-agnostic middleware for any runtime built on the web-standard `Request` / `Response` API. The middleware follows the `(req, next) => Response` pattern and can be created using the `createPermix` function.
+
+<Callout>
+This integration is designed to plug directly into [srvx](https://srvx.h3.dev) — its `middleware` array uses the exact same `(req, next) => Response` shape — but it does not depend on srvx and can be composed in any fetch-style handler.
+</Callout>
+
+<Callout>
+Before getting started with the server integration, make sure you've completed the initial setup steps in the [Quick Start](/docs/quick-start) guide.
+</Callout>
+
+<Steps>
+
+<Step>
+
+## Setup
+
+Here's a basic example of how to use the Permix middleware with srvx:
+
+```ts
+import { serve } from 'srvx'
+import { createPermix } from 'permix/server'
+
+interface Post {
+  id: string
+  authorId: string
+  title: string
+  content: string
+}
+
+// Create your Permix instance
+const permix = createPermix<{
+  post: [
+    { name: 'create', type: Post },
+    { name: 'read', type: Post },
+    { name: 'update', type: Post },
+    { name: 'delete', type: Post },
+  ]
+}>()
+
+// Set up the middleware with your permission rules
+serve({
+  middleware: [
+    permix.setupMiddleware(({ req }) => {
+      // You can read headers, cookies, or any request data to determine permissions
+      const isAdmin = req.headers.get('x-user-role') === 'admin'
+
+      return {
+        post: {
+          create: true,
+          read: true,
+          update: isAdmin,
+          delete: isAdmin,
+        },
+      }
+    }),
+  ],
+  fetch(req) {
+    return Response.json({ ok: true })
+  },
+})
+```
+
+<Callout>
+The middleware preserves full type safety from your Permix definition, ensuring your permission checks are type-safe.
+</Callout>
+
+</Step>
+
+<Step>
+
+## Checking Permissions
+
+Use the `checkMiddleware` function to enforce a permission in your handler:
+
+```ts
+serve({
+  middleware: [
+    permix.setupMiddleware({ /* ... */ }),
+  ],
+  fetch(req) {
+    // Check a single path
+    return permix.checkMiddleware('post.create')(req, () =>
+      Response.json({ success: true }),
+    )
+  },
+})
+```
+
+`checkMiddleware` accepts the same arguments as the core `check`:
+
+```ts
+// Check a single path
+permix.checkMiddleware('post.create')
+
+// Check with data
+permix.checkMiddleware('post.update', post)
+
+// Compose multiple checks with a callback
+permix.checkMiddleware(c => c('post.read') && c('post.update'))
+```
+
+If the check passes, `next()` is called. If it fails, the middleware short-circuits with the response from `onForbidden` (a 403 JSON response by default).
+
+</Step>
+
+<Step>
+
+## Accessing Permix Directly
+
+You can access the Permix instance directly inside any handler that has the `Request`:
+
+```ts
+fetch(req) {
+  const { check } = permix.getOrThrow(req)
+
+  // Check permissions manually
+  if (check('post.read')) {
+    return Response.json({ posts: getAllPosts() })
+  }
+
+  return Response.json({ error: 'Forbidden' }, { status: 403 })
+}
+```
+
+The `get` function returns the Permix instance attached to the request (or `null` if `setupMiddleware` has not run yet), while `getOrThrow` throws a `PermixNotFoundError` in that case.
+
+</Step>
+
+<Step>
+
+## Using Templates
+
+Permix provides a template helper to create reusable permission rule sets:
+
+```ts
+// Create a template for admin permissions
+const adminTemplate = permix.template({
+  post: {
+    create: true,
+    read: true,
+    update: true,
+    delete: true,
+  },
+})
+
+// Create a template for regular user permissions
+const userTemplate = permix.template({
+  post: {
+    create: true,
+    read: true,
+    update: false,
+    delete: false,
+  },
+})
+
+// Use templates in your middleware
+serve({
+  middleware: [
+    permix.setupMiddleware(({ req }) => {
+      const isAdmin = req.headers.get('x-user-role') === 'admin'
+      return isAdmin ? adminTemplate() : userTemplate()
+    }),
+  ],
+  fetch(req) {
+    return Response.json({ ok: true })
+  },
+})
+```
+
+</Step>
+
+</Steps>
+
+## Custom Error Handling
+
+By default, the middleware returns a 403 Forbidden response with `{ "error": "Forbidden" }`. You can customize this behavior by providing an `onForbidden` handler:
+
+### Basic Error Handler
+
+```ts
+const permix = createPermix<Definition>({
+  onForbidden: () =>
+    Response.json({ error: 'Custom forbidden message' }, { status: 403 }),
+})
+```
+
+### Dynamic Error Handler
+
+You can also provide a handler that returns different responses based on the path and data being checked:
+
+```ts
+const permix = createPermix<Definition>({
+  onForbidden: ({ req, path, data }) => {
+    if (path === 'post.create') {
+      return Response.json(
+        { error: `You don't have permission for ${path}` },
+        { status: 403 },
+      )
+    }
+
+    return Response.json(
+      { error: 'You do not have permission to perform this action' },
+      { status: 403 },
+    )
+  },
+})
+```
+
+The `onForbidden` handler receives:
+- `req`: the incoming web-standard `Request`
+- `next`: the downstream handler — call it to let the request through anyway
+- `path`: the permission path that was checked (e.g. `'post.create'`)
+- `data`: optional data passed to the check
+
+## Advanced Usage
+
+### Async Permission Rules
+
+You can use async functions in your permission setup:
+
+```ts
+serve({
+  middleware: [
+    permix.setupMiddleware(async ({ req }) => {
+      // Fetch user permissions from database
+      const userId = req.headers.get('x-user-id')
+      const userPermissions = await getUserPermissions(userId)
+
+      return {
+        post: {
+          create: userPermissions.canCreatePosts,
+          read: userPermissions.canReadPosts,
+          update: userPermissions.canUpdatePosts,
+          delete: userPermissions.canDeletePosts,
+        },
+      }
+    }),
+  ],
+  fetch(req) {
+    return Response.json({ ok: true })
+  },
+})
+```
+
+### Dynamic Data-Based Permissions
+
+You can check permissions based on the specific data being accessed:
+
+```ts
+async function fetch(req: Request) {
+  const url = new URL(req.url)
+  const postId = url.pathname.split('/')[2]
+  const post = await getPostById(postId)
+
+  const { check } = permix.getOrThrow(req)
+
+  // Check if user can update this specific post
+  if (check('post.update', post)) {
+    return Response.json({ success: true })
+  }
+
+  return Response.json({ error: 'You cannot update this post' }, { status: 403 })
+}
+```
+
+## Without a Framework
+
+Because the middleware is just `(req, next) => Response`, you can compose it by hand in any `fetch` handler — no framework required. The pattern is to chain middlewares by passing each one as the `next` of the previous:
+
+```ts
+import { createPermix } from 'permix/server'
+
+const permix = createPermix<Definition>()
+
+const setup = permix.setupMiddleware({
+  post: { create: true, read: true, update: false, delete: false },
+})
+
+export default {
+  fetch(req: Request) {
+    return setup(req, () =>
+      permix.checkMiddleware('post.create')(req, () =>
+        Response.json({ ok: true }),
+      ),
+    )
+  },
+}
+```
+
+For anything beyond a couple of middlewares, srvx (or any other web-standard runtime) will compose them for you.

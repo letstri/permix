@@ -10,5 +10,5 @@
     "skipLibCheck": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "*.ts"],
-  "exclude": ["src/react/*.ts", "src/react/*.tsx", "src/solid/*.ts", "src/solid/*.tsx"]
+  "exclude": ["src/react/*.ts", "src/react/*.tsx", "src/solid/*.ts", "src/solid/*.tsx", "src/next/*.ts", "src/next/*.tsx", "src/tanstack-start/*.ts", "src/tanstack-start/*.tsx"]
 }

@@ -12,6 +12,7 @@ export default defineConfig({
     './src/express/index.ts',
     './src/hono/index.ts',
     './src/node/index.ts',
+    './src/server/index.ts',
     './src/elysia/index.ts',
     './src/fastify/index.ts',
     './src/solid/index.ts',
@@ -19,6 +20,8 @@ export default defineConfig({
     './src/drizzle/index.ts',
     './src/drizzle/legacy/index.ts',
     './src/better-auth/index.ts',
+    './src/next/index.ts',
+    './src/tanstack-start/index.ts',
   ],
   dts: {
     build: true,

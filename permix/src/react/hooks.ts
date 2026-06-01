@@ -25,7 +25,7 @@ export function usePermixContext() {
  *
  * @link https://permix.letstri.dev/docs/integrations/react
  */
-export function usePermix<T extends Definition>(permix: Permix<T>) {
+export function usePermix<T extends Definition>(permix: Pick<Permix<T>, 'getRules' | 'check'>) {
   const { isReady, rules } = usePermixContext()
 
   const check: Permix<T>['check'] = React.useCallback((...args) => {

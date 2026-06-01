@@ -1,0 +1,311 @@
+---
+title: Next.js
+description: Learn how to use Permix with Next.js App Router
+---
+
+## Overview
+
+Permix provides a dedicated integration for the Next.js **App Router** through `permix/next`. It exposes a `createPermix` factory that returns a **per-request** Permix instance backed by React's [`cache()`](https://react.dev/reference/react/cache), so you can `setup()` the rules once and `check()` them anywhere on the server — layouts, pages, route handlers, and server actions — without threading the instance through props.
+
+The client side reuses the existing React integration (`permix/react`): the server `dehydrate()`s its state and the client hydrates it into its own singleton via `PermixProvider` + `PermixHydrate`.
+
+<Callout>
+Before getting started with the Next.js integration, make sure you've completed the initial setup steps in the [Quick Start](/docs/quick-start) guide. Familiarity with the [Hydration guide](/docs/guide/hydration) helps too.
+</Callout>
+
+<Callout type="warn">
+This integration is designed for the **App Router**. It relies on `react`'s request-scoped `cache()`, which is available in server components, route handlers, and server actions within a single request.
+</Callout>
+
+<Steps>
+
+<Step>
+
+## Define your permissions
+
+Create a Permix instance once in a shared module so it can be imported anywhere on the server:
+
+```ts title="lib/permix.ts"
+import { createPermix } from 'permix/next'
+
+interface Post {
+  id: string
+  authorId: string
+}
+
+export const permix = createPermix<{
+  post: [
+    { name: 'create', type: Post },
+    { name: 'read', type: Post },
+    { name: 'update', type: Post },
+    { name: 'delete', type: Post },
+  ]
+}>()
+```
+
+The returned helper does **not** hold any permission state at module scope — every request gets its own isolated instance.
+
+</Step>
+
+<Step>
+
+## Setup per request
+
+Call `setup()` early in the request lifecycle. A common place is the root layout (or any server component that runs before the ones doing `check`s). Resolve any async data (session, headers, cookies, DB lookups) first, then pass plain rules to `setup`:
+
+```tsx title="app/layout.tsx"
+import { permix } from '@/lib/permix'
+import { getSession } from '@/lib/auth'
+
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const session = await getSession()
+
+  permix.setup({
+    post: {
+      create: !!session,
+      read: true,
+      update: post => post?.authorId === session?.userId,
+      delete: session?.role === 'admin',
+    },
+  })
+
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  )
+}
+```
+
+<Callout>
+Because `setup()` is scoped to the current request, calling it again from a nested server component or route handler in the **same** request simply replaces the rules for that request. Other requests are unaffected.
+</Callout>
+
+</Step>
+
+<Step>
+
+## Check on the server
+
+Anywhere a server component, route handler, or server action runs in that request, you can use `check()`:
+
+```tsx title="app/posts/[id]/page.tsx"
+import { notFound } from 'next/navigation'
+import { permix } from '@/lib/permix'
+import { getPost } from '@/lib/posts'
+
+export default async function PostPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
+  const post = await getPost(id)
+
+  if (!permix.check('post.read', post)) {
+    notFound()
+  }
+
+  return <article>{/* ... */}</article>
+}
+```
+
+```ts title="app/api/posts/route.ts"
+import { permix } from '@/lib/permix'
+
+export async function POST(req: Request) {
+  if (!permix.check('post.create')) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  // create the post...
+  return Response.json({ ok: true })
+}
+```
+
+You can also reach the underlying core instance through `permix.get()` if you need methods like `isReady()` or `getRules()`.
+
+</Step>
+
+<Step>
+
+## Send permissions to the client
+
+Use `dehydrate()` to serialize the request's permissions and hand them to a client provider. The server cannot send the Permix instance itself across the boundary — only the JSON state.
+
+```tsx title="app/providers.tsx"
+'use client'
+
+import { createPermix } from 'permix'
+import { PermixHydrate, PermixProvider } from 'permix/react'
+import type { DehydratedState } from 'permix'
+
+// One singleton per browser tab. The same type definition as on the server.
+const permix = createPermix<{
+  post: [
+    { name: 'create', type: { id: string, authorId: string } },
+    { name: 'read', type: { id: string, authorId: string } },
+    { name: 'update', type: { id: string, authorId: string } },
+    { name: 'delete', type: { id: string, authorId: string } },
+  ]
+}>()
+
+export function Providers({
+  state,
+  children,
+}: {
+  state: DehydratedState<any>
+  children: React.ReactNode
+}) {
+  return (
+    <PermixProvider permix={permix}>
+      <PermixHydrate state={state}>{children}</PermixHydrate>
+    </PermixProvider>
+  )
+}
+
+export { permix }
+```
+
+Then wire it up in your root layout right after `setup()`:
+
+```tsx title="app/layout.tsx"
+import { permix } from '@/lib/permix'
+import { getSession } from '@/lib/auth'
+import { Providers } from './providers'
+
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const session = await getSession()
+
+  permix.setup({
+    /* ...rules derived from session... */
+  })
+
+  return (
+    <html lang="en">
+      <body>
+        <Providers state={permix.dehydrate()}>{children}</Providers>
+      </body>
+    </html>
+  )
+}
+```
+
+<Callout type="warn">
+`hydrate()` restores the boolean state but does not flip `isReady` on its own — function-based rules are lost during serialization. If you need `isReady` on the client (e.g. to gate UI on `usePermix(...).isReady`), call `permix.setup(...)` on the client too with the same shape (using booleans and any function rules you want active client-side). See the [Hydration guide](/docs/guide/hydration) for details.
+</Callout>
+
+</Step>
+
+<Step>
+
+## Use on the client
+
+From any client component, import the singleton from `app/providers.tsx` and the hooks/components from `permix/react`:
+
+```tsx title="app/posts/[id]/edit-button.tsx"
+'use client'
+
+import { usePermix } from 'permix/react'
+import { permix } from '@/app/providers'
+
+export function EditButton({ post }: { post: { id: string, authorId: string } }) {
+  const { check } = usePermix(permix)
+
+  if (!check('post.update', post)) {
+    return null
+  }
+
+  return <button>Edit post</button>
+}
+```
+
+If you prefer the component API, create checkers with `createComponents` from `permix/react` and use them in your client components — see the [React integration](/docs/integrations/react#components) for details.
+
+</Step>
+
+<Step>
+
+## Templates
+
+`createPermix` exposes the same `template()` helper as the core API for reusing rule sets:
+
+```ts title="lib/permix.ts"
+import { createPermix } from 'permix/next'
+
+export const permix = createPermix<{
+  post: ['create', 'read', 'update', 'delete']
+}>()
+
+export const adminTemplate = permix.template({
+  post: { create: true, read: true, update: true, delete: true },
+})
+
+export const guestTemplate = permix.template({
+  post: { create: false, read: true, update: false, delete: false },
+})
+```
+
+```tsx title="app/layout.tsx"
+import { permix, adminTemplate, guestTemplate } from '@/lib/permix'
+import { getSession } from '@/lib/auth'
+
+const session = await getSession()
+
+permix.setup(session?.role === 'admin' ? adminTemplate() : guestTemplate())
+```
+
+</Step>
+
+<Step>
+
+## Example
+
+You can find a runnable example of the Next.js integration [here](https://github.com/letstri/permix/tree/main/examples/next).
+
+</Step>
+
+</Steps>
+
+## How per-request isolation works
+
+`createPermix` from `permix/next` wraps a single core instance per request using React's `cache()`. Inside one Next.js request:
+
+- The first call to `setup`/`check`/`get`/`dehydrate` creates (or reuses) **one** instance.
+- All subsequent calls in the same request — across server components, route handlers, and server actions — share that instance.
+
+Across concurrent requests, each request gets its **own** instance. State never leaks between users.
+
+<Callout type="warn">
+Do **not** store the result of `permix.get()` (or any rule data) in module-level variables. That would defeat per-request isolation. Always go through `permix.check()` / `permix.get()` so the request-scoped cache is consulted.
+</Callout>
+
+## API
+
+### `createPermix<D>()`
+
+Returns an object with the following methods:
+
+| Method | Description |
+|---|---|
+| `setup(rules)` | Set the per-request permission rules. Resolve any async data (session, etc.) before calling. |
+| `check(...args)` | Check a permission against the current request's rules. Same signature as the core `check`. |
+| `get()` | Return the underlying [`Permix<D>`](/docs/guide/instance) instance for the current request. |
+| `dehydrate()` | Serialize the current request's rules to JSON (for `<PermixHydrate>` on the client). |
+| `template(rules)` | Create a reusable rule set. Same as the core [`template`](/docs/guide/template). |
+
+## TanStack Start and other frameworks
+
+The client layer (`permix/react`) is framework-agnostic. If you're using TanStack Start, Remix, or a custom React SSR setup, you can still use `permix/react` on the client. For the server side, either:
+
+- Use the dedicated [`permix/tanstack-start`](/docs/integrations/tanstack-start) integration, which follows the same shape as `permix/next`, or
+- Create a core Permix instance per request manually (see [Hydration guide](/docs/guide/hydration)), or
+- Use an existing server integration like [`permix/node`](/docs/integrations/node), [`permix/express`](/docs/integrations/express), or [`permix/hono`](/docs/integrations/hono) when applicable.

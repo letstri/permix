@@ -5,6 +5,6 @@
     "jsxImportSource": "react",
     "lib": ["ESNext", "DOM", "DOM.Iterable"]
   },
-  "include": ["src/react/*.ts", "src/react/*.tsx"],
+  "include": ["src/react/*.ts", "src/react/*.tsx", "src/next/*.ts", "src/next/*.tsx", "src/tanstack-start/*.ts", "src/tanstack-start/*.tsx"],
   "exclude": ["src/solid/*.ts", "src/solid/*.tsx"]
 }

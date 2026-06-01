@@ -84,6 +84,10 @@ function buildPermix<D extends Definition>(
     }
   }
 
+  function getRules(request: FastifyRequest): Rules<D> | null {
+    return get(request)?.getRules() ?? null
+  }
+
   function template<T = void>(rules: Rules<D> | ((param: T) => Rules<D>)) {
     return createTemplate<D, T>(rules)
   }
@@ -94,6 +98,7 @@ function buildPermix<D extends Definition>(
     template,
     get,
     getOrThrow,
+    getRules,
     get key() {
       return resolveKey()
     },

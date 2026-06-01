@@ -25,6 +25,7 @@
     "access-control",
     "typescript",
     "react",
+    "nextjs",
     "vue",
     "solid",
     "type-safe",
@@ -38,10 +39,6 @@
     ".": {
       "types": "./dist/core/index.d.mts",
       "import": "./dist/core/index.mjs"
-    },
-    "./sever": {
-      "types": "./dist/server/index.d.mts",
-      "import": "./dist/server/index.mjs"
     },
     "./react": {
       "types": "./dist/react/index.d.mts",
@@ -71,6 +68,10 @@
       "types": "./dist/node/index.d.mts",
       "import": "./dist/node/index.mjs"
     },
+    "./server": {
+      "types": "./dist/server/index.d.mts",
+      "import": "./dist/server/index.mjs"
+    },
     "./elysia": {
       "types": "./dist/elysia/index.d.mts",
       "import": "./dist/elysia/index.mjs"
@@ -98,6 +99,14 @@
     "./better-auth": {
       "types": "./dist/better-auth/index.d.mts",
       "import": "./dist/better-auth/index.mjs"
+    },
+    "./next": {
+      "types": "./dist/next/index.d.mts",
+      "import": "./dist/next/index.mjs"
+    },
+    "./tanstack-start": {
+      "types": "./dist/tanstack-start/index.d.mts",
+      "import": "./dist/tanstack-start/index.mjs"
     }
   },
   "main": "./dist/core/index.mjs",
@@ -117,6 +126,7 @@
   },
   "peerDependencies": {
     "@orpc/server": ">=1",
+    "@tanstack/react-start": ">=1",
     "@trpc/server": ">=11",
     "better-auth": ">=1",
     "drizzle-orm": ">=0.30.0 || >=1.0.0-rc.3",
@@ -126,6 +136,7 @@
     "fastify": ">=5",
     "fastify-plugin": ">=5",
     "hono": ">=4",
+    "next": ">=14",
     "react": ">=18",
     "react-dom": ">=18",
     "solid-js": ">=1",
@@ -133,6 +144,9 @@
   },
   "peerDependenciesMeta": {
     "@orpc/server": {
+      "optional": true
+    },
+    "@tanstack/react-start": {
       "optional": true
     },
     "@trpc/server": {
@@ -162,6 +176,9 @@
     "hono": {
       "optional": true
     },
+    "next": {
+      "optional": true
+    },
     "react": {
       "optional": true
     },
@@ -177,6 +194,7 @@
   },
   "devDependencies": {
     "@solidjs/testing-library": "^0.8.10",
+    "@tanstack/react-start": "^1.168.18",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/express": "^5.0.6",

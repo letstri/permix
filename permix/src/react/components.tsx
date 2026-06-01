@@ -57,7 +57,7 @@ export interface PermixComponents<D extends Definition> {
   Check: <P extends RulesPaths<D>>(props: CheckProps<D, P>) => React.ReactNode
 }
 
-export function createComponents<D extends Definition>(permix: Permix<D>): PermixComponents<D> {
+export function createComponents<D extends Definition>(permix: Pick<Permix<D>, 'getRules' | 'check'>): PermixComponents<D> {
   function Check<P extends RulesPaths<D>>({
     children,
     path,

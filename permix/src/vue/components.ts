@@ -20,7 +20,7 @@ export interface PermixComponents<D extends Definition> {
   ) => VNode | VNode[] | undefined
 }
 
-export function createComponents<D extends Definition>(permix: Permix<D>): PermixComponents<D> {
+export function createComponents<D extends Definition>(permix: Pick<Permix<D>, 'getRules' | 'check'>): PermixComponents<D> {
   function Check(
     props: CheckProps<D>,
     context: CheckContext,

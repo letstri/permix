@@ -11,7 +11,7 @@ export default antfu(
       'no-console': 'off',
       'react-refresh/only-export-components': 'off',
     },
-    ignores: ['**/.source/**', '**/next-env.d.ts'],
+    ignores: ['**/.source/**', '**/next-env.d.ts', '**/routeTree.gen.ts'],
   },
   {
     files: ['examples/**/*.ts?(x)'],

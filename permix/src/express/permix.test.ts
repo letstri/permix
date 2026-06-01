@@ -347,6 +347,40 @@ describe('get / getOrThrow', () => {
       name: 'PermixNotFoundError',
     })
   })
+
+  it('getRules should return null when setupMiddleware has not run', async () => {
+    const app = express()
+
+    app.get('/', (req, res) => {
+      res.json({ rules: permix.getRules(req) })
+    })
+
+    const response = await request(app).get('/')
+    expect(response.status).toBe(200)
+    expect(response.body).toEqual({ rules: null })
+  })
+
+  it('getRules should return the current rules when setupMiddleware has run', async () => {
+    const app = express()
+
+    app.use(permix.setupMiddleware({
+      post: { create: true, read: false, update: false },
+      user: { delete: true },
+    }))
+
+    app.get('/', (req, res) => {
+      res.json({ rules: permix.getRules(req) })
+    })
+
+    const response = await request(app).get('/')
+    expect(response.status).toBe(200)
+    expect(response.body).toEqual({
+      rules: {
+        post: { create: true, read: false, update: false },
+        user: { delete: true },
+      },
+    })
+  })
 })
 
 describe('checkMiddleware without setupMiddleware', () => {

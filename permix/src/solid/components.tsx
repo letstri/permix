@@ -57,7 +57,7 @@ export interface PermixComponents<D extends Definition> {
   Check: <P extends RulesPaths<D>>(props: CheckProps<D, P>) => JSX.Element
 }
 
-export function createComponents<D extends Definition>(permix: Permix<D>): PermixComponents<D> {
+export function createComponents<D extends Definition>(permix: Pick<Permix<D>, 'getRules' | 'check'>): PermixComponents<D> {
   function Check<P extends RulesPaths<D>>(props: CheckProps<D, P>): JSX.Element {
     const context = usePermix(permix)
     const hasPermission = createMemo(() => context.check(...([props.path, props.data] as unknown as CheckArgs<D>)))

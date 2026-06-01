@@ -5,7 +5,11 @@ packages:
   - permix
   - docs
   - examples/*
+onlyBuiltDependencies:
+  - esbuild
+  - lightningcss
 allowBuilds:
   better-sqlite3: true
   esbuild: false
   sharp: false
+  unrs-resolver: false
