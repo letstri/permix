@@ -38,11 +38,10 @@ function App() {
           {post.authorId}
           ?
           <br />
-          {check('post', 'edit', post) ? 'Yes' : 'No'}
+          {check('post.edit', post) ? 'Yes' : 'No'}
           <br />
           <Check
-            entity="post"
-            action="edit"
+            path="post.edit"
             data={post}
             otherwise="I don't have permission to edit a post inside the Check component"
           >

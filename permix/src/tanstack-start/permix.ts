@@ -1,4 +1,4 @@
-import type { FunctionServerResultWithContext } from '@tanstack/react-start'
+import type { FunctionMiddlewareServerNextFn, FunctionServerResultWithContext } from '@tanstack/react-start'
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
 import type { Definition } from '../core/definitions'
@@ -8,16 +8,13 @@ import type { MaybePromise } from '../utils'
 import { createMiddleware } from '@tanstack/react-start'
 import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixError, PermixNotFoundError } from '../core'
 
-/**
- * Context passed to the `setupMiddleware` rules callback. Mirrors the options
- * available to a TanStack Start request middleware.
- */
 export interface SetupContext {
   request: Request
 }
 
 export interface MiddlewareContext {
-  next: (...args: any[]) => any
+  // eslint-disable-next-line ts/no-empty-object-type
+  next: FunctionMiddlewareServerNextFn<{}, unknown, undefined>
 }
 
 export interface PermixOptions<D extends Definition> {
