@@ -28,17 +28,10 @@ export function usePermixContext() {
 export function usePermix<T extends Definition>(permix: Pick<Permix<T>, 'getRules' | 'check'>) {
   const { isReady, rules } = usePermixContext()
 
-  const check: Permix<T>['check'] = React.useCallback((...args) => {
-    const resolved = (rules ?? permix.getRules()) as Rules<T> | null
-    if (!resolved)
-      return false
-    try {
-      return createCheck<T>(resolved)(...args)
-    }
-    catch {
-      return false
-    }
-  }, [rules, permix])
+  const check: Permix<T>['check'] = React.useCallback(
+    (...args) => createCheck<T>(() => (rules ?? permix.getRules()) as Rules<T> | null)(...args),
+    [rules, permix],
+  )
 
   return { check, isReady }
 }

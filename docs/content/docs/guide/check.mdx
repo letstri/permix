@@ -108,7 +108,7 @@ permix.check('post.invalid-action')
 permix.check('invalid-entity.create')
 ```
 
-Invalid paths cause a TypeScript error at compile time. At runtime, checking an undefined path throws `PermixRuleNotDefinedError`. In React, the `usePermix` hook catches check errors and returns `false` instead (including undefined paths).
+Invalid paths cause a TypeScript error at compile time. At runtime, checking an undefined path throws `PermixRuleNotDefinedError`.
 
 ## Errors
 
@@ -117,7 +117,7 @@ Permix throws typed errors from `permix` when checks cannot run safely:
 | Error | When |
 | --- | --- |
 | `PermixNotReadyError` | `check()` or `dehydrate()` runs before any rules exist (no `setup()` and no initial rules). |
-| `PermixRuleNotDefinedError` | `check()` targets a path that is not present in the current rules object. |
+| `PermixRuleNotDefinedError` | `check()` targets a path that is not present in the current rules object, or is deeper than the rules tree (for example rules `{ post: true }` with `check('post.create')`). |
 
 After `hydrate()`, boolean rules are available immediately — `check()` works even while `isReady()` is still `false`. Function-based rules still need a follow-up `setup()` on the client. See [Hydration](/docs/guide/hydration) and [Ready State](/docs/guide/ready).
 

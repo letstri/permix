@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import { createPermix } from '../core'
+import { createPermix, PermixRuleNotDefinedError } from '../core'
 import { createComponents, PermixHydrate, PermixProvider } from './components'
 import { usePermix } from './composables'
 import { mountWithPermix } from './test-utils'
@@ -255,11 +255,7 @@ describe('components', () => {
       components: { Check },
     }
 
-    const wrapper = mountWithPermix(TestEntityComponent, permix)
-
-    const wrapper2 = mountWithPermix(TestActionComponent, permix)
-
-    expect(wrapper.html()).not.toContain('Action prop')
-    expect(wrapper2.html()).not.toContain('Entity prop')
+    expect(() => mountWithPermix(TestEntityComponent, permix)).toThrow(PermixRuleNotDefinedError)
+    expect(() => mountWithPermix(TestActionComponent, permix)).toThrow(PermixRuleNotDefinedError)
   })
 })

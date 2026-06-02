@@ -34,6 +34,48 @@ describe('createPermix', () => {
     expect(() => permix.check('post.not-exist')).toThrow(PermixRuleNotDefinedError)
   })
 
+  it('should throw when check path is deeper than a boolean leaf (setup)', () => {
+    const permix = createPermix<{ post: ['create', 'read'] }>()
+
+    permix.setup({
+      post: true,
+    } as never)
+
+    expect(() => permix.check('post.create')).toThrow(
+      expect.objectContaining({ path: 'post.create', name: 'PermixRuleNotDefinedError' }),
+    )
+  })
+
+  it('should throw when check path is deeper than a boolean leaf (hydrate)', () => {
+    const permix = createPermix<{ post: ['create', 'read'] }>()
+
+    permix.hydrate({
+      // @ts-expect-error true is not a valid rule
+      post: true,
+    })
+
+    expect(() => permix.check('post.create')).toThrow(
+      expect.objectContaining({ path: 'post.create', name: 'PermixRuleNotDefinedError' }),
+    )
+  })
+
+  it('should allow check on a flat boolean leaf without extra path segments', () => {
+    const permix = createPermix<['read']>()
+
+    permix.setup({ read: true })
+
+    expect(permix.check('read')).toBe(true)
+  })
+
+  it('should allow check with explicit undefined data after reaching a boolean leaf', () => {
+    const permix = createPermix<{ post: ['create'] }>()
+
+    permix.setup({ post: { create: true } })
+
+    // @ts-expect-error undefined is not a valid data argument
+    expect(permix.check('post.create', undefined)).toBe(true)
+  })
+
   it('should validate permission for entity with data callback', () => {
     interface Post { authorId: string }
 

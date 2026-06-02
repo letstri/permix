@@ -14,6 +14,10 @@ function isSpecialSymbol(value: unknown): value is SpecialSymbol {
   return value === '~any' || value === '~all'
 }
 
+function pathFromArgs(args: unknown[]): string {
+  return args.filter((a): a is string => typeof a === 'string').join('.')
+}
+
 /**
  * Invoke a rule with no check data, treating a thrown error as `false`.
  *
@@ -72,8 +76,12 @@ function walk(rules: Rules<any>, args: unknown[]): boolean {
   for (; i < args.length && typeof rule === 'object'; i++)
     rule = rule[String(args[i])]
 
-  if (typeof rule === 'boolean')
+  if (typeof rule === 'boolean') {
+    const remainingPath = args.slice(i).some(a => typeof a === 'string')
+    if (remainingPath)
+      throw new PermixRuleNotDefinedError(pathFromArgs(args))
     return rule
+  }
   if (typeof rule === 'function')
     return Boolean(rule(args[i]))
 

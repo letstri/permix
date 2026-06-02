@@ -11,17 +11,8 @@ import { usePermixContext } from './context'
 export function usePermix<T extends Definition>(permix: Pick<Permix<T>, 'getRules' | 'check'>) {
   const context = usePermixContext()
 
-  const check: Permix<T>['check'] = (...args) => {
-    const resolved = (context.value.rules ?? permix.getRules()) as Rules<T> | null
-    if (!resolved)
-      return false
-    try {
-      return createCheck<T>(resolved)(...args)
-    }
-    catch {
-      return false
-    }
-  }
+  const check: Permix<T>['check'] = (...args) =>
+    createCheck<T>(() => (context.value.rules ?? permix.getRules()) as Rules<T> | null)(...args)
 
   return { check, isReady: computed(() => context.value.isReady) }
 }

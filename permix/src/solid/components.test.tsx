@@ -1,6 +1,6 @@
 import { render, waitFor } from '@solidjs/testing-library'
 import { describe, expect, it } from 'vitest'
-import { createPermix } from '../core'
+import { createPermix, PermixRuleNotDefinedError } from '../core'
 import { createComponents, PermixHydrate, PermixProvider } from './components'
 import { usePermix } from './hooks'
 import '@testing-library/jest-dom/vitest'
@@ -254,15 +254,16 @@ describe('components', () => {
       )
     }
 
-    const { container } = render(() => (
+    expect(() => render(() => (
       <PermixProvider permix={permix}>
         <TestEntityComponent />
+      </PermixProvider>
+    ))).toThrow(PermixRuleNotDefinedError)
+
+    expect(() => render(() => (
+      <PermixProvider permix={permix}>
         <TestActionComponent />
       </PermixProvider>
-    ),
-    )
-
-    expect(container.innerHTML).not.toContain('Action prop')
-    expect(container.innerHTML).not.toContain('Entity prop')
+    ))).toThrow(PermixRuleNotDefinedError)
   })
 })

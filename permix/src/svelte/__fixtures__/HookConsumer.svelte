@@ -11,7 +11,7 @@ const post = { id: '1' }
 </script>
 
 <div>
-  <span data-testid="create">{permissions.check('post.create', post).toString()}</span>
-  <span data-testid="read">{permissions.check('post.read').toString()}</span>
+  <span data-testid="create">{permissions.isReady ? permissions.check('post.create', post).toString() : ''}</span>
+  <span data-testid="read">{permissions.isReady ? permissions.check('post.read').toString() : ''}</span>
   <span data-testid="ready">{permissions.isReady.toString()}</span>
 </div>
