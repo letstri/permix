@@ -1,7 +1,7 @@
 import type { JSX } from 'solid-js'
 import type { CheckArgs, DataAtPath, Definition, DehydratedState, Permix, RulesPaths } from '../core'
 import type { PermixContext } from './hooks'
-import { createEffect, createMemo, onCleanup } from 'solid-js'
+import { createEffect, createMemo, createRenderEffect, onCleanup } from 'solid-js'
 import { createStore } from 'solid-js/store'
 import { Context, usePermix, usePermixContext } from './hooks'
 
@@ -40,7 +40,9 @@ export function PermixProvider<D extends Definition>(props: {
 export function PermixHydrate(props: { children: JSX.Element, state: DehydratedState<any> }) {
   const context = usePermixContext()
 
-  context.permix.hydrate(props.state)
+  createRenderEffect(() => {
+    context.permix.hydrate(props.state)
+  })
 
   return props.children
 }

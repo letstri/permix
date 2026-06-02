@@ -6,7 +6,7 @@ import type { Rules, RulesPaths } from '../core/permix'
 import type { DehydratedState } from '../core/rules'
 import type { MaybePromise } from '../utils'
 import { createMiddleware } from '@tanstack/react-start'
-import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixError, PermixNotFoundError } from '../core'
+import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixForbiddenError, PermixNotFoundError } from '../core'
 
 export interface SetupContext {
   request: Request
@@ -33,7 +33,7 @@ function buildPermix<D extends Definition>(
   options: PermixOptions<D> = {},
 ) {
   const onForbidden = options.onForbidden ?? (() => {
-    throw new PermixError('Forbidden')
+    throw new PermixForbiddenError()
   })
 
   /**

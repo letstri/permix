@@ -31,3 +31,10 @@ export class PermixNotFoundError extends PermixError {
     this.key = key
   }
 }
+
+export class PermixForbiddenError extends PermixError {
+  constructor() {
+    super('Forbidden.')
+    this.name = 'PermixForbiddenError'
+  }
+}

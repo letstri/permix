@@ -10,5 +10,3 @@ export function omit<T extends object, K extends keyof T>(obj: T, keys: K[]): Om
 }
 
 export type MaybePromise<T> = T | Promise<T>
-
-export type MaybeArray<T> = T | T[]
