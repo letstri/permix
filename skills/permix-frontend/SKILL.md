@@ -93,14 +93,20 @@ Use `PermixHydrate` + call `setup` again on the client for function rules — se
 
 Docs: https://permix.letstri.dev/docs/integrations/vue
 
-```ts
-import { createPermixPlugin } from 'permix/vue'
+```vue
+<script setup lang="ts">
+import { PermixProvider } from 'permix/vue'
 import { permix } from './lib/permix'
+</script>
 
-app.use(createPermixPlugin(permix))
+<template>
+  <PermixProvider :permix="permix">
+    <YourApp />
+  </PermixProvider>
+</template>
 ```
 
-Use composables from `permix/vue` (same `setup` / `check` / `isReady` flow as React).
+Use `usePermix` from `permix/vue` (same `setup` / `check` / `isReady` flow as React).
 
 ## Solid
 

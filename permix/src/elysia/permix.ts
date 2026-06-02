@@ -22,13 +22,13 @@ function buildPermix<D extends Definition>(
   resolveKey: () => string | symbol,
   options: PermixOptions<D> = {},
 ) {
-  const onForbidden = options.onForbidden ?? (({ context }: CheckContext<D> & MiddlewareContext) => {
-    context.set.status = 403
+  const onForbidden = options.onForbidden ?? (({ context }) => {
+    context.set.status = 'Forbidden'
     return { error: 'Forbidden' }
   })
 
   function get(context: Context): PermixCore<D> | null {
-    const instance = (context as any)[resolveKey()] as PermixCore<D> | undefined
+    const instance = (context.store as any)[resolveKey()] as PermixCore<D> | undefined
     return instance ?? null
   }
 
@@ -47,7 +47,7 @@ function buildPermix<D extends Definition>(
       const rules = typeof callbackOrRules === 'function'
         ? await callbackOrRules({ context })
         : callbackOrRules
-      ;(context as any)[resolveKey()] = createPermixCore<D>(rules)
+      ;(context.store as any)[resolveKey()] = createPermixCore<D>(rules)
     }
   }
 

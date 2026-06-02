@@ -3,7 +3,7 @@ import type { CheckArgs, CheckContext } from '../core/check'
 import type { Definition } from '../core/definitions'
 import type { Rules, RulesPaths } from '../core/permix'
 import { ORPCError, os } from '@orpc/server'
-import { createCheckContext, createPermix as createPermixCore, createTemplate } from '../core'
+import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
 
 export interface PermixOptions<D extends Definition> {
   onForbidden?: (params: CheckContext<D> & { context: Record<string, any>, next: (...args: any[]) => any }) => any
@@ -31,7 +31,7 @@ function buildPermix<D extends Definition, const Key extends string>(
       const instance = context[resolveKey()]
 
       if (!instance) {
-        throw new Error('[Permix] Instance not found. Please use the `setup` function.')
+        throw new PermixNotFoundError(resolveKey())
       }
 
       if (instance.check(...args)) {

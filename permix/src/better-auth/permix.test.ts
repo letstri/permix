@@ -1,6 +1,7 @@
 import { createAccessControl } from 'better-auth/plugins/access'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { PermixRuleNotDefinedError } from '../core/errors'
+import { PermixInvalidAccessControlError, PermixUnknownRoleError } from './errors'
 import { createPermix } from './permix'
 
 const statement = {
@@ -116,21 +117,19 @@ describe('better-auth createPermix', () => {
     const permix = createPermix({ ac, roles })
 
     // @ts-expect-error unknown role name
-    expect(() => permix.roleToRules('ghost')).toThrow('[Permix]: Unknown role "ghost"')
+    expect(() => permix.roleToRules('ghost')).toThrow(PermixUnknownRoleError)
   })
 
   it('throws when a role name is passed but no roles were provided', () => {
     const permix = createPermix({ ac })
 
     // @ts-expect-error roles were not provided, so names are not allowed
-    expect(() => permix.roleToRules('admin')).toThrow('[Permix]: Unknown role "admin"')
+    expect(() => permix.roleToRules('admin')).toThrow(PermixUnknownRoleError)
   })
 
   it('throws when ac is missing', () => {
     // @ts-expect-error ac is required
-    expect(() => createPermix({})).toThrow(
-      '[Permix]: `ac` must be a better-auth access controller created with `createAccessControl`.',
-    )
+    expect(() => createPermix({})).toThrow(PermixInvalidAccessControlError)
   })
 
   it('works with templates', () => {

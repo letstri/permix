@@ -24,7 +24,7 @@ function buildPermix<D extends Definition>(
   resolveKey: () => string | symbol,
   options: PermixOptions<D> = {},
 ) {
-  const onForbidden = options.onForbidden ?? (({ res }: CheckContext<D> & MiddlewareContext) => {
+  const onForbidden = options.onForbidden ?? (({ res }) => {
     res.status(403).json({ error: 'Forbidden' })
   })
 

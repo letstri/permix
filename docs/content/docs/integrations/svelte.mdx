@@ -128,4 +128,39 @@ Use the `usePermix` hook and checking components in your components:
 
 </Step>
 
+<Step>
+
+## Hydration
+
+For SSR, wrap the app with `PermixHydrate` and pass the dehydrated server state. Call `permix.setup()` on the client afterward to restore function-based rules and set `isReady`:
+
+```svelte title="App.svelte"
+<script lang="ts">
+  import type { DehydratedState } from 'permix'
+  import { onMount } from 'svelte'
+  import { PermixHydrate, PermixProvider } from 'permix/svelte'
+  import { permix } from './lib/permix'
+  import { getClientRules } from './lib/permissions'
+
+  let { children, dehydratedState }: {
+    children: import('svelte').Snippet
+    dehydratedState: DehydratedState<any>
+  } = $props()
+
+  onMount(() => {
+    permix.setup(getClientRules())
+  })
+</script>
+
+<PermixProvider {permix}>
+  <PermixHydrate state={dehydratedState}>
+    {@render children()}
+  </PermixHydrate>
+</PermixProvider>
+```
+
+See the [Hydration guide](/docs/guide/hydration).
+
+</Step>
+
 </Steps>

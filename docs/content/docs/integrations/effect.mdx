@@ -174,6 +174,10 @@ const program = Effect.gen(function* () {
 })
 ```
 
+<Callout type="warn">
+`hydrate` does not mark the instance ready and cannot restore function-based rules. Follow with `setup` using the full rule set when you need dynamic checks or `isReady`. See the [Hydration guide](/docs/guide/hydration).
+</Callout>
+
 ### Reacting to Changes
 
 Register hooks that fire when permissions are set up. `hook` yields a function that removes the listener:

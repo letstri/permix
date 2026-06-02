@@ -39,4 +39,6 @@ permix.setup({
 Available events:
 
 - `setup` - Triggered when permissions are updated through the `setup` method or `hydrate()`.
-- `ready` - Triggered once when the instance first becomes ready (first `setup()`, or initial rules passed to `createPermix`). `hydrate()` alone does not trigger `ready`.
+- `ready` - Triggered **once** when the instance first becomes ready (first `setup()`, or initial rules passed to `createPermix`). Later `setup()` calls do not fire `ready` again. `hydrate()` alone does not trigger `ready`.
+
+Use the `setup` event when UI or caches should refresh after every permission change. Use `ready` only for one-time bootstrap (for example, hiding a global loading shell).

@@ -10,6 +10,7 @@ export function useUser() {
 
   useEffect(() => {
     // Simulate a network request
+    // eslint-disable-next-line react/web-api-no-leaked-timeout
     new Promise(resolve => setTimeout(resolve, 1000)).then(() => {
       setUser({
         id: Math.random() < 0.5 ? '1' : '2',

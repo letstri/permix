@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
 import type { Definition } from '../core/definitions'
-import type { Rules } from '../core/permix'
+import type { Rules, RulesPaths } from '../core/permix'
 import type { MaybePromise } from '../utils'
 import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
 
@@ -28,7 +28,7 @@ function buildPermix<D extends Definition>(
   resolveKey: () => string | symbol,
   options: PermixOptions<D> = {},
 ) {
-  const onForbidden = options.onForbidden ?? (({ res }: CheckContext<D> & MiddlewareContext) => {
+  const onForbidden = options.onForbidden ?? (({ res }) => {
     res.statusCode = 403
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify({ error: 'Forbidden' }))
@@ -96,6 +96,7 @@ function buildPermix<D extends Definition>(
     get key() {
       return resolveKey()
     },
+    $inferPath: undefined as unknown as RulesPaths<D>,
   }
 }
 

@@ -1,4 +1,4 @@
-export { createPermix, type PermixOptions, type TrpcPermix } from './permix'
+export * from './permix'
 
 declare global {
   interface Disposable {

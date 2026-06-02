@@ -4,7 +4,7 @@ import type { CheckArgs, CheckContext } from '../core/check'
 import type { Definition } from '../core/definitions'
 import type { Rules, RulesPaths } from '../core/permix'
 import { initTRPC, TRPCError } from '@trpc/server'
-import { createCheckContext, createPermix as createPermixCore, createTemplate } from '../core'
+import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
 
 export interface PermixOptions<D extends Definition> {
   onForbidden?: (params: CheckContext<D> & { ctx: Record<string, any>, next: (...args: any[]) => any }) => any
@@ -33,10 +33,7 @@ function buildPermix<D extends Definition, const Key extends string>(
       const instance = ctx[resolveKey()]
 
       if (!instance) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: '[Permix] Instance not found. Please use the `setup` function.',
-        })
+        throw new PermixNotFoundError(resolveKey())
       }
 
       if (instance.check(...args)) {

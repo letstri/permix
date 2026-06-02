@@ -131,6 +131,38 @@ export default function Page() {
 
 <Step>
 
+## Hydration
+
+For SSR, use `PermixHydrate` with the dehydrated server state, then call `permix.setup()` on the client to restore function-based rules:
+
+```tsx title="App.tsx"
+import { onMount } from 'solid-js'
+import type { DehydratedState } from 'permix'
+import { PermixHydrate, PermixProvider } from 'permix/solid'
+import { permix } from './lib/permix'
+import { getClientRules } from './lib/permissions'
+
+export function App(props: { dehydratedState: DehydratedState<any>, children: any }) {
+  onMount(() => {
+    permix.setup(getClientRules())
+  })
+
+  return (
+    <PermixProvider permix={permix}>
+      <PermixHydrate state={props.dehydratedState}>
+        {props.children}
+      </PermixHydrate>
+    </PermixProvider>
+  )
+}
+```
+
+See the [Hydration guide](/docs/guide/hydration).
+
+</Step>
+
+<Step>
+
 ## Example
 
 You can find the example of the Solid integration [here](https://github.com/letstri/permix/tree/main/examples/solid).

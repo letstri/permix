@@ -1,17 +1,7 @@
 import type { Definition, Permix, Rules } from '../core'
-import { computed, inject } from 'vue'
+import { computed } from 'vue'
 import { createCheck } from '../core'
-import { PERMIX_CONTEXT_KEY } from './plugin'
-
-function usePermixContext() {
-  const context = inject(PERMIX_CONTEXT_KEY)
-
-  if (!context) {
-    throw new Error('[Permix]: Looks like you forgot to install the plugin')
-  }
-
-  return context
-}
+import { usePermixContext } from './context'
 
 /**
  * Composable that provides the Permix context to your Vue components.

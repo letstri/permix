@@ -265,7 +265,7 @@ describe('get / getOrThrow', () => {
     const response = await app.inject({ method: 'GET', url: '/' })
     expect(response.statusCode).toBe(500)
     expect(response.json()).toEqual({
-      error: '[Permix]: Instance not found. Please use the `setupMiddleware` function.',
+      error: '[Permix]: Instance not found. Please setup the permix instance first.',
       name: 'PermixNotFoundError',
     })
   })
@@ -292,7 +292,7 @@ describe('checkMiddleware without setupMiddleware', () => {
     const response = await app.inject({ method: 'POST', url: '/posts' })
     expect(response.statusCode).toBe(500)
     expect(response.json()).toEqual({
-      error: '[Permix]: Instance not found. Please use the `setupMiddleware` function.',
+      error: '[Permix]: Instance not found. Please setup the permix instance first.',
     })
   })
 })

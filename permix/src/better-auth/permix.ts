@@ -1,6 +1,7 @@
 import type { AccessControl, Role, Statements } from 'better-auth/plugins/access'
 import type { Permix as PermixCore, Rules } from '../core'
 import { createPermix as createPermixCore } from '../core'
+import { PermixInvalidAccessControlError, PermixUnknownRoleError } from './errors'
 
 /**
  * Builds a Permix {@link import('../core/definitions').Definition} from a
@@ -132,7 +133,7 @@ export function createPermix<
   const { ac, roles } = options
 
   if (!ac || typeof ac !== 'object' || !('statements' in ac)) {
-    throw new Error('[Permix]: `ac` must be a better-auth access controller created with `createAccessControl`.')
+    throw new PermixInvalidAccessControlError()
   }
 
   const statements = ac.statements
@@ -147,7 +148,7 @@ export function createPermix<
       const resolved = roles?.[role]
 
       if (!resolved) {
-        throw new Error(`[Permix]: Unknown role "${role}". Pass it via the \`roles\` option to resolve roles by name.`)
+        throw new PermixUnknownRoleError(role)
       }
 
       return resolved

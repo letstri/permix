@@ -195,6 +195,24 @@ describe('createPermix', () => {
     expect(guestResponse.status).toBe(403)
     expect(await guestResponse.json()).toEqual({ error: 'Forbidden' })
   })
+
+  it('should accept an explicit symbol key', async () => {
+    const key = Symbol('my-permix')
+    const permix = createPermix<PermissionsDefinition>().contextKey(key)
+
+    const app = new Hono()
+
+    app.use(permix.setupMiddleware({
+      post: { create: true, read: true, update: true },
+      user: { delete: true },
+    }))
+
+    app.get('/probe', c => c.json({ attached: permix.get(c) !== null }))
+
+    const res = await app.request('/probe')
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ attached: true })
+  })
 })
 
 describe('get / getOrThrow', () => {
@@ -246,7 +264,7 @@ describe('get / getOrThrow', () => {
     const res = await app.request('/')
     expect(res.status).toBe(500)
     expect(await res.json()).toEqual({
-      error: '[Permix]: Instance not found. Please use the `setupMiddleware` function.',
+      error: '[Permix]: Instance not found. Please setup the permix instance first.',
       name: 'PermixNotFoundError',
     })
   })
@@ -270,7 +288,7 @@ describe('checkMiddleware without setupMiddleware', () => {
     const res = await app.request('/posts', { method: 'POST' })
     expect(res.status).toBe(500)
     expect(await res.json()).toEqual({
-      error: '[Permix]: Instance not found. Please use the `setupMiddleware` function.',
+      error: '[Permix]: Instance not found. Please setup the permix instance first.',
     })
   })
 })

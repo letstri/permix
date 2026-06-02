@@ -1,10 +1,54 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import { createPermix } from '../core'
-import { createComponents } from './components'
-import { permixPlugin } from './plugin'
+import { createComponents, PermixHydrate, PermixProvider } from './components'
+import { usePermix } from './composables'
+import { mountWithPermix } from './test-utils'
 
 describe('components', () => {
+  it('should check hydration', () => {
+    const permixServer = createPermix<{
+      post: ['create', 'read']
+    }>()
+
+    permixServer.setup({
+      post: {
+        create: true,
+        read: false,
+      },
+    })
+
+    const dehydrated = permixServer.dehydrate()
+
+    const permixClient = createPermix<{
+      post: ['create', 'read']
+    }>()
+
+    const TestComponent = {
+      template: '<div>{{ check(\'post.create\') }}</div>',
+      setup() {
+        const { check } = usePermix(permixClient)
+        return { check }
+      },
+    }
+
+    const wrapper = mount({
+      template: `
+        <PermixProvider :permix="permix">
+          <PermixHydrate :state="dehydrated">
+            <TestComponent />
+          </PermixHydrate>
+        </PermixProvider>
+      `,
+      components: { PermixProvider, PermixHydrate, TestComponent },
+      setup() {
+        return { permix: permixClient, dehydrated }
+      },
+    })
+
+    expect(wrapper.text()).toBe('true')
+  })
+
   it('should work with Check component', () => {
     const permix = createPermix<{
       post: ['create']
@@ -32,11 +76,7 @@ describe('components', () => {
       },
     }
 
-    const wrapper = mount(TestPost, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper = mountWithPermix(TestPost, permix)
 
     expect(wrapper.text()).toContain(text)
   })
@@ -69,11 +109,7 @@ describe('components', () => {
       },
     }
 
-    const wrapper1 = mount(TestPost1, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper1 = mountWithPermix(TestPost1, permix)
 
     expect(wrapper1.html()).toContain(canText)
 
@@ -92,11 +128,7 @@ describe('components', () => {
       },
     }
 
-    const wrapper2 = mount(TestPost2, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper2 = mountWithPermix(TestPost2, permix)
 
     expect(wrapper2.html()).not.toContain(canText)
     expect(wrapper2.html()).toContain(cannotText)
@@ -129,11 +161,7 @@ describe('components', () => {
       },
     }
 
-    const wrapper = mount(TestComponent, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper = mountWithPermix(TestComponent, permix)
 
     expect(wrapper.html()).not.toContain(text)
 
@@ -178,11 +206,7 @@ describe('components', () => {
       },
     }
 
-    const wrapper = mount(TestComponent, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper = mountWithPermix(TestComponent, permix)
 
     expect(wrapper.html()).not.toContain(defaultText)
     expect(wrapper.html()).toContain(otherwiseText)
@@ -231,17 +255,9 @@ describe('components', () => {
       components: { Check },
     }
 
-    const wrapper = mount(TestEntityComponent, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper = mountWithPermix(TestEntityComponent, permix)
 
-    const wrapper2 = mount(TestActionComponent, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper2 = mountWithPermix(TestActionComponent, permix)
 
     expect(wrapper.html()).not.toContain('Action prop')
     expect(wrapper2.html()).not.toContain('Entity prop')

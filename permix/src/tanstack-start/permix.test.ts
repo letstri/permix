@@ -15,7 +15,7 @@ type PostWithData = ValidateDefinition<{
  * TanStack Start middleware created by `createMiddleware()` stores its handlers
  * on `.options`. Outside the framework runtime there is no server to execute
  * the chain, so we invoke the stored `server` handler directly with a fake
- * `next` to assert the behaviour in isolation.
+ * `next` to assert the behavior in isolation.
  */
 function runServer(
   middleware: { options: { server?: (opts: any) => any } },

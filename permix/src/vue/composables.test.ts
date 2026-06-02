@@ -1,11 +1,12 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import { createApp, defineComponent, onBeforeMount, onMounted, ref } from 'vue'
+import { defineComponent, onBeforeMount, onMounted, ref } from 'vue'
 import { createPermix } from '../core'
-import { permixPlugin, usePermix } from './index'
+import { usePermix } from './composables'
+import { mountWithPermix } from './test-utils'
 
 describe('composables', () => {
-  it('should throw error when plugin is not installed', () => {
+  it('should throw error when PermixProvider is not used', () => {
     const permix = createPermix<{
       post: ['read']
     }>()
@@ -13,7 +14,7 @@ describe('composables', () => {
     const TestWrapper = defineComponent({
       template: '<div></div>',
       setup() {
-        expect(() => usePermix(permix)).toThrow('[Permix]: Looks like you forgot to install the plugin')
+        expect(() => usePermix(permix)).toThrow('[Permix]: Looks like you forgot to wrap your app with <PermixProvider>')
         return {}
       },
     })
@@ -34,23 +35,22 @@ describe('composables', () => {
     })
 
     const TestWrapper = defineComponent({
-      template: '<div></div>',
+      template: `
+        <div>
+          <span data-testid="create">{{ check('post.create') }}</span>
+          <span data-testid="read">{{ check('post.read') }}</span>
+        </div>
+      `,
       setup() {
         const { check } = usePermix(permix)
         return { check }
       },
     })
 
-    const wrapper = mount(TestWrapper, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper = mountWithPermix(TestWrapper, permix)
 
-    const { check } = wrapper.vm
-
-    expect(check('post.create')).toBe(true)
-    expect(check('post.read')).toBe(false)
+    expect(wrapper.get('[data-testid="create"]').text()).toBe('true')
+    expect(wrapper.get('[data-testid="read"]').text()).toBe('false')
   })
 
   it('should work with DOM rerender', async () => {
@@ -81,15 +81,7 @@ describe('composables', () => {
       `,
     })
 
-    const app = createApp({})
-
-    app.use(permixPlugin, { permix })
-
-    const wrapper = mount(TestComponent, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper = mountWithPermix(TestComponent, permix)
 
     expect(wrapper.get('[data-testid="create"]').text()).toBe('true')
     expect(wrapper.get('[data-testid="read"]').text()).toBe('false')
@@ -120,11 +112,7 @@ describe('composables', () => {
       template: '<div>{{ isReady }}</div>',
     })
 
-    const wrapper = mount(TestWrapper, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper = mountWithPermix(TestWrapper, permix)
 
     expect(wrapper.get('div').text()).toBe('false')
 
@@ -162,11 +150,7 @@ describe('composables', () => {
       },
     })
 
-    const wrapper = mount(TestWrapper, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper = mountWithPermix(TestWrapper, permix)
 
     expect(wrapper.text()).toBe('true')
   })
@@ -193,11 +177,7 @@ describe('composables', () => {
       },
     })
 
-    const wrapper = mount(TestWrapper, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper = mountWithPermix(TestWrapper, permix)
 
     expect(wrapper.text()).toBe('false')
 

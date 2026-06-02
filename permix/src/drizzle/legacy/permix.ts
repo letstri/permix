@@ -2,6 +2,7 @@ import type { Table } from 'drizzle-orm'
 import type { Permix as PermixCore } from '../../core'
 import { Table as DrizzleTable, is } from 'drizzle-orm'
 import { createPermix as createPermixCore } from '../../core'
+import { PermixInvalidActionsError } from '../errors'
 
 /**
  * The default CRUD action set used when no `actions` are provided.
@@ -34,11 +35,6 @@ export type DrizzleDefinition<
   [K in DrizzleTableKeys<S>]: [...Actions]
 }
 
-/**
- * A partial map of `{ action: boolean }` used as a shortcut when generating
- * baseline rules with {@link DrizzlePermix.generateRules}. Missing actions
- * default to `false`.
- */
 export type ActionMap<Actions extends readonly string[]>
   = Partial<Record<Actions[number], boolean>>
 
@@ -111,7 +107,7 @@ export function createPermix<
   const actions = (options.actions ?? DEFAULT_DRIZZLE_ACTIONS) as unknown as Actions
 
   if (!Array.isArray(actions) || actions.length === 0) {
-    throw new Error('[Permix]: `actions` must be a non-empty array of strings.')
+    throw new PermixInvalidActionsError()
   }
 
   const tables = Object.entries(schema)

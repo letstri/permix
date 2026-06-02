@@ -146,6 +146,8 @@ This approach is not recommended as it reduces type safety and IDE support.
 ```ts twoslash
 import { createPermix } from 'permix'
 
+const currentUser = { id: 'user-1' }
+
 const permix = createPermix<{
   comment: ['update']
 }>()
@@ -153,7 +155,7 @@ const permix = createPermix<{
 // @noErrors
 permix.setup({
   comment: {
-    update: (comment: { authorId: string }) => comment.authorId === user.id
+    update: (comment: { authorId: string }) => comment.authorId === currentUser.id
   }
 })
 ```
@@ -196,6 +198,29 @@ async function loadUserPermissions(userId: string) {
 
 // Usage
 await loadUserPermissions('user-123')
+```
+
+## Typed rules factory
+
+Use `createRules` when rules live in a separate module but must stay aligned with your schema:
+
+```ts twoslash title="/lib/rules.ts"
+import { createPermix, createRules } from 'permix'
+
+type PermissionsDefinition = {
+  post: ['create', 'read']
+}
+
+export const postRules = createRules<PermissionsDefinition>({
+  post: {
+    create: true,
+    read: true,
+  },
+})
+
+export const permix = createPermix<PermissionsDefinition>()
+
+permix.setup(postRules)
 ```
 
 ## Getting Rules

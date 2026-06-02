@@ -2,7 +2,7 @@ import type { Context, MiddlewareHandler } from 'hono'
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
 import type { Definition } from '../core/definitions'
-import type { Rules } from '../core/permix'
+import type { Rules, RulesPaths } from '../core/permix'
 import type { MaybePromise } from '../utils'
 import { createMiddleware } from 'hono/factory'
 import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
@@ -19,14 +19,19 @@ export interface PermixOptions<D extends Definition> {
   onForbidden?: (params: CheckContext<D> & MiddlewareContext) => MaybePromise<Response>
 }
 
+/** Hono types `c.get`/`c.set` keys as strings; the runtime store accepts symbols too. */
+function keyToString(key: string | symbol): string {
+  return key as string
+}
+
 function buildPermix<D extends Definition>(
-  resolveKey: () => string,
+  resolveKey: () => string | symbol,
   options: PermixOptions<D> = {},
 ) {
-  const onForbidden = options.onForbidden ?? (({ c }: CheckContext<D> & MiddlewareContext) => c.json({ error: 'Forbidden' }, 403))
+  const onForbidden = options.onForbidden ?? (({ c }) => c.json({ error: 'Forbidden' }, 403))
 
   function get(c: Context): PermixCore<D> | null {
-    const instance = c.get(resolveKey()) as PermixCore<D> | undefined
+    const instance = c.get(keyToString(resolveKey())) as PermixCore<D> | undefined
     return instance ?? null
   }
 
@@ -45,7 +50,7 @@ function buildPermix<D extends Definition>(
       const rules = typeof callbackOrRules === 'function'
         ? await callbackOrRules({ c })
         : callbackOrRules
-      c.set(resolveKey(), createPermixCore<D>(rules))
+      c.set(keyToString(resolveKey()), createPermixCore<D>(rules))
       await next()
     })
   }
@@ -86,6 +91,7 @@ function buildPermix<D extends Definition>(
     get key() {
       return resolveKey()
     },
+    $inferPath: undefined as unknown as RulesPaths<D>,
   }
 }
 
@@ -110,11 +116,11 @@ function buildPermix<D extends Definition>(
  * @link https://permix.letstri.dev/docs/integrations/hono
  */
 export function createPermix<D extends Definition>(options: PermixOptions<D> = {}) {
-  let key: string = Symbol('permix') as unknown as string
+  let key: string | symbol = Symbol('permix')
   const permix = buildPermix<D>(() => key, options)
 
   return Object.assign(permix, {
-    contextKey(newKey: string) {
+    contextKey(newKey: string | symbol) {
       key = newKey
       return permix
     },

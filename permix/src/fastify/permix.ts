@@ -2,7 +2,7 @@ import type { FastifyPluginAsync, FastifyReply, FastifyRequest, preHandlerHookHa
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
 import type { Definition } from '../core/definitions'
-import type { Rules } from '../core/permix'
+import type { Rules, RulesPaths } from '../core/permix'
 import type { MaybePromise } from '../utils'
 import fp from 'fastify-plugin'
 import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
@@ -26,7 +26,7 @@ function buildPermix<D extends Definition>(
   resolveKey: () => string | symbol,
   options: PermixOptions<D> = {},
 ) {
-  const onForbidden = options.onForbidden ?? (({ reply }: CheckContext<D> & MiddlewareContext) => {
+  const onForbidden = options.onForbidden ?? (({ reply }) => {
     reply.status(403).send({ error: 'Forbidden' })
   })
 
@@ -102,6 +102,7 @@ function buildPermix<D extends Definition>(
     get key() {
       return resolveKey()
     },
+    $inferPath: undefined as unknown as RulesPaths<D>,
   }
 }
 

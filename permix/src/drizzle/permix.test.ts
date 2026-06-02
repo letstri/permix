@@ -2,6 +2,7 @@ import { defineRelations } from 'drizzle-orm'
 import { integer, pgTable, pgView, serial, text } from 'drizzle-orm/pg-core'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { PermixRuleNotDefinedError } from '../core/errors'
+import { PermixInvalidActionsError } from './errors'
 import { createPermix } from './permix'
 
 const users = pgTable('users', {
@@ -80,9 +81,7 @@ describe('drizzle createPermix', () => {
   })
 
   it('throws when actions is an empty array', () => {
-    expect(() => createPermix(schema, { actions: [] })).toThrow(
-      '[Permix]: `actions` must be a non-empty array of strings.',
-    )
+    expect(() => createPermix(schema, { actions: [] })).toThrow(PermixInvalidActionsError)
   })
 
   it('exposes correct types for tables and actions', () => {

@@ -233,7 +233,7 @@ describe('check ~all / ~any', () => {
     })
 
     expect(permix.check('post.~any')).toBe(true)
-    expect(permix.check('post.~any')).toBe(true)
+    expect(permix.check('post.~all')).toBe(true)
     expect(permix.check('comment.~all')).toBe(false)
     expect(permix.check('comment.~any')).toBe(true)
   })

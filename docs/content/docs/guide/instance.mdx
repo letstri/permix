@@ -195,11 +195,51 @@ permix.
 //     ^|
 ```
 
+## ValidateDefinition
+
+When the same permission schema is shared between the server integration and the client bundle, wrap it with `ValidateDefinition` so TypeScript keeps the definition consistent across imports:
+
+```ts title="/lib/permix-definition.ts"
+import type { ValidateDefinition } from 'permix'
+
+export type PermissionsDefinition = ValidateDefinition<{
+  post: ['create', 'read', 'update', 'delete']
+}>
+```
+
+This helper is used in the [TanStack Start](/docs/integrations/tanstack-start) integration and in the repository examples.
+
+## Merging definitions
+
+Combine permission trees from multiple modules with the `MergePermix` type (for example, a core app schema plus a plugin schema):
+
+```ts title="/lib/permix-merged.ts"
+import type { MergePermix } from 'permix'
+import { createPermix } from 'permix'
+
+type AppPermissions = {
+  post: ['create', 'read']
+}
+
+type PluginPermissions = {
+  billing: ['view', 'update']
+}
+
+type PermissionsDefinition = MergePermix<AppPermissions, PluginPermissions>
+
+const permix = createPermix<PermissionsDefinition>()
+// Paths: 'post.create' | 'post.read' | 'billing.view' | 'billing.update'
+```
+
+When two definitions declare the same entity key with different actions, actions are concatenated. If one side is a branch and the other is a leaf list, the branch wins.
+
 ## JavaScript
 
 Not using TypeScript? Permix works perfectly fine even with plain JavaScript.
 
 ```ts title="/lib/permix.js"
+import { createPermix } from 'permix'
+
 const permix = createPermix()
 ```
 
