@@ -109,19 +109,26 @@ function buildPermix<D extends Definition>(
 /**
  * Create a plugin factory that wires Permix into Fastify routes.
  *
- * Call `.contextKey('name')` to set a custom request decorator key. Omit it to
- * use a fresh `Symbol('permix')` as the default key.
+ * Use `.contextKey('name')` to set a custom request decorator key (defaults to
+ * a unique `Symbol('permix')`).
  *
  * @example
  * ```ts
- * // default symbol key
- * const permix = createPermix<Def>()
+ * import Fastify from 'fastify'
+ * import { createPermix } from 'permix/fastify'
  *
- * // custom string key
- * const permix = createPermix<Def>().contextKey('permissions')
+ * const permix = createPermix<{
+ *   post: ['create', 'read']
+ * }>()
  *
- * // with custom forbidden handler
- * const permix = createPermix<Def>({ onForbidden: ... }).contextKey('permissions')
+ * const app = Fastify()
+ * await app.register(permix.setupMiddleware(({ request }) => ({
+ *   post: { create: !!request.user, read: true },
+ * })))
+ *
+ * app.get('/posts', {
+ *   preHandler: permix.checkMiddleware('post.read'),
+ * }, (request, reply) => reply.send({ ok: true }))
  * ```
  *
  * @link https://permix.letstri.dev/docs/integrations/fastify

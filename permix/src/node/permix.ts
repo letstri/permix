@@ -103,19 +103,27 @@ function buildPermix<D extends Definition>(
 /**
  * Create a middleware factory that wires Permix into raw Node.js HTTP servers.
  *
- * Call `.contextKey('name')` to set a custom request key. Omit it to use a
- * fresh `Symbol('permix')` as the default key.
+ * Use `.contextKey('name')` to set a custom request key (defaults to a unique
+ * `Symbol('permix')`).
  *
  * @example
  * ```ts
- * // default symbol key
- * const permix = createPermix<Def>()
+ * import http from 'node:http'
+ * import { createPermix } from 'permix/node'
  *
- * // custom string key
- * const permix = createPermix<Def>().contextKey('permissions')
+ * const permix = createPermix<{
+ *   post: ['create', 'read']
+ * }>()
  *
- * // with custom forbidden handler
- * const permix = createPermix<Def>({ onForbidden: ... }).contextKey('permissions')
+ * const setupPermix = permix.setupMiddleware(({ req }) => ({
+ *   post: { create: true, read: true },
+ * }))
+ *
+ * http.createServer(async (req, res) => {
+ *   await setupPermix(req, res, () => {})
+ *   permix.getOrThrow(req).check('post.read') // true
+ *   res.end('ok')
+ * }).listen(3000)
  * ```
  *
  * @link https://permix.letstri.dev/docs/integrations/node

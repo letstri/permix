@@ -12,21 +12,16 @@ export const DEFAULT_DRIZZLE_ACTIONS = ['create', 'read', 'update', 'delete'] as
 export type DefaultDrizzleAction = (typeof DEFAULT_DRIZZLE_ACTIONS)[number]
 
 /**
- * Picks the keys of `S` whose values are Drizzle tables (`Table` instances).
- *
- * Anything that isn't a table (relations, enums, helpers, etc.) is filtered
- * out so the generated definition only contains real entities.
+ * Keys of `S` whose values are Drizzle `Table` instances.
+ * Relations, enums, helpers, and other non-table exports are filtered out.
  */
 export type DrizzleTableKeys<S> = {
   [K in keyof S]: S[K] extends Table<any> ? K & string : never
 }[keyof S]
 
 /**
- * Builds a Permix {@link Definition} from a Drizzle schema object, assigning
- * the same `actions` tuple to every table that lives in the schema.
- *
- * `[...Actions]` strips the `readonly` modifier from the tuple so the result
- * matches Permix's `Definition` leaf type (a mutable `Action[]`).
+ * Permix {@link Definition} derived from a Drizzle schema, assigning the same
+ * `actions` tuple to every table.
  */
 export type DrizzleDefinition<
   S,
@@ -49,8 +44,7 @@ export interface CreateDrizzlePermixOptions<Actions extends readonly string[]> {
 }
 
 /**
- * The Permix instance returned by {@link createPermix}. Extends the core
- * Permix API with Drizzle-specific helpers for generating rules.
+ * Extends the core Permix API with Drizzle-specific metadata.
  */
 export interface DrizzlePermix<
   S,
@@ -121,7 +115,7 @@ export function createPermix<
   return Object.assign(permix, { actions, tables }) as DrizzlePermix<S, Actions>
 }
 
-/** Convenience type for the object returned by {@link createPermix}. */
+/** Return type of {@link createPermix}. */
 export type DrizzlePermixInstance<
   S extends Record<string, unknown>,
   Actions extends readonly string[] = readonly DefaultDrizzleAction[],

@@ -12,23 +12,15 @@ export const DEFAULT_DRIZZLE_ACTIONS = ['create', 'read', 'update', 'delete'] as
 export type DefaultDrizzleAction = (typeof DEFAULT_DRIZZLE_ACTIONS)[number]
 
 /**
- * Keys of `S` that Drizzle v1 considers "schema entries" — i.e. tables and
- * views. Anything else (a `defineRelations(...)` object, plain helpers, enums,
- * etc.) is filtered out so the generated definition only contains real
- * permissioned entities.
- *
- * Powered by Drizzle's own `ExtractTablesFromSchema` type.
+ * Keys of `S` that Drizzle v1 recognises as schema entries (tables and views).
+ * Relations, enums, helpers, and other non-entity exports are filtered out.
  */
 export type DrizzleTableKeys<S extends Record<string, unknown>>
   = keyof ExtractTablesFromSchema<S> & string
 
 /**
- * Builds a Permix {@link import('../core/definitions').Definition} from a
- * Drizzle schema object, assigning the same `actions` tuple to every table
- * (or view) that lives in the schema.
- *
- * `[...Actions]` strips the `readonly` modifier from the tuple so the result
- * matches Permix's `Definition` leaf type (a mutable `Action[]`).
+ * Permix {@link import('../core/definitions').Definition} derived from a
+ * Drizzle schema, assigning the same `actions` tuple to every table/view.
  */
 export type DrizzleDefinition<
   S extends Record<string, unknown>,
@@ -51,8 +43,7 @@ export interface CreateDrizzlePermixOptions<Actions extends readonly string[]> {
 }
 
 /**
- * The Permix instance returned by {@link createPermix}. Extends the core
- * Permix API with Drizzle-specific helpers for generating rules.
+ * Extends the core Permix API with Drizzle-specific metadata.
  */
 export interface DrizzlePermix<
   S extends Record<string, unknown>,
@@ -125,7 +116,7 @@ export function createPermix<
   return Object.assign(permix, { actions, tables }) as DrizzlePermix<S, Actions>
 }
 
-/** Convenience type for the object returned by {@link createPermix}. */
+/** Return type of {@link createPermix}. */
 export type DrizzlePermixInstance<
   S extends Record<string, unknown>,
   Actions extends readonly string[] = readonly DefaultDrizzleAction[],

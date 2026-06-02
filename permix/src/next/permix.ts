@@ -6,22 +6,11 @@ import { cache } from 'react'
 import { createPermix as createPermixCore, createTemplate } from '../core'
 
 /**
- * Create a per-request Permix instance for Next.js (App Router).
+ * Create a per-request Permix instance for Next.js App Router.
  *
- * The returned helper is backed by React's `cache()`, which scopes memoization
- * to a single request (server components, route handlers, and server actions
- * for the same request all share the same instance, while different requests
- * are fully isolated from each other).
- *
- * Typical flow:
- *
- * 1. Create the helper once in a module (e.g. `lib/permix.ts`).
- * 2. Call `setup()` early in the request (root layout, middleware, or the
- *    first server component that needs permissions).
- * 3. Use `check()`, `get()`, or `dehydrate()` anywhere on the server for the
- *    remainder of that request.
- * 4. Pass `dehydrate()` to the client and hydrate it with `PermixHydrate`
- *    from `permix/react`.
+ * Backed by React's `cache()`, so all server components, route handlers, and
+ * server actions within the same request share one instance while concurrent
+ * requests stay fully isolated.
  *
  * @example
  * ```ts
@@ -57,8 +46,8 @@ import { createPermix as createPermixCore, createTemplate } from '../core'
  * @link https://permix.letstri.dev/docs/integrations/next
  */
 export function createPermix<D extends Definition>() {
-  // `cache()` gives us a fresh, request-scoped Permix instance. Concurrent
-  // requests get isolated instances; same-request callers share one.
+  // Per-request isolation: concurrent requests each get their own instance;
+  // multiple callers within one request share the same one.
   const getPermix = cache((): PermixCore<D> => createPermixCore<D>())
 
   function setup(rules: Rules<D>): void {

@@ -17,7 +17,7 @@ type ActionArgs<A extends Action>
 type ActionByName<A extends Action, N extends string>
   = A extends unknown ? ActionName<A> extends N ? A : never : never
 
-// This is a hack to limit the depth because of TypeScript's recursive type limits
+// Caps recursion depth to avoid "Type instantiation is excessively deep" errors.
 type Depth = [unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown]
 
 export type RulesPaths<D, Prefix extends string = '', N extends unknown[] = Depth>
@@ -204,37 +204,22 @@ export interface Permix<D extends Definition> {
   getRules: () => Rules<D> | null
 
   /**
-   * Type-only helper that resolves to the union of every valid permission path
-   * for this Permix instance (e.g. `'user.create' | 'post.read'`). Use it with
-   * `typeof` to derive permission-path types without restating the definition.
+   * Type-only carrier for the union of all valid permission paths
+   * (e.g. `'user.create' | 'post.read'`). Use with `typeof` to derive
+   * path types without repeating the definition. Always `undefined` at runtime.
    *
-   * @example Single path
+   * @example
    * ```ts
    * const path: typeof permix.$inferPath = 'user.create'
+   *
+   * const ALL = ['user.create', 'job.remove'] satisfies (typeof permix.$inferPath)[]
    * ```
-   *
-   * @example Array of paths
-   * ```ts
-   * const permix = createPermix<{
-   *   user: ['create']
-   *   job: ['remove']
-   * }>()
-   *
-   * const AVAILABLE_PERMISSIONS = ['user.create', 'job.remove']
-   *   satisfies (typeof permix.$inferPath)[]
-   * ```
-   *
-   * @remarks
-   * Has no runtime value (it is `undefined`); exists purely as a type carrier
-   * and is not intended to be read at runtime.
    */
   readonly $inferPath: RulesPaths<D>
 }
 
 /**
  * Create a type-safe Permix instance.
- *
- * @template D - A {@link Definition} describing the permission tree.
  *
  * @example Flat definition
  * ```ts

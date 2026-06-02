@@ -11,9 +11,9 @@ export interface PermixContext<T extends Definition> {
 const PERMIX_CONTEXT_KEY = Symbol('svelte-permix')
 
 /**
- * Provides the Permix context to your Svelte components.
+ * Provides Permix context to the Svelte component tree.
  *
- * Must be called during component initialization (e.g. inside `<PermixProvider>`).
+ * Must be called during component initialization (inside `<PermixProvider>`).
  *
  * @link https://permix.letstri.dev/docs/integrations/svelte
  */
@@ -53,7 +53,7 @@ export function usePermixContext<T extends Definition>(): PermixContext<T> {
 }
 
 /**
- * Hook that provides the Permix reactive methods to your Svelte components.
+ * Access Permix check and readiness state inside a Svelte component.
  *
  * @link https://permix.letstri.dev/docs/integrations/svelte
  */

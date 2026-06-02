@@ -21,7 +21,7 @@ export function usePermixContext() {
 }
 
 /**
- * Hook that provides the Permix reactive methods to your React components.
+ * Access Permix check and readiness state inside a React component.
  *
  * @link https://permix.letstri.dev/docs/integrations/react
  */

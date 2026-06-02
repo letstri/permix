@@ -21,7 +21,7 @@ export function usePermixContext() {
 }
 
 /**
- * Hook that provides the Permix reactive methods to your Solid components.
+ * Access Permix check and readiness state inside a Solid component.
  *
  * @link https://permix.letstri.dev/docs/integrations/solid
  */

@@ -5,7 +5,7 @@ import { usePermix } from './composables'
 import { providePermixContext, usePermixContext } from './context'
 
 /**
- * Provider that supplies the Permix context to your Vue components.
+ * Provides Permix context to the Vue component tree.
  *
  * @link https://permix.letstri.dev/docs/integrations/vue
  */

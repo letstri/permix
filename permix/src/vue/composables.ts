@@ -4,7 +4,7 @@ import { createCheck } from '../core'
 import { usePermixContext } from './context'
 
 /**
- * Composable that provides the Permix context to your Vue components.
+ * Access Permix check and readiness state inside a Vue component.
  *
  * @link https://permix.letstri.dev/docs/integrations/vue
  */

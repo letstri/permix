@@ -36,10 +36,7 @@ export type Definition = readonly Action[] | { [key: string]: Definition }
 
 export type ValidateDefinition<D extends Definition> = D & ([Extract<Definition, string>] extends [never] ? unknown : Extract<Definition, string>)
 
-/**
- * Resolve an {@link Action} to its string name — the bare string for plain
- * actions, or the `name` field for {@link ActionSpec} objects.
- */
+/** Resolves an {@link Action} to its string name. */
 export type ActionName<A extends Action>
   = A extends string ? A
     : A extends { name: infer N extends string } ? N

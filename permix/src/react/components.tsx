@@ -4,7 +4,7 @@ import * as React from 'react'
 import { Context, usePermix, usePermixContext } from './hooks'
 
 /**
- * Provider that provides the Permix context to your React components.
+ * Provides Permix context to the React component tree.
  *
  * @link https://permix.letstri.dev/docs/integrations/react
  */

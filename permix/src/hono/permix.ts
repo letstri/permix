@@ -19,7 +19,8 @@ export interface PermixOptions<D extends Definition> {
   onForbidden?: (params: CheckContext<D> & MiddlewareContext) => MaybePromise<Response>
 }
 
-/** Hono types `c.get`/`c.set` keys as strings; the runtime store accepts symbols too. */
+// Hono's TypeScript types for `c.get`/`c.set` only accept strings, but the
+// runtime store handles symbols too — cast here to keep types happy.
 function keyToString(key: string | symbol): string {
   return key as string
 }
@@ -98,19 +99,24 @@ function buildPermix<D extends Definition>(
 /**
  * Create a middleware factory that wires Permix into Hono routes.
  *
- * Call `.contextKey('name')` to set a custom context key. Omit it to use a
- * fresh `Symbol('permix')` as the default key.
+ * Use `.contextKey('name')` to set a custom context key (defaults to a unique
+ * `Symbol('permix')`).
  *
  * @example
  * ```ts
- * // default symbol key
- * const permix = createPermix<Def>()
+ * import { Hono } from 'hono'
+ * import { createPermix } from 'permix/hono'
  *
- * // custom string key
- * const permix = createPermix<Def>().contextKey('permissions')
+ * const permix = createPermix<{
+ *   post: ['create', 'read']
+ * }>()
  *
- * // with custom forbidden handler
- * const permix = createPermix<Def>({ onForbidden: ... }).contextKey('permissions')
+ * const app = new Hono()
+ * app.use(permix.setupMiddleware(({ c }) => ({
+ *   post: { create: true, read: true },
+ * })))
+ *
+ * app.get('/posts', permix.checkMiddleware('post.read'), c => c.json({ ok: true }))
  * ```
  *
  * @link https://permix.letstri.dev/docs/integrations/hono
@@ -127,5 +133,5 @@ export function createPermix<D extends Definition>(options: PermixOptions<D> = {
   })
 }
 
-/** Convenience type for the object returned by {@link createPermix}. */
+/** Return type of {@link createPermix}. */
 export type HonoPermix<D extends Definition> = ReturnType<typeof createPermix<D>>

@@ -15,7 +15,7 @@ export interface PermixComponents<D extends Definition> {
 }
 
 /**
- * Creates type-safe Permix components bound to your Permix instance.
+ * Creates type-safe Permix components for Svelte bound to your instance.
  *
  * @link https://permix.letstri.dev/docs/integrations/svelte
  */

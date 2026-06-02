@@ -87,19 +87,25 @@ function buildPermix<D extends Definition>(
 /**
  * Create a middleware factory that wires Permix into Elysia routes.
  *
- * Call `.contextKey('name')` to set a custom context key. Omit it to use a
- * fresh `Symbol('permix')` as the default key.
+ * Use `.contextKey('name')` to set a custom context key (defaults to a unique
+ * `Symbol('permix')`).
  *
  * @example
  * ```ts
- * // default symbol key
- * const permix = createPermix<Def>()
+ * import { Elysia } from 'elysia'
+ * import { createPermix } from 'permix/elysia'
  *
- * // custom string key
- * const permix = createPermix<Def>().contextKey('permissions')
+ * const permix = createPermix<{
+ *   post: ['create', 'read']
+ * }>()
  *
- * // with custom forbidden handler
- * const permix = createPermix<Def>({ onForbidden: ... }).contextKey('permissions')
+ * new Elysia()
+ *   .onBeforeHandle(permix.setupMiddleware(({ context }) => ({
+ *     post: { create: true, read: true },
+ *   })))
+ *   .onBeforeHandle('/posts', permix.checkMiddleware('post.read'))
+ *   .get('/posts', () => ({ ok: true }))
+ *   .listen(3000)
  * ```
  *
  * @link https://permix.letstri.dev/docs/integrations/elysia

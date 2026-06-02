@@ -65,19 +65,30 @@ function buildPermix<D extends Definition, const Key extends string>(
 /**
  * Create a middleware factory that wires Permix into oRPC procedures.
  *
- * Call `.contextKey('name')` to set a custom context key (its literal type is
- * inferred automatically). Omit it to use the default key `'permix'`.
+ * Use `.contextKey('name')` to set a custom context key (its literal type is
+ * inferred automatically). Defaults to `'permix'`.
  *
  * @example
  * ```ts
- * // default key 'permix'
- * const permix = createPermix<Def>()
+ * import { os } from '@orpc/server'
+ * import { createPermix } from 'permix/orpc'
  *
- * // custom key – type of 'permissions' is inferred
- * const permix = createPermix<Def>().contextKey('permissions')
+ * const permix = createPermix<{
+ *   post: ['create']
+ * }>()
  *
- * // with custom error handler
- * const permix = createPermix<Def>({ onForbidden: ... }).contextKey('permissions')
+ * const orpc = os
+ *   .use(({ next }) => {
+ *     return next({
+ *       context: permix.setupContext({
+ *         post: { create: true }
+ *       }),
+ *     })
+ *   })
+ *
+ * export const createPost = orpc
+ *   .use(permix.checkMiddleware('post.create'))
+ *   .handler(() => { ... })
  * ```
  *
  * @link https://permix.letstri.dev/docs/integrations/orpc

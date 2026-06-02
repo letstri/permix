@@ -96,19 +96,26 @@ function buildPermix<D extends Definition>(
 /**
  * Create a middleware factory that wires Permix into Express routes.
  *
- * Call `.contextKey('name')` to set a custom request key. Omit it to use a
- * fresh `Symbol('permix')` as the default key.
+ * Use `.contextKey('name')` to set a custom request key (defaults to a unique
+ * `Symbol('permix')`).
  *
  * @example
  * ```ts
- * // default symbol key
- * const permix = createPermix<Def>()
+ * import express from 'express'
+ * import { createPermix } from 'permix/express'
  *
- * // custom string key
- * const permix = createPermix<Def>().contextKey('permissions')
+ * const permix = createPermix<{
+ *   post: ['create', 'read']
+ * }>()
  *
- * // with custom forbidden handler
- * const permix = createPermix<Def>({ onForbidden: ... }).contextKey('permissions')
+ * const app = express()
+ * app.use(permix.setupMiddleware(({ req }) => ({
+ *   post: { create: !!req.user, read: true },
+ * })))
+ *
+ * app.get('/posts', permix.checkMiddleware('post.read'), (req, res) => {
+ *   res.json({ ok: true })
+ * })
  * ```
  *
  * @link https://permix.letstri.dev/docs/integrations/express

@@ -13,9 +13,6 @@ export type NextFunction = () => MaybePromise<Response>
  */
 export type Middleware = (req: Request, next: NextFunction) => MaybePromise<Response>
 
-/** @alias Middleware */
-export type ServerMiddleware = Middleware
-
 export interface MiddlewareContext {
   req: Request
   next: NextFunction

@@ -37,10 +37,8 @@ function buildPermix<D extends Definition>(
   })
 
   /**
-   * Read the request-scoped Permix instance from a TanStack Start context
-   * object (the `context` argument of a `beforeLoad`, loader, server route, or
-   * server function). Returns `null` when no instance was set up for the
-   * request.
+   * Returns the request-scoped Permix instance from a TanStack Start context
+   * object, or `null` when not set up yet.
    */
   function get(context: Record<string | symbol, unknown> | null | undefined): PermixCore<D> | null {
     const instance = context?.[resolveKey()] as PermixCore<D> | undefined
@@ -49,7 +47,7 @@ function buildPermix<D extends Definition>(
 
   /**
    * Like {@link get}, but throws {@link PermixNotFoundError} when the instance
-   * is missing — usually a sign that `setupMiddleware` didn't run.
+   * is missing.
    */
   function getOrThrow(context: Record<string | symbol, unknown> | null | undefined): PermixCore<D> {
     const instance = get(context)
@@ -60,9 +58,8 @@ function buildPermix<D extends Definition>(
   }
 
   /**
-   * A TanStack Start **request** middleware that creates a fresh, request-scoped
-   * Permix instance, runs `setup()` with the resolved rules, and exposes the
-   * instance on the server request context (under the configured key).
+   * TanStack Start middleware that creates a request-scoped Permix instance,
+   * calls `setup()` with the resolved rules, and stores it in the server context.
    *
    * Register it globally via `createStart({ requestMiddleware: [...] })` so it
    * runs for every request, or attach it to specific server routes.
@@ -80,9 +77,8 @@ function buildPermix<D extends Definition>(
   }
 
   /**
-   * A TanStack Start **function** middleware that enforces a permission check
-   * before a server function's handler runs. Relies on `setupMiddleware`
-   * having populated the request context.
+   * TanStack Start middleware that enforces a permission check before the
+   * server function handler runs.
    *
    * @example
    * ```ts
@@ -108,8 +104,7 @@ function buildPermix<D extends Definition>(
   }
 
   /**
-   * Serialize the request's permission state. Convenience wrapper around
-   * `getOrThrow(context).dehydrate()` for handing rules to the client.
+   * Serialize the request's permission state for client hydration.
    */
   function dehydrate(context: Record<string | symbol, unknown> | null | undefined): DehydratedState<D> {
     return getOrThrow(context).dehydrate()
@@ -119,7 +114,6 @@ function buildPermix<D extends Definition>(
     return get(context)?.getRules() ?? null
   }
 
-  /** Same as the core `template` helper, re-exposed for convenience. */
   function template<T = void>(rules: Rules<D> | ((param: T) => Rules<D>)) {
     return createTemplate<D, T>(rules)
   }
@@ -142,26 +136,12 @@ function buildPermix<D extends Definition>(
 /**
  * Create a per-request Permix helper for TanStack Start.
  *
- * Unlike the Next.js integration (which relies on React's request-scoped
- * `cache()`), TanStack Start exposes a per-request **server context** that is
- * shared across global middleware, server routes, server functions, and the
- * router. This integration leans on that: `setupMiddleware` creates a fresh
- * core instance per request and injects it into the context, and `get()`
- * reads it back anywhere on the server.
+ * Uses TanStack Start's per-request server context to share a single Permix
+ * instance across global middleware, server routes, server functions, and the
+ * router for the lifetime of each request.
  *
- * Call `.contextKey('name')` to set a custom context key. Omit it to use a
- * fresh `Symbol('permix')` as the default key.
- *
- * Typical flow:
- *
- * 1. Create the helper once in a module (e.g. `lib/permix.ts`).
- * 2. Register `setupMiddleware()` as a global request middleware in
- *    `src/start.ts` so every request gets its own instance.
- * 3. Read it with `get(context)` inside `beforeLoad`, loaders, server routes,
- *    or server functions.
- * 4. Guard server functions declaratively with `checkMiddleware(...)`.
- * 5. Send `dehydrate(context)` to the client and hydrate it with
- *    `PermixHydrate` from `permix/react`.
+ * Use `.contextKey('name')` to set a custom context key (defaults to a unique
+ * `Symbol('permix')`).
  *
  * @example
  * ```ts
@@ -171,12 +151,6 @@ function buildPermix<D extends Definition>(
  * export const permix = createPermix<{
  *   post: ['create', 'read', 'update', 'delete']
  * }>()
- *
- * // custom string key
- * const permix = createPermix<Def>().contextKey('permissions')
- *
- * // with custom forbidden handler
- * const permix = createPermix<Def>({ onForbidden: ... }).contextKey('permissions')
  * ```
  *
  * ```ts
@@ -216,5 +190,5 @@ export function createPermix<D extends Definition>(options: PermixOptions<D> = {
   })
 }
 
-/** Convenience type for the object returned by {@link createPermix}. */
+/** Return type of {@link createPermix}. */
 export type TanStackStartPermix<D extends Definition> = ReturnType<typeof createPermix<D>>

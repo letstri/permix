@@ -60,12 +60,10 @@ export function hydrateRules<D extends Definition>(state: DehydratedState<D>): R
 }
 
 /**
- * Build a type-safe {@link Rules} object for a given {@link Definition}.
+ * Build a typed {@link Rules} object for a given {@link Definition}.
  *
- * `createRules` is the canonical way to construct the rules consumed by
- * `permix.setup()`. It returns the rules unchanged, acting as a typed factory
- * so you can declare permission rules in a separate location (with full type
- * inference) and reuse them later.
+ * Returns the input unchanged — useful for declaring rules in a separate
+ * location with full type inference.
  *
  * @example
  * ```ts

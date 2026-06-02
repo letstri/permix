@@ -6,7 +6,7 @@ import { createStore } from 'solid-js/store'
 import { Context, usePermix, usePermixContext } from './hooks'
 
 /**
- * Provider that provides the Permix context to your Solid components.
+ * Provides Permix context to the Solid component tree.
  *
  * @link https://permix.letstri.dev/docs/integrations/solid
  */

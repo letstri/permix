@@ -4,20 +4,15 @@ import { createPermix as createPermixCore } from '../core'
 import { PermixInvalidAccessControlError, PermixUnknownRoleError } from './errors'
 
 /**
- * Builds a Permix {@link import('../core/definitions').Definition} from a
- * better-auth access control statement, mapping every resource key to its
- * action tuple.
- *
- * `[...TStatements[K]]` strips the `readonly` modifier from the action tuple
- * so the result matches Permix's `Definition` leaf type (a mutable `Action[]`).
+ * Permix {@link import('../core/definitions').Definition} derived from a
+ * better-auth `AccessControl` statement, mapping every resource to its actions.
  */
 export type BetterAuthDefinition<TStatements extends Statements> = {
   [K in keyof TStatements & string]: [...TStatements[K]]
 }
 
 /**
- * A map of role name to better-auth {@link Role}, identical to the `roles`
- * object you pass to better-auth's `organization({ ac, roles })` plugin.
+ * A map of role name to better-auth {@link Role}.
  */
 export type BetterAuthRoles = Record<string, Role>
 
@@ -48,26 +43,20 @@ export interface CreateBetterAuthPermixOptions<
 }
 
 /**
- * The Permix instance returned by {@link createPermix}. Extends the core
- * Permix API with better-auth-specific metadata and a `roleToRules` helper.
+ * Extends the core Permix API with better-auth metadata and a `roleToRules`
+ * helper.
  */
 export interface BetterAuthPermix<
   TStatements extends Statements,
   Roles extends BetterAuthRoles | undefined = undefined,
 > extends PermixCore<BetterAuthDefinition<TStatements>> {
-  /**
-   * The original better-auth statement object (`ac.statements`).
-   */
+  /** The original `ac.statements` object. */
   readonly statements: TStatements
 
-  /**
-   * The resource names detected in the statement.
-   */
+  /** Resource names from the statement. */
   readonly resources: (keyof TStatements & string)[]
 
-  /**
-   * The roles provided to {@link createPermix}, or `undefined`.
-   */
+  /** Roles provided to {@link createPermix}, or `undefined`. */
   readonly roles: Roles
 
   /**
@@ -185,7 +174,7 @@ export function createPermix<
   }) as BetterAuthPermix<TStatements, Roles>
 }
 
-/** Convenience type for the object returned by {@link createPermix}. */
+/** Return type of {@link createPermix}. */
 export type BetterAuthPermixInstance<
   TStatements extends Statements,
   Roles extends BetterAuthRoles | undefined = undefined,

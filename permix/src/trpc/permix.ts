@@ -67,19 +67,34 @@ function buildPermix<D extends Definition, const Key extends string>(
 /**
  * Create a middleware factory that wires Permix into tRPC procedures.
  *
- * Call `.contextKey('name')` to set a custom context key (its literal type is
- * inferred automatically). Omit it to use the default key `'permix'`.
+ * Use `.contextKey('name')` to set a custom context key (its literal type is
+ * inferred automatically). Defaults to `'permix'`.
  *
  * @example
  * ```ts
- * // default key 'permix'
- * const permix = createPermix<Def>()
+ * import { initTRPC } from '@trpc/server'
+ * import { createPermix } from 'permix/trpc'
  *
- * // custom key – type of 'permissions' is inferred
- * const permix = createPermix<Def>().contextKey('permissions')
+ * const permix = createPermix<{
+ *   post: ['create', 'read']
+ * }>()
  *
- * // with custom error handler
- * const permix = createPermix<Def>({ onForbidden: ... }).contextKey('permissions')
+ * const t = initTRPC.context<Context>().create()
+ *
+ * const trpc = t.procedure
+ *   .use(({ next }) => {
+ *     return next({
+ *       ctx: permix.setupContext({
+ *         post: { create: true },
+ *       }),
+ *     })
+ *   })
+ *
+ * export const router = trpc.router({
+ *   createPost: trpc
+ *     .use(permix.checkMiddleware('post.create'))
+ *     .mutation(({ ctx }) => { ... }),
+ * })
  * ```
  *
  * @link https://permix.letstri.dev/docs/integrations/trpc
