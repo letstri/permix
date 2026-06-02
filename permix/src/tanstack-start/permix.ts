@@ -1,3 +1,4 @@
+import type { FunctionServerResultWithContext } from '@tanstack/react-start'
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
 import type { Definition } from '../core/definitions'
@@ -15,6 +16,10 @@ export interface SetupContext {
   request: Request
 }
 
+export interface MiddlewareContext {
+  next: (...args: any[]) => any
+}
+
 export interface PermixOptions<D extends Definition> {
   /**
    * Called when a `checkMiddleware` denies the request. By default a
@@ -23,7 +28,7 @@ export interface PermixOptions<D extends Definition> {
    * Throw a `redirect()` / `Response`, or your own error here to customise the
    * behaviour.
    */
-  onForbidden?: (params: CheckContext<D>) => MaybePromise<void>
+  onForbidden?: (params: CheckContext<D> & MiddlewareContext) => MaybePromise<FunctionServerResultWithContext<any, any, any, any, any>>
 }
 
 function buildPermix<D extends Definition>(
@@ -93,11 +98,15 @@ function buildPermix<D extends Definition>(
     return createMiddleware({ type: 'function' }).server(async ({ next, context }) => {
       const permix = getOrThrow(context as unknown as Record<string | symbol, unknown>)
 
-      if (!permix.check(...args)) {
-        await onForbidden(createCheckContext<D>(...args))
+      if (permix.check(...args)) {
+        return next()
       }
-
-      return next()
+      else {
+        return await onForbidden({
+          next,
+          ...createCheckContext<D>(...args),
+        })
+      }
     }) as unknown as ReturnType<typeof createMiddleware>
   }
 

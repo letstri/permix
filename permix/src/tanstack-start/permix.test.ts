@@ -184,14 +184,16 @@ describe('tanstack-start createPermix', () => {
     })
 
     it('calls a custom onForbidden handler', async () => {
-      const onForbidden = vi.fn()
+      const onForbidden = vi.fn(({ next }: { next: (...args: any[]) => any }) => {
+        return next()
+      })
       const permix = createPermix<PermissionsDefinition>({ onForbidden })
 
       const middleware = permix.checkMiddleware('post.create')
       const run = runServer(middleware, { context: { [permix.key]: createInstance({ create: false }) } })
       await run.result
 
-      expect(onForbidden).toHaveBeenCalledWith({ path: 'post.create', data: undefined })
+      expect(onForbidden).toHaveBeenCalledWith({ next: run.next, path: 'post.create', data: undefined })
       expect(run.next).toHaveBeenCalledOnce()
     })
 
