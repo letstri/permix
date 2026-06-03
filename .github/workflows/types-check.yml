@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  eslint:
+  types:
     runs-on: ubuntu-latest
 
     steps:
@@ -28,6 +28,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
 
       - name: Check types
         run: pnpm run check-types
