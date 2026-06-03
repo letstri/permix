@@ -9,17 +9,17 @@ export default function App() {
     setupFeatureFlags()
   }, [])
 
-  if (!check('betaFeatures', 'newUI')) {
+  if (!check('betaFeatures.newUI')) {
     return null
   }
 
   async function handleApiCall() {
-    if (!permix.check('betaFeatures', 'experimentalAPI')) {
+    if (!permix.check('betaFeatures.experimentalAPI')) {
       return
     }
 
     // Call experimental API...
-    // eslint-disable-next-line no-console
+
     console.log('Calling experimental API...')
   }
 

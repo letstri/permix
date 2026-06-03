@@ -30,8 +30,8 @@ watch(user, (user) => {
       </h2>
       Can I edit the post where authorId is
       {{ post.authorId }}?<br>
-      {{ check('post', 'edit', post) ? 'Yes' : 'No' }}<br>
-      <Check entity="post" :action="['edit', 'read']" :data="post">
+      {{ check('post.edit', post) ? 'Yes' : 'No' }}<br>
+      <Check path="post.edit" :data="post">
         I can edit a post inside the Check component
         <template #otherwise>
           I don't have permission to edit a post inside the Check component

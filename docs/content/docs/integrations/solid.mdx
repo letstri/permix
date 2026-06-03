@@ -75,11 +75,10 @@ And then you can use the `Check` component in your components:
 export default function Page() {
   return (
     <Check
-      entity="entity"
-      action="action"
+      path="entity.action"
       data={data}
-      otherwise={<p>Will show this if a user doesn't have permission</p>} // Will show this if a user doesn't have permission
-      reverse // Will flip the logic of the permission check
+      otherwise={<p>Will show this if a user doesn't have permission</p>}
+      reverse
     >
       Will show this if a user has permission
     </Check>
@@ -104,7 +103,7 @@ export default function Page() {
   const post = usePost()
   const { check, isReady } = usePermix(permix)
 
-  const canEdit = () => check('post', 'edit', post)
+  const canEdit = () => check('post.edit', post)
 
   return (
     <>
@@ -117,7 +116,7 @@ export default function Page() {
             ) : (
               <p>You don't have permission to edit this post</p>
             )}
-            <Check entity="post" action="create">
+            <Check path="post.create">
               Can I create a post inside the Check component?
             </Check>
           </div>
@@ -127,6 +126,38 @@ export default function Page() {
   )
 }
 ```
+
+</Step>
+
+<Step>
+
+## Hydration
+
+For SSR, use `PermixHydrate` with the dehydrated server state, then call `permix.setup()` on the client to restore function-based rules:
+
+```tsx title="App.tsx"
+import { onMount } from 'solid-js'
+import type { DehydratedState } from 'permix'
+import { PermixHydrate, PermixProvider } from 'permix/solid'
+import { permix } from './lib/permix'
+import { getClientRules } from './lib/permissions'
+
+export function App(props: { dehydratedState: DehydratedState<any>, children: any }) {
+  onMount(() => {
+    permix.setup(getClientRules())
+  })
+
+  return (
+    <PermixProvider permix={permix}>
+      <PermixHydrate state={props.dehydratedState}>
+        {props.children}
+      </PermixHydrate>
+    </PermixProvider>
+  )
+}
+```
+
+See the [Hydration guide](/docs/guide/hydration).
 
 </Step>
 

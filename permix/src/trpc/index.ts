@@ -1,1 +1,8 @@
-export { createPermix, type PermixOptions } from './create-permix'
+export * from './permix'
+
+declare global {
+  interface Disposable {
+  }
+  interface AsyncDisposable {
+  }
+}

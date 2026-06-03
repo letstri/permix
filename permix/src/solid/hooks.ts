@@ -1,11 +1,11 @@
-import type { Permix, PermixDefinition, PermixRules } from '../core/create-permix'
+import type { Definition, Permix, Rules } from '../core'
 import { createContext, useContext } from 'solid-js'
-import { checkWithRules, getRules, validatePermix } from '../core/create-permix'
+import { createCheck } from '../core'
 
-export interface PermixContext<T extends PermixDefinition> {
+export interface PermixContext<T extends Definition> {
   permix: Permix<T>
   isReady: boolean
-  rules?: PermixRules<T>
+  rules: Rules<T> | null
 }
 
 export const Context = createContext<PermixContext<any>>(null!)
@@ -21,21 +21,15 @@ export function usePermixContext() {
 }
 
 /**
- * Hook that provides the Permix reactive methods to your Solid components.
+ * Access Permix check and readiness state inside a Solid component.
  *
  * @link https://permix.letstri.dev/docs/integrations/solid
  */
-
-export function usePermix<T extends PermixDefinition>(permix: Permix<T>) {
-  validatePermix(permix)
-
+export function usePermix<T extends Definition>(permix: Pick<Permix<T>, 'getRules' | 'check'>) {
   const context = usePermixContext()
 
-  validatePermix(context.permix)
-
-  const check: typeof permix.check = (...args) => {
-    return checkWithRules(context.rules ?? getRules(context.permix), ...args)
-  }
+  const check: Permix<T>['check'] = (...args) =>
+    createCheck<T>(() => (context.rules ?? permix.getRules()) as Rules<T> | null)(...args)
 
   return { check, isReady: () => context.isReady }
 }

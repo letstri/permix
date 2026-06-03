@@ -4,10 +4,10 @@ import { createPermix } from 'permix'
 import { createComponents } from 'permix/react'
 
 export const permix = createPermix<{
-  post: {
-    dataType: Post
-    action: 'read' | 'edit'
-  }
+  post: [
+    'read',
+    { name: 'edit', type: Post },
+  ]
 }>()
 
 export function setupPermix(user: User) {

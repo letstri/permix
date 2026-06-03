@@ -36,9 +36,7 @@ To create a base instance, you need to provide a schema as a generic type to `cr
 import { createPermix } from 'permix'
 
 export const permix = createPermix<{
-  post: {
-    action: 'create' | 'read' | 'update' | 'delete'
-  }
+  post: ['create', 'read', 'update', 'delete']
 }>()
 
 // ...
@@ -79,7 +77,7 @@ export function setupPermissions() {
 After setup, you can use `check` method to check available permissions:
 
 ```ts
-permix.check('post', 'create') // true
+permix.check('post.create') // true
 ```
 
 </Step>
@@ -90,12 +88,13 @@ permix.check('post', 'create') // true
 
 That's it! 🎉
 
-You've now got a basic setup of Permix. The next step is to learn more about 3 core concepts of Permix:
+You've now got a basic setup of Permix. Next, read the core guides:
 
-- [Instance](/docs/guide/instance)
-- [Setup](/docs/guide/setup)
-- [Check](/docs/guide/check)
-- Of course, do not hesitate to read other guide pages.
+- [Instance](/docs/guide/instance) — schema, `ValidateDefinition`, `MergePermix`, `$inferPath`
+- [Setup](/docs/guide/setup) — rules, `createRules`, type-based callbacks
+- [Check](/docs/guide/check) — paths, `~all` / `~any`, errors
+- [Template](/docs/guide/template) — reusable role presets
+- [Hydration](/docs/guide/hydration) and [Ready state](/docs/guide/ready) — SSR and async bootstrap
 
 </Step>
 
@@ -119,6 +118,10 @@ Integration with Vue via plugin and composable.
 Integration with Node.js via middleware.
 </Card>
 
+<Card href="/docs/integrations/server" title="Server">
+Integration with native Request and Response handlers.
+</Card>
+
 <Card href="/docs/integrations/hono" title="Hono">
 Integration with Hono via middleware.
 </Card>
@@ -129,6 +132,42 @@ Integration with Express via middleware.
 
 <Card href="/docs/integrations/trpc" title="tRPC">
 Integration with tRPC via middleware.
+</Card>
+
+<Card href="/docs/integrations/next" title="Next.js">
+Integration with Next.js App Router.
+</Card>
+
+<Card href="/docs/integrations/tanstack-start" title="TanStack Start">
+Integration with TanStack Start.
+</Card>
+
+<Card href="/docs/integrations/solid" title="Solid">
+Integration with Solid via provider and hook.
+</Card>
+
+<Card href="/docs/integrations/svelte" title="Svelte">
+Integration with Svelte via provider and hook.
+</Card>
+
+<Card href="/docs/integrations/orpc" title="oRPC">
+Integration with oRPC via middleware.
+</Card>
+
+<Card href="/docs/integrations/fastify" title="Fastify">
+Integration with Fastify via plugin.
+</Card>
+
+<Card href="/docs/integrations/elysia" title="Elysia">
+Integration with Elysia via middleware.
+</Card>
+
+<Card href="/docs/integrations/drizzle" title="Drizzle">
+Schema-driven permissions from Drizzle tables.
+</Card>
+
+<Card href="/docs/integrations/effect" title="Effect">
+Integration with Effect services and layers.
 </Card>
 
 </Cards>

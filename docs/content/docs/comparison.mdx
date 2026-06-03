@@ -19,4 +19,46 @@ Permix is a library that provides a way to manage permissions in your applicatio
 | Events | ✅ | ❌ |
 | Simple DX | ✅ Create instance, use built-in integrations | ❌ In CASL you need to manage a lot of stuff manually (type-safe, hydration, etc.) |
 | Modernity | ✅ Uses modern updates and features of each lib and framework | ❌ CASL was created a long time ago and hasn't updated the core |
-| Size | ~2.5kb | ~21kb (ability) + ~2.5kb (framework adapter) |
+| Size | **2.64 kB** gzip (core) [react 0.86 kB, vue 0.87 kB, solid 0.82 kB, next 1.00 kB, tanstack-start 2.05 kB, svelte ~2.17 kB, …] | **6.17 kB** min+gzip (core) [@casl/react 0.62 kB] |
+
+Sizes are hard numbers from published builds — see [Bundle size](#bundle-size). Bracketed values are integration adapters imported on top of core.
+
+## Bundle size
+
+All figures are **gzip**. Measured on **2026-06-02** from production builds.
+
+### Permix
+
+Built with `pnpm run build` in the `permix` package (`tsdown` for all entries except Svelte).
+
+| Entry | gzip | Notes |
+| --- | ---: | --- |
+| **`permix` (core)** | **2.64 kB** | `dist/core/index.mjs` (7.96 kB raw) |
+| `permix/react` | 0.86 kB | adapter |
+| `permix/vue` | 0.87 kB | adapter |
+| `permix/solid` | 0.82 kB | adapter |
+| `permix/svelte` | ~2.17 kB | adapter (`dist/svelte/`, `svelte-package` build) |
+| `permix/next` | 1.00 kB | adapter |
+| `permix/tanstack-start` | 2.05 kB | adapter |
+| `permix/node` | 0.95 kB | adapter |
+| `permix/server` | 1.10 kB | adapter |
+| `permix/express` | 0.91 kB | adapter |
+| `permix/hono` | 0.88 kB | adapter |
+| `permix/fastify` | 1.04 kB | adapter |
+| `permix/elysia` | 0.88 kB | adapter |
+| `permix/trpc` | 0.96 kB | adapter |
+| `permix/orpc` | 0.92 kB | adapter |
+| `permix/effect` | 1.28 kB | adapter |
+| `permix/drizzle` | 0.89 kB | adapter |
+| `permix/drizzle/legacy` | 0.83 kB | adapter |
+
+Integration entries import `../core/index.mjs`, so a typical app ships **core + adapter** (for example React ≈ **2.64 + 0.86 ≈ 3.50 kB** gzip of published chunks before your bundler minifies further).
+
+### CASL (`@casl/ability@7.0.0`, `@casl/react@7.0.0`)
+
+| Entry | gzip | Notes |
+| --- | ---: | --- |
+| **`@casl/ability` (core)** | **6.17 kB** | minified + gzip, esbuild bundle of `createMongoAbility([])` |
+| `@casl/react` | 0.62 kB | published `dist/esm/index.mjs` only (adapter; ability loaded separately) |
+
+CASL core figure reflects what most apps ship after bundling and minification, not a single prebuilt file on disk.

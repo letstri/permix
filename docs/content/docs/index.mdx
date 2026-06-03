@@ -40,9 +40,7 @@ That is why you only need to write the following code to get started:
 import { createPermix } from 'permix'
 
 const permix = createPermix<{
-  post: {
-    action: 'read'
-  }
+  post: ['read']
 }>()
 
 permix.setup({
@@ -51,13 +49,12 @@ permix.setup({
   }
 })
 
-const canReadPost = permix.check('post', 'read') // true
+const canReadPost = permix.check('post.read') // true
 ```
 
 It looks too simple, so here's a more interesting example:
 
 ```ts twoslash
-import type { PermixDefinition } from 'permix'
 import { createPermix } from 'permix'
 
 // You can take types from your database
@@ -80,16 +77,19 @@ interface Comment {
 }
 
 // Create definition to describe your permissions
-type PermissionsDefinition = PermixDefinition<{
-  post: {
-    dataType: Post
-    action: 'create' | 'read' | 'update' | 'delete'
-  }
-  comment: {
-    dataType: Comment
-    action: 'create' | 'read' | 'update'
-  }
-}>
+type PermissionsDefinition = {
+  post: [
+    { name: 'create', type: Post },
+    { name: 'read', type: Post },
+    { name: 'update', type: Post },
+    { name: 'delete', type: Post },
+  ]
+  comment: [
+    { name: 'create', type: Comment },
+    { name: 'read', type: Comment },
+    { name: 'update', type: Comment },
+  ]
+}
 
 const permix = createPermix<PermissionsDefinition>()
 
@@ -145,7 +145,7 @@ async function setupPermix() {
 setupPermix()
 
 // Check if a user has permission to do something
-const canCreatePost = permix.check('post', 'create')
+const canCreatePost = permix.check('post.create')
 
 async function getComment() {
   // Imagine that this function is fetching comment from database
@@ -158,7 +158,7 @@ async function getComment() {
 
 const comment = await getComment()
 
-const canUpdateComment = permix.check('comment', 'update', comment)
+const canUpdateComment = permix.check('comment.update', comment)
 ```
 
 ## Benefits
@@ -169,8 +169,21 @@ What are the benefits of using Permix?
 - Single source of truth for your entire app
 - Perfect match for TypeScript monorepos
 - Zero dependencies
-- Useful methods for specific cases
+- Built-in SSR via [dehydrate / hydrate](/docs/guide/hydration)
+- Relationship-based rules with closures — see [ReBAC patterns](/docs/guide/rebac)
 - Large number of integrations for different frameworks, such as [React](/docs/integrations/react), [Vue](/docs/integrations/vue), [Express](/docs/integrations/express), and more.
+
+## Core concepts
+
+| Topic | Guide |
+| --- | --- |
+| Schema and instance API | [Instance](/docs/guide/instance) |
+| Assigning rules | [Setup](/docs/guide/setup) |
+| Checking permissions | [Check](/docs/guide/check) |
+| Role presets | [Template](/docs/guide/template) |
+| SSR transfer | [Hydration](/docs/guide/hydration) |
+| Async bootstrap | [Ready state](/docs/guide/ready) |
+| Permission change hooks | [Events](/docs/guide/events) |
 
 ## Ready?
 

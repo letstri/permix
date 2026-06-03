@@ -3,14 +3,15 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "tsx main.ts"
+    "start": "tsx main.ts",
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "express": "catalog:",
+    "express": "^5.2.1",
     "permix": "workspace:*"
   },
   "devDependencies": {
-    "@types/express": "catalog:",
-    "tsx": "catalog:"
+    "@types/express": "^5.0.6",
+    "tsx": "^4.22.4"
   }
 }

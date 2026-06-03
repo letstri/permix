@@ -1,9 +1,34 @@
-import type { SetupContext, SlotsType, VNode } from 'vue'
-import type { Permix, PermixDefinition } from '../core/create-permix'
-import type { CheckFunctionObject } from '../core/params'
+import type { PropType, SetupContext, SlotsType, VNode } from 'vue'
+import type { CheckArgs, Definition, DehydratedState, Permix } from '../core'
+import { defineComponent, onUnmounted, watch } from 'vue'
 import { usePermix } from './composables'
+import { providePermixContext, usePermixContext } from './context'
 
-export type CheckProps<Definition extends PermixDefinition, K extends keyof Definition> = CheckFunctionObject<Definition, K> & {
+/**
+ * Provides Permix context to the Vue component tree.
+ *
+ * @link https://permix.letstri.dev/docs/integrations/vue
+ */
+export const PermixProvider = defineComponent({
+  name: 'PermixProvider',
+  props: {
+    permix: {
+      type: Object as PropType<Permix<any>>,
+      required: true,
+    },
+  },
+  setup(props, { slots }) {
+    const cleanup = providePermixContext(props.permix)
+
+    onUnmounted(cleanup)
+
+    return () => slots.default?.()
+  },
+})
+
+export interface CheckProps<D extends Definition> {
+  path: CheckArgs<D>[0]
+  data?: CheckArgs<D>[1]
   reverse?: boolean
 }
 
@@ -12,21 +37,46 @@ type CheckContext = SetupContext<any, SlotsType<{
   otherwise?: void
 }>>
 
-export interface PermixComponents<Definition extends PermixDefinition> {
-  Check: <K extends keyof Definition>(
-    props: CheckProps<Definition, K>,
+export interface PermixComponents<D extends Definition> {
+  Check: (
+    props: CheckProps<D>,
     context: CheckContext,
   ) => VNode | VNode[] | undefined
 }
 
-export function createComponents<Definition extends PermixDefinition>(permix: Permix<Definition>): PermixComponents<Definition> {
-  function Check<K extends keyof Definition>(
-    props: CheckProps<Definition, K>,
+/**
+ * Restores dehydrated server permissions on the client.
+ *
+ * @link https://permix.letstri.dev/docs/integrations/vue
+ */
+export const PermixHydrate = defineComponent({
+  name: 'PermixHydrate',
+  props: {
+    state: {
+      type: Object as PropType<DehydratedState<any>>,
+      required: true,
+    },
+  },
+  setup(props, { slots }) {
+    const context = usePermixContext()
+
+    const hydrate = () => context.value.permix.hydrate(props.state)
+
+    hydrate()
+    watch(() => props.state, hydrate)
+
+    return () => slots.default?.()
+  },
+})
+
+export function createComponents<D extends Definition>(permix: Pick<Permix<D>, 'getRules' | 'check'>): PermixComponents<D> {
+  function Check(
+    props: CheckProps<D>,
     context: CheckContext,
   ) {
     const { check } = usePermix(permix)
 
-    const hasPermission = check(props.entity, props.action, props.data)
+    const hasPermission = check(...([props.path, props.data] as unknown as CheckArgs<D>))
     return props.reverse
       ? (hasPermission ? context.slots.otherwise?.() : context.slots.default?.())
       : (hasPermission ? context.slots.default?.() : context.slots.otherwise?.())
@@ -34,12 +84,8 @@ export function createComponents<Definition extends PermixDefinition>(permix: Pe
 
   Check.inheritAttrs = false
   Check.props = {
-    entity: {
+    path: {
       type: String,
-      required: true,
-    },
-    action: {
-      type: [String, Array],
       required: true,
     },
     data: {

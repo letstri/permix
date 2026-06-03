@@ -8,19 +8,21 @@ description: Learn how to use the `isReady()` method to check if permissions are
 Sometimes you need to know when permissions are ready to use. For example, you might want to wait for permissions to be ready before rendering a component. That's where the `isReady()` and `isReadyAsync()` methods come in.
 
 <Callout type="warn">
-Note that `isReady()` and `isReadyAsync()` will always return `false` on server-side. It only becomes `true` after the first successful call to `setup()` on the client.
+`hydrate()` alone does **not** make the instance ready. You must call `setup()` after hydration to restore function-based rules and mark the instance as ready.
 </Callout>
 
 ## Usage
 
 ### Basic
 
-Permix provides an `isReady()` method to check if permissions have been properly initialized on the client side:
+Permix provides an `isReady()` method to check if permissions have been properly initialized:
 
 ```ts twoslash
 import { createPermix } from 'permix'
 
-const permix = createPermix()
+const permix = createPermix<{
+  post: ['create', 'read']
+}>()
 
 console.log(permix.isReady()) // false
 
@@ -42,12 +44,14 @@ If you need to wait for permissions to be ready in an async context, you can use
 ```ts
 import { createPermix } from 'permix'
 
-const permix = createPermix()
+const permix = createPermix<{
+  post: ['create']
+}>()
 
 async function init() {
   await permix.isReadyAsync()
   // Permissions are now ready to use
-  const canCreate = permix.check('post', 'create')
+  const canCreate = permix.check('post.create')
 }
 ```
 
@@ -56,31 +60,48 @@ async function init() {
 This is particularly useful in SSR applications when using function-based permissions, since the dehydration process converts all function permissions to `false` until they are properly rehydrated on the client.
 
 <Callout>
-Read more about [hydration](/guide/hydration) to learn how to transfer permissions from the server to the client.
+Read more about [hydration](/docs/guide/hydration) to learn how to transfer permissions from the server to the client.
 </Callout>
 
 ```ts
-import { dehydrate, hydrate, createPermix } from 'permix'
-import { permix } from './permix'
+// Server instance
+import { createPermix } from 'permix'
 
-permix.setup({
+const serverPermix = createPermix<{
+  post: [{ name: 'read', type: { isPublic: boolean } }]
+}>()
+
+serverPermix.setup({
   post: {
-    create: true,
-    read: post => post.isPublic
-  }
+    read: post => !!post?.isPublic,
+  },
 })
 
-// Dehydrate permissions on the server
-const state = dehydrate(permix)
-// { post: { create: true, read: false } }
+const state = serverPermix.dehydrate()
+// { post: { read: false } } — functions evaluated without data
 
-// Rehydrate permissions on the client
-hydrate(permix, state)
+// Client instance (separate from the server)
+const clientPermix = createPermix<{
+  post: [{ name: 'read', type: { isPublic: boolean } }]
+}>()
 
-const canRead = permix.check('post', 'read', { isPublic: true }) // false
+clientPermix.hydrate(state)
 
-permix.hook('ready', (state) => {
-  const canRead = permix.check('post', 'read', { isPublic: true })
-  console.log(canRead) // true
+console.log(clientPermix.isReady()) // false
+// Boolean rules from hydration work immediately:
+console.log(clientPermix.check('post.read')) // false
+
+// Restore function-based rules and mark the instance ready
+clientPermix.setup({
+  post: {
+    read: post => !!post?.isPublic,
+  },
 })
+
+console.log(clientPermix.isReady()) // true
+console.log(clientPermix.check('post.read', { isPublic: true })) // true
 ```
+
+<Callout>
+The `ready` event fires **once** on the first `setup()` (or when initial rules are passed to `createPermix`). Register `permix.hook('ready', ...)` before that first `setup()` if you need to react to readiness — not after a later `setup()` on an already-ready instance.
+</Callout>

@@ -11,10 +11,9 @@ export default function App() {
   }, [])
 
   function createPost() {
-    if (!permix.check('post', PostPermission.Create)) // You still can use the permix instance to check permissions
+    if (!permix.check(`post.${PostPermission.Create}`)) // You still can use the permix instance to check permissions
       return
 
-    // eslint-disable-next-line no-console
     console.log('Creating a post')
   }
 
@@ -22,8 +21,8 @@ export default function App() {
     <div>
       Can I create a post?
       {' '}
-      {check('post', PostPermission.Create).toString()}
-      <Check entity="post" action={PostPermission.Create} otherwise={<div>I can't create a post</div>}>
+      {check(`post.${PostPermission.Create}`).toString()}
+      <Check path={`post.${PostPermission.Create}`} otherwise={<div>I can't create a post</div>}>
         <div>I can create a post</div>
       </Check>
       <button type="button" onClick={createPost}>Create a post</button>

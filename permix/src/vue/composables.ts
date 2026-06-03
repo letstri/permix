@@ -1,35 +1,18 @@
-import type { Permix, PermixDefinition } from '../core/create-permix'
-import { computed, inject } from 'vue'
-import { checkWithRules, getRules, validatePermix } from '../core/create-permix'
-import { PERMIX_CONTEXT_KEY } from './plugin'
-
-function usePermixContext() {
-  const context = inject(PERMIX_CONTEXT_KEY)
-
-  if (!context) {
-    throw new Error('[Permix]: Looks like you forgot to install the plugin')
-  }
-
-  return context
-}
+import type { Definition, Permix, Rules } from '../core'
+import { computed } from 'vue'
+import { createCheck } from '../core'
+import { usePermixContext } from './context'
 
 /**
- * Composable that provides the Permix context to your Vue components.
+ * Access Permix check and readiness state inside a Vue component.
  *
  * @link https://permix.letstri.dev/docs/integrations/vue
  */
-export function usePermix<T extends PermixDefinition>(
-  permix: Permix<T>,
-) {
-  validatePermix(permix)
-
+export function usePermix<T extends Definition>(permix: Pick<Permix<T>, 'getRules' | 'check'>) {
   const context = usePermixContext()
 
-  validatePermix(context.value.permix)
-
-  const check: typeof permix.check = (...args) => {
-    return checkWithRules(context.value.rules ?? getRules(context.value.permix), ...args)
-  }
+  const check: Permix<T>['check'] = (...args) =>
+    createCheck<T>(() => (context.value.rules ?? permix.getRules()) as Rules<T> | null)(...args)
 
   return { check, isReady: computed(() => context.value.isReady) }
 }

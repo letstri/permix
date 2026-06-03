@@ -1,19 +1,17 @@
-import type { PermixDefinition, PermixRules } from 'permix'
+import type { Rules, ValidateDefinition } from 'permix'
 
-export type PermissionsDefinition = PermixDefinition<{
-  user: {
-    action: 'read' | 'create'
-  }
+export type PermissionsDefinition = ValidateDefinition<{
+  user: ['read', 'create']
 }>
 
-const adminPermissions: PermixRules<PermissionsDefinition> = {
+const adminPermissions: Rules<PermissionsDefinition> = {
   user: {
     read: true,
     create: true,
   },
 }
 
-const userPermissions: PermixRules<PermissionsDefinition> = {
+const userPermissions: Rules<PermissionsDefinition> = {
   user: {
     read: true,
     create: false,

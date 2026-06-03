@@ -4,12 +4,8 @@ import { getUser } from './user'
 
 // Define permix instance with feature flags
 export const permix = createPermix<{
-  darkMode: {
-    action: 'enabled'
-  }
-  betaFeatures: {
-    action: 'newUI' | 'experimentalAPI'
-  }
+  darkMode: ['enabled']
+  betaFeatures: ['newUI', 'experimentalAPI']
 }>()
 
 // Not necessary, but you can use components to check permissions

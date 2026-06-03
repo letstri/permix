@@ -8,10 +8,7 @@ import '@testing-library/jest-dom/vitest'
 describe('permix react', () => {
   it('should work with custom hook', () => {
     const permix = createPermix<{
-      post: {
-        dataType: { id: string }
-        action: 'create' | 'read'
-      }
+      post: ['create', 'read']
     }>()
 
     permix.setup({
@@ -29,16 +26,13 @@ describe('permix react', () => {
       ),
     })
 
-    expect(result.current.check('post', 'create')).toBe(true)
-    expect(result.current.check('post', 'read')).toBe(false)
+    expect(result.current.check('post.create')).toBe(true)
+    expect(result.current.check('post.read')).toBe(false)
   })
 
   it('should work with DOM rerender', async () => {
     const permix = createPermix<{
-      post: {
-        dataType: { id: string }
-        action: 'create' | 'read'
-      }
+      post: [{ name: 'create', type: { id: string } }, 'read']
     }>()
 
     permix.setup({
@@ -55,8 +49,8 @@ describe('permix react', () => {
 
       return (
         <div>
-          <span data-testid="create">{check('post', 'create', post).toString()}</span>
-          <span data-testid="read">{check('post', 'read').toString()}</span>
+          <span data-testid="create">{check('post.create', post).toString()}</span>
+          <span data-testid="read">{check('post.read').toString()}</span>
         </div>
       )
     }
@@ -85,10 +79,7 @@ describe('permix react', () => {
 
   it('should check isReady', async () => {
     const permix = createPermix<{
-      post: {
-        dataType: { id: string }
-        action: 'create' | 'read'
-      }
+      post: ['create', 'read']
     }>()
 
     const TestComponent = () => {
@@ -118,15 +109,12 @@ describe('permix react', () => {
 
   it('should throw error when PermixProvider is missing', () => {
     const permix = createPermix<{
-      post: {
-        dataType: { id: string }
-        action: 'create' | 'read'
-      }
+      post: [{ name: 'create', type: { id: string } }, 'read']
     }>()
 
     const TestComponent = () => {
       const { check } = usePermix(permix)
-      return <div>{check('post', 'create').toString()}</div>
+      return <div>{check('post.create').toString()}</div>
     }
 
     expect(() => render(<TestComponent />)).toThrow()

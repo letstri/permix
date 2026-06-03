@@ -5,12 +5,18 @@ import { getUser } from './user'
 
 // Define permix instance
 export const permix = createPermix<{
-  post: {
-    action: PostPermission
-  }
-  user: {
-    action: UserPermission
-  }
+  post: [
+    PostPermission.Create,
+    PostPermission.Read,
+    PostPermission.Update,
+    PostPermission.Delete,
+  ]
+  user: [
+    UserPermission.Create,
+    UserPermission.Read,
+    UserPermission.Update,
+    UserPermission.Delete,
+  ]
 }>()
 
 // Not necessary, but you can use components to check permissions

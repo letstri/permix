@@ -1,15 +1,57 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import { createPermix } from '../core'
-import { createComponents } from './components'
-import { permixPlugin } from './plugin'
+import { createPermix, PermixRuleNotDefinedError } from '../core'
+import { createComponents, PermixHydrate, PermixProvider } from './components'
+import { usePermix } from './composables'
+import { mountWithPermix } from './test-utils'
 
 describe('components', () => {
+  it('should check hydration', () => {
+    const permixServer = createPermix<{
+      post: ['create', 'read']
+    }>()
+
+    permixServer.setup({
+      post: {
+        create: true,
+        read: false,
+      },
+    })
+
+    const dehydrated = permixServer.dehydrate()
+
+    const permixClient = createPermix<{
+      post: ['create', 'read']
+    }>()
+
+    const TestComponent = {
+      template: '<div>{{ check(\'post.create\') }}</div>',
+      setup() {
+        const { check } = usePermix(permixClient)
+        return { check }
+      },
+    }
+
+    const wrapper = mount({
+      template: `
+        <PermixProvider :permix="permix">
+          <PermixHydrate :state="dehydrated">
+            <TestComponent />
+          </PermixHydrate>
+        </PermixProvider>
+      `,
+      components: { PermixProvider, PermixHydrate, TestComponent },
+      setup() {
+        return { permix: permixClient, dehydrated }
+      },
+    })
+
+    expect(wrapper.text()).toBe('true')
+  })
+
   it('should work with Check component', () => {
     const permix = createPermix<{
-      post: {
-        action: 'create'
-      }
+      post: ['create']
     }>()
 
     permix.setup({
@@ -24,7 +66,7 @@ describe('components', () => {
 
     const TestPost = {
       template: `
-        <Check entity="post" action="create">
+        <Check path="post.create">
           <div>{{ text }}</div>
         </Check>
       `,
@@ -34,21 +76,14 @@ describe('components', () => {
       },
     }
 
-    const wrapper = mount(TestPost, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper = mountWithPermix(TestPost, permix)
 
     expect(wrapper.text()).toContain(text)
   })
 
-  it('should work with Check component and entity', () => {
+  it('should work with Check component and data', () => {
     const permix = createPermix<{
-      post: {
-        dataType: { authorId: string }
-        action: 'edit'
-      }
+      post: [{ name: 'edit', type: { authorId: string } }]
     }>()
 
     permix.setup({
@@ -64,7 +99,7 @@ describe('components', () => {
 
     const TestPost1 = {
       template: `
-        <Check entity="post" action="edit" :data="{ authorId: '1' }">
+        <Check path="post.edit" :data="{ authorId: '1' }">
           <div data-testid="post-can-be-created">{{ text }}</div>
         </Check>
       `,
@@ -74,17 +109,13 @@ describe('components', () => {
       },
     }
 
-    const wrapper1 = mount(TestPost1, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper1 = mountWithPermix(TestPost1, permix)
 
     expect(wrapper1.html()).toContain(canText)
 
     const TestPost2 = {
       template: `
-        <Check entity="post" action="edit" :data="{ authorId: '2' }">
+        <Check path="post.edit" :data="{ authorId: '2' }">
           <div data-testid="post-can-be-created">{{ canText }}</div>
           <template #otherwise>
             <div data-testid="otherwise">{{ cannotText }}</div>
@@ -97,11 +128,7 @@ describe('components', () => {
       },
     }
 
-    const wrapper2 = mount(TestPost2, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper2 = mountWithPermix(TestPost2, permix)
 
     expect(wrapper2.html()).not.toContain(canText)
     expect(wrapper2.html()).toContain(cannotText)
@@ -109,9 +136,7 @@ describe('components', () => {
 
   it('should work with Check component and DOM rerender', async () => {
     const permix = createPermix<{
-      post: {
-        action: 'read'
-      }
+      post: ['read']
     }>()
 
     permix.setup({
@@ -126,7 +151,7 @@ describe('components', () => {
 
     const TestComponent = {
       template: `
-        <Check entity="post" action="read">
+        <Check path="post.read">
           <span data-testid="read">{{ text }}</span>
         </Check>
       `,
@@ -136,11 +161,7 @@ describe('components', () => {
       },
     }
 
-    const wrapper = mount(TestComponent, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper = mountWithPermix(TestComponent, permix)
 
     expect(wrapper.html()).not.toContain(text)
 
@@ -156,9 +177,7 @@ describe('components', () => {
 
   it('should work with reverse prop', async () => {
     const permix = createPermix<{
-      post: {
-        action: 'create'
-      }
+      post: ['create']
     }>()
 
     permix.setup({
@@ -174,7 +193,7 @@ describe('components', () => {
 
     const TestComponent = {
       template: `
-        <Check entity="post" action="create" reverse>
+        <Check path="post.create" reverse>
           <div>{{ defaultText }}</div>
           <template #otherwise>
             <div>{{ otherwiseText }}</div>
@@ -187,11 +206,7 @@ describe('components', () => {
       },
     }
 
-    const wrapper = mount(TestComponent, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
+    const wrapper = mountWithPermix(TestComponent, permix)
 
     expect(wrapper.html()).not.toContain(defaultText)
     expect(wrapper.html()).toContain(otherwiseText)
@@ -211,9 +226,7 @@ describe('components', () => {
 
   it('shouldn\'t accept invalid props', () => {
     const permix = createPermix<{
-      post: {
-        action: 'create'
-      }
+      post: ['create']
     }>()
 
     permix.setup({
@@ -226,7 +239,7 @@ describe('components', () => {
 
     const TestEntityComponent = {
       template: `
-        <Check entity="not-exist" action="create">
+        <Check path="not-exist">
           <div>Entity prop</div>
         </Check>
       `,
@@ -235,26 +248,14 @@ describe('components', () => {
 
     const TestActionComponent = {
       template: `
-        <Check entity="post" action="not-exist">
+        <Check path="post.not-exist">
           <div>Action prop</div>
         </Check>
       `,
       components: { Check },
     }
 
-    const wrapper = mount(TestEntityComponent, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
-
-    const wrapper2 = mount(TestActionComponent, {
-      global: {
-        plugins: [[permixPlugin, { permix }]],
-      },
-    })
-
-    expect(wrapper.html()).not.toContain('Action prop')
-    expect(wrapper2.html()).not.toContain('Entity prop')
+    expect(() => mountWithPermix(TestEntityComponent, permix)).toThrow(PermixRuleNotDefinedError)
+    expect(() => mountWithPermix(TestActionComponent, permix)).toThrow(PermixRuleNotDefinedError)
   })
 })

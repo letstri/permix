@@ -7,10 +7,7 @@ import '@testing-library/jest-dom/vitest'
 describe('permix solid', () => {
   it('should work with custom hook', () => {
     const permix = createPermix<{
-      post: {
-        dataType: { id: string }
-        action: 'create' | 'read'
-      }
+      post: ['create', 'read']
     }>()
 
     permix.setup({
@@ -28,16 +25,13 @@ describe('permix solid', () => {
       ),
     })
 
-    expect(result.check('post', 'create')).toBe(true)
-    expect(result.check('post', 'read')).toBe(false)
+    expect(result.check('post.create')).toBe(true)
+    expect(result.check('post.read')).toBe(false)
   })
 
   it('should work with DOM rerender', async () => {
     const permix = createPermix<{
-      post: {
-        dataType: { id: string }
-        action: 'create' | 'read'
-      }
+      post: [{ name: 'create', type: { id: string } }, 'read']
     }>()
 
     permix.setup({
@@ -54,8 +48,8 @@ describe('permix solid', () => {
 
       return (
         <div>
-          <span data-testid="create">{check('post', 'create', post).toString()}</span>
-          <span data-testid="read">{check('post', 'read').toString()}</span>
+          <span data-testid="create">{check('post.create', post).toString()}</span>
+          <span data-testid="read">{check('post.read').toString()}</span>
         </div>
       )
     }
@@ -84,10 +78,7 @@ describe('permix solid', () => {
 
   it('should check isReady', async () => {
     const permix = createPermix<{
-      post: {
-        dataType: { id: string }
-        action: 'create' | 'read'
-      }
+      post: ['create', 'read']
     }>()
 
     const TestComponent = () => {
@@ -117,15 +108,12 @@ describe('permix solid', () => {
 
   it('should throw error when PermixProvider is missing', () => {
     const permix = createPermix<{
-      post: {
-        dataType: { id: string }
-        action: 'create' | 'read'
-      }
+      post: [{ name: 'create', type: { id: string } }, 'read']
     }>()
 
     const TestComponent = () => {
       const { check } = usePermix(permix)
-      return <div>{check('post', 'create').toString()}</div>
+      return <div>{check('post.create').toString()}</div>
     }
 
     expect(() => render(() => <TestComponent />)).toThrow()

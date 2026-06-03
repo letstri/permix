@@ -1,8 +1,8 @@
 import { PermixProvider } from 'permix/react'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { permix } from '@/shared/permix'
 import App from './App.tsx'
+import { permix } from './permix'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

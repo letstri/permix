@@ -10,7 +10,7 @@ export default function App() {
   const { check, isReady } = usePermissions()
   const [users, setUsers] = useState<RouterOutput['userList']>([])
 
-  const canReadUser = check('user', 'read')
+  const canReadUser = check('user.read')
 
   useEffect(() => {
     // Imagine this is a request from the server that gets the user from the request
@@ -37,9 +37,9 @@ export default function App() {
       <hr />
       Can I read a user?
       {' '}
-      {check('user', 'read') ? 'Yes' : 'No'}
+      {check('user.read') ? 'Yes' : 'No'}
       <hr />
-      <Check entity="user" action="read" otherwise={<div>You don't have permission to read a user</div>}>
+      <Check path="user.read" otherwise={<div>You don't have permission to read a user</div>}>
         Can I read a user inside the Check component?
       </Check>
       <hr />
@@ -47,7 +47,7 @@ export default function App() {
         <div key={user.id}>{user.name}</div>
       ))}
       <hr />
-      <Check entity="user" action="create" otherwise={<div>You don't have permission to create a user</div>}>
+      <Check path="user.create" otherwise={<div>You don't have permission to create a user</div>}>
         <button type="button" onClick={() => trpc.userWrite.mutate({ name: 'John Doe', email: 'john.doe@example.com' })}>
           Create user
         </button>

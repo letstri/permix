@@ -1,1 +1,1 @@
-export * from './create-permix'
+export * from './permix'

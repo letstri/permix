@@ -1,28 +1,27 @@
 {
   "type": "module",
   "private": true,
-  "packageManager": "pnpm@10.32.1",
+  "packageManager": "pnpm@11.5.0",
   "scripts": {
     "prepare": "husky",
     "publish": "cd permix && pnpm publish",
     "build": "cd permix && pnpm run build",
     "test": "cd permix && pnpm run test",
-    "check-types": "cd permix && pnpm run check-types",
+    "check-types": "turbo check-types",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "update": "taze -r -I major"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "catalog:",
-    "@commitlint/cli": "catalog:",
-    "@commitlint/config-conventional": "catalog:",
-    "@eslint-react/eslint-plugin": "catalog:",
-    "eslint": "catalog:",
-    "eslint-plugin-react-hooks": "catalog:",
-    "eslint-plugin-react-refresh": "catalog:",
-    "husky": "catalog:",
-    "npm-run-all2": "catalog:",
-    "taze": "catalog:",
-    "typescript": "catalog:"
+    "@antfu/eslint-config": "^9.0.0",
+    "@eslint-react/eslint-plugin": "^5.8.9",
+    "eslint": "^10.4.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "husky": "^9.1.7",
+    "npm-run-all2": "^9.0.1",
+    "taze": "^19.14.1",
+    "turbo": "^2.9.16",
+    "typescript": "^6.0.3"
   }
 }

@@ -1,32 +1,27 @@
 import type { JSX } from 'solid-js'
-import type { Permix, PermixDefinition } from '../core'
-import type { PermixStateJSON } from '../core/create-permix'
-import type { CheckFunctionObject } from '../core/params'
+import type { CheckArgs, DataAtPath, Definition, DehydratedState, Permix, RulesPaths } from '../core'
 import type { PermixContext } from './hooks'
-import { createEffect, createMemo, onCleanup } from 'solid-js'
+import { createEffect, createMemo, createRenderEffect, onCleanup } from 'solid-js'
 import { createStore } from 'solid-js/store'
-import { getRules, validatePermix } from '../core/create-permix'
 import { Context, usePermix, usePermixContext } from './hooks'
 
 /**
- * Provider that provides the Permix context to your Solid components.
+ * Provides Permix context to the Solid component tree.
  *
  * @link https://permix.letstri.dev/docs/integrations/solid
  */
-export function PermixProvider<Permissions extends PermixDefinition>(props: {
+export function PermixProvider<D extends Definition>(props: {
   children: JSX.Element
-  permix: Permix<Permissions>
+  permix: Permix<D>
 }): JSX.Element {
-  validatePermix(props.permix)
-
-  const [context, setContext] = createStore<PermixContext<Permissions>>({
+  const [context, setContext] = createStore<PermixContext<D>>({
     permix: props.permix,
     isReady: props.permix.isReady(),
-    rules: getRules(props.permix),
+    rules: props.permix.getRules(),
   })
 
   createEffect(() => {
-    const setup = props.permix.hook('setup', () => setContext('rules', getRules(props.permix)))
+    const setup = props.permix.hook('setup', () => setContext('rules', props.permix.getRules()))
     const ready = props.permix.hook('ready', () => setContext('isReady', props.permix.isReady()))
 
     onCleanup(() => {
@@ -42,30 +37,32 @@ export function PermixProvider<Permissions extends PermixDefinition>(props: {
   )
 }
 
-export function PermixHydrate(props: { children: JSX.Element, state: PermixStateJSON<any> }) {
+export function PermixHydrate(props: { children: JSX.Element, state: DehydratedState<any> }) {
   const context = usePermixContext()
 
-  validatePermix(context.permix)
-
-  context.permix.hydrate(props.state)
+  createRenderEffect(() => {
+    context.permix.hydrate(props.state)
+  })
 
   return props.children
 }
 
-export type CheckProps<Permissions extends PermixDefinition, K extends keyof Permissions> = CheckFunctionObject<Permissions, K> & {
+export interface CheckProps<D extends Definition, P extends RulesPaths<D>> {
+  path: P
+  data?: DataAtPath<D, P>[0]
   children: JSX.Element
   otherwise?: JSX.Element
   reverse?: boolean
 }
 
-export interface PermixComponents<Permissions extends PermixDefinition> {
-  Check: <K extends keyof Permissions>(props: CheckProps<Permissions, K>) => JSX.Element
+export interface PermixComponents<D extends Definition> {
+  Check: <P extends RulesPaths<D>>(props: CheckProps<D, P>) => JSX.Element
 }
 
-export function createComponents<Permissions extends PermixDefinition>(permix: Permix<Permissions>): PermixComponents<Permissions> {
-  function Check<K extends keyof Permissions>(props: CheckProps<Permissions, K>): JSX.Element {
+export function createComponents<D extends Definition>(permix: Pick<Permix<D>, 'getRules' | 'check'>): PermixComponents<D> {
+  function Check<P extends RulesPaths<D>>(props: CheckProps<D, P>): JSX.Element {
     const context = usePermix(permix)
-    const hasPermission = createMemo(() => context.check(props.entity, props.action, props.data))
+    const hasPermission = createMemo(() => context.check(...([props.path, props.data] as unknown as CheckArgs<D>)))
 
     return (
       <>

@@ -5,46 +5,52 @@ description: Learn how to check permissions in your application
 
 ## Overview
 
-Permix provides two methods for checking permissions: `check` and `checkAsync`. Both methods return a boolean indicating whether the action is allowed.
+Permix provides the `check` method for verifying permissions. It returns a boolean indicating whether the action is allowed.
 
-## `check`
+## Dot paths
 
-The `check` method allows you to verify if certain actions are permitted. It returns a boolean indicating whether the action is allowed:
+Check a single action using a dot-separated path:
 
 ```ts
-permix.check('post', 'create') // returns true/false
+permix.check('post.create') // returns true/false
 ```
 
-## Array
+## Multiple actions
 
-You can check multiple actions at once by passing an array of actions. All actions must be permitted for the check to return true:
+Combine multiple checks with a callback. All conditions must be truthy:
 
 ```ts
 // Check if both create and read are allowed
-permix.check('post', ['create', 'read']) // returns true if both are allowed
+permix.check(c => c('post.create') && c('post.read'))
 ```
 
 ## All
 
-Use the special 'all' keyword to verify if all possible actions for an entity are permitted:
+Use the `~all` special token to verify if all possible actions in a subtree are permitted:
 
 ```ts
-// Check if all actions are allowed for posts
-permix.check('post', 'all') // returns true only if all actions are permitted
+// Check if all post actions are allowed
+permix.check('post.~all')
+
+// Check if all actions in the entire permission tree are allowed
+permix.check('~all')
 ```
 
 ## Any
 
-Use the special 'any' keyword to verify if any of the actions for an entity are permitted:
+Use the `~any` special token to verify if any action in a subtree is permitted:
 
 ```ts
-// Check if any action is allowed for posts
-permix.check('post', 'any') // returns true if any action is permitted
+// Check if any post action is allowed
+permix.check('post.~any')
+
+// Check if any action in the entire permission tree is allowed
+permix.check('~any')
 ```
 
-## `checkAsync`
+## Waiting for setup
 
-When you need to ensure permissions are ready before checking, use `checkAsync`. This is useful when permissions might be set up asynchronously:
+When permissions might be set up asynchronously, wait for the instance to be ready before checking:
 
 ```ts
 setTimeout(() => {
@@ -53,11 +59,12 @@ setTimeout(() => {
   })
 }, 1000)
 
-await permix.checkAsync('post', 'create') // waits for setup
+await permix.isReadyAsync()
+permix.check('post.create')
 ```
 
 <Callout>
-In most cases you should use `check` instead of `checkAsync`. `checkAsync` is useful when you need to ensure permissions are ready before checking, for example in route middleware.
+In most cases you should use `check` directly. Use `isReadyAsync()` when you need to ensure permissions are ready before checking, for example in route middleware.
 </Callout>
 
 ## Data-Based
@@ -77,11 +84,11 @@ permix.setup({
 // Check with data
 const post = { id: '1', authorId: 'user1' }
 
-permix.check('post', 'update', post) // true if currentUserId === 'user1'
+permix.check('post.update', post) // true if currentUserId === 'user1'
 ```
 
 <Callout type="warn">
-You still can check permissions without providing the data, but it will return `false` in this case.
+You can still check permissions without providing the data, but dynamic rules that require entity data will return `false` in that case.
 </Callout>
 
 ## Type Safety
@@ -92,14 +99,26 @@ Permix provides full type safety for your permissions:
 import { createPermix } from 'permix'
 
 const permix = createPermix<{
-  post: {
-    action: 'create' | 'update'
-  }
+  post: ['create', 'update']
 }>()
 
 // @errors: 2345
-// This will cause a TypeScript error but will return false
-permix.check('post', 'invalid-action')
+permix.check('post.invalid-action')
 
-permix.check('invalid-entity', 'create')
+permix.check('invalid-entity.create')
 ```
+
+Invalid paths cause a TypeScript error at compile time. At runtime, checking an undefined path throws `PermixRuleNotDefinedError`.
+
+## Errors
+
+Permix throws typed errors from `permix` when checks cannot run safely:
+
+| Error | When |
+| --- | --- |
+| `PermixNotReadyError` | `check()` or `dehydrate()` runs before any rules exist (no `setup()` and no initial rules). |
+| `PermixRuleNotDefinedError` | `check()` targets a path that is not present in the current rules object, or is deeper than the rules tree (for example rules `{ post: true }` with `check('post.create')`). |
+
+After `hydrate()`, boolean rules are available immediately — `check()` works even while `isReady()` is still `false`. Function-based rules still need a follow-up `setup()` on the client. See [Hydration](/docs/guide/hydration) and [Ready State](/docs/guide/ready).
+
+`PermixNotFoundError` is thrown by server integrations when middleware was not registered on the request — see [Server](/docs/integrations/server) and [Node.js](/docs/integrations/node).

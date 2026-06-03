@@ -1,52 +1,63 @@
-type HookHandler<T = any> = (...args: T[]) => void
+type HookFn = (...args: any[]) => void
 
-export function createHooks<T extends Record<string, HookHandler>>() {
-  let hooks: Record<string, HookHandler[]> = {}
+export function createHooks<T extends { [K in keyof T]: HookFn } = Record<string, HookFn>>() {
+  const hooks = new Map<keyof T, HookFn[]>()
 
-  const hook = <K extends keyof T>(name: K, fn: T[K]) => {
-    if (!hooks[name as string]) {
-      hooks[name as string] = []
+  function getList(name: keyof T): HookFn[] {
+    let list = hooks.get(name)
+    if (!list) {
+      list = []
+      hooks.set(name, list)
     }
-    hooks[name as string].push(fn)
+    return list
+  }
+
+  const hook = <K extends keyof T>(name: K, fn: T[K]): (() => void) => {
+    getList(name).push(fn)
 
     return () => {
-      const index = hooks[name as string].indexOf(fn)
-      if (index !== -1) {
-        hooks[name as string].splice(index, 1)
-      }
+      const list = hooks.get(name)
+      if (!list)
+        return
+      const index = list.indexOf(fn)
+      if (index !== -1)
+        list.splice(index, 1)
     }
   }
 
-  const hookOnce = <K extends keyof T>(name: K, fn: T[K]) => {
-    const remove = hook(name, ((...args) => {
-      remove()
+  const hookOnce = <K extends keyof T>(name: K, fn: T[K]): void => {
+    let remove: (() => void) | undefined
+    const wrapper: HookFn = (...args) => {
+      remove?.()
       fn(...args)
-    }) as T[K])
+    }
+    remove = hook(name, wrapper as T[K])
   }
 
-  const removeHook = <K extends keyof T>(name: K, fn: T[K]) => {
-    if (hooks[name as string]) {
-      const index = hooks[name as string].indexOf(fn)
-      if (index !== -1) {
-        hooks[name as string].splice(index, 1)
-      }
+  const removeHook = <K extends keyof T>(name: K, fn: T[K]): void => {
+    const list = hooks.get(name)
+    if (!list)
+      return
+    const index = list.indexOf(fn)
+    if (index !== -1)
+      list.splice(index, 1)
+  }
+
+  const callHook = <K extends keyof T>(name: K, ...args: Parameters<T[K]>): void => {
+    const list = hooks.get(name)
+    if (!list)
+      return
+    for (const fn of [...list]) {
+      fn(...args)
     }
   }
 
-  const callHook = <K extends keyof T>(name: K, ...args: Parameters<T[K]>) => {
-    if (hooks[name as string]) {
-      for (const fn of hooks[name as string]) {
-        fn(...args)
-      }
-    }
+  const clearHook = <K extends keyof T>(name: K): void => {
+    hooks.delete(name)
   }
 
-  const clearHook = <K extends keyof T>(name: K) => {
-    delete hooks[name as string]
-  }
-
-  const clearAllHooks = () => {
-    hooks = {}
+  const clearAllHooks = (): void => {
+    hooks.clear()
   }
 
   return {
