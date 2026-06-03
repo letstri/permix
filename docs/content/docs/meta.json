@@ -31,7 +31,6 @@
     "integrations/fastify",
     "integrations/effect",
     "integrations/drizzle",
-    "integrations/better-auth",
     "---",
     "[Examples](https://github.com/letstri/permix/tree/main/examples)",
     "---LLMs---",

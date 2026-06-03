@@ -28,30 +28,18 @@ export function createPermix<D extends Definition>(options: PermixOptions = {}) 
 
   const Tag = Context.GenericTag<PermixCore<D>>(id)
 
-  /**
-   * Create a Layer that provides a Permix instance, optionally pre-seeded with
-   * rules. Omit `rules` to call {@link setup} later.
-   */
   function layer(rules?: Rules<D>) {
     return Layer.sync(Tag, () => createPermixCore<D>(rules))
   }
 
-  /**
-   * Create a Layer that derives rules from an Effect. Requirements of that
-   * Effect (e.g. a `CurrentUser` tag) become requirements of the Layer.
-   */
   function layerSetup<E, R>(rules: Effect.Effect<Rules<D>, E, R>) {
     return Layer.effect(Tag, Effect.map(rules, r => createPermixCore<D>(r)))
   }
 
-  /** Provide (or replace) rules for the current instance. */
   function setup(rules: Rules<D>) {
     return Effect.map(Tag, instance => instance.setup(rules))
   }
 
-  /**
-   * Check a permission. Returns `Effect<boolean>` — handle denial as you see fit.
-   */
   function check(...args: CheckArgs<D>) {
     return Effect.flatMap(
       Tag,
@@ -62,7 +50,6 @@ export function createPermix<D extends Definition>(options: PermixOptions = {}) 
     )
   }
 
-  /** Serialize the current rules to a JSON-safe object. */
   function dehydrate() {
     return Effect.flatMap(
       Tag,
@@ -73,10 +60,6 @@ export function createPermix<D extends Definition>(options: PermixOptions = {}) 
     )
   }
 
-  /**
-   * Restore rules from a {@link dehydrate} snapshot. Does not mark the
-   * instance as ready — call {@link setup} to fully restore function-based rules.
-   */
   function hydrate(state: DehydratedState<D>) {
     return Effect.flatMap(
       Tag,
@@ -87,32 +70,26 @@ export function createPermix<D extends Definition>(options: PermixOptions = {}) 
     )
   }
 
-  /** Returns `true` once {@link setup} has been called. */
   function isReady() {
     return Effect.map(Tag, instance => instance.isReady())
   }
 
-  /** Resolves once the instance is ready (i.e. {@link setup} has run). */
   function isReadyAsync() {
     return Effect.flatMap(Tag, instance => Effect.promise(() => instance.isReadyAsync()))
   }
 
-  /** Returns the current rules, or `null` if not set up yet. */
   function getRules(): Effect.Effect<Rules<D> | null, never, PermixCore<D>> {
     return Effect.map(Tag, instance => instance.getRules())
   }
 
-  /** Register a hook that fires every time the named event occurs. Yields the remover. */
   function hook<K extends keyof PermixHooks>(name: K, fn: PermixHooks[K]): Effect.Effect<() => void, never, PermixCore<D>> {
     return Effect.map(Tag, instance => instance.hook(name, fn))
   }
 
-  /** Register a hook that fires only once for the named event. */
   function hookOnce<K extends keyof PermixHooks>(name: K, fn: PermixHooks[K]): Effect.Effect<void, never, PermixCore<D>> {
     return Effect.map(Tag, instance => instance.hookOnce(name, fn))
   }
 
-  /** Create a reusable permission template for this Definition. */
   function template<T = void>(rules: Rules<D> | ((param: T) => Rules<D>)) {
     return createTemplate<D, T>(rules)
   }
@@ -132,6 +109,7 @@ export function createPermix<D extends Definition>(options: PermixOptions = {}) 
     hookOnce,
     template,
     id,
+    $inferDefinition: undefined as unknown as D,
     $inferPath: undefined as unknown as RulesPaths<D>,
   }
 }

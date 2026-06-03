@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { PermixNotReadyError, PermixRuleNotDefinedError } from './errors'
 import { createPermix } from './permix'
 
@@ -158,9 +158,14 @@ describe('createPermix', () => {
     expect(permix.check(`post.${PostAction.Delete}`)).toBe(false)
   })
 
-  it('should expose a type-only $inferPath helper for permission paths', () => {
+  it('should expose type-only $inferDefinition and $inferPath helpers', () => {
     // eslint-disable-next-line unused-imports/no-unused-vars
     const permix = createPermix<{
+      user: ['create']
+      job: ['remove']
+    }>()
+
+    expectTypeOf(permix.$inferDefinition).toEqualTypeOf<{
       user: ['create']
       job: ['remove']
     }>()

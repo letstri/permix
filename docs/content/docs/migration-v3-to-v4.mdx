@@ -321,11 +321,9 @@ Consider **`permix/server`** for fetch-style handlers (Web Standard `Request` / 
 
 ### Better Auth
 
-The v3 plugin (`permixPlugin`, `PermixDefinition`, session-driven `createPermix<Definition, Session>`) was **redesigned**. v4 generates Permix from your Better Auth **access control statement** and maps roles with **`roleToRules()`**:
+The v3 Better Auth integration is **removed** in v4. There is no `permix/better-auth` package, no `permixPlugin`, and no session helpers (`permixClient`, `createPermix<Definition, Session>`).
 
-[Better Auth integration](/docs/integrations/better-auth)
-
-If you used the v3 HTTP plugin and session helpers, plan a full pass over server and client setup using the new guide.
+Map each Better Auth role to a rules object yourself — the same booleans you previously got from `roleToRules()`. Use [React](/docs/integrations/react) (or your UI integration) and [hydration](/docs/guide/hydration) as with any other Permix setup.
 
 ---
 
@@ -342,7 +340,6 @@ These are additive — migrate the core API first, then adopt what you need:
 | `permix/drizzle` | Rules from Drizzle v1 schema |
 | `permix/drizzle/legacy` | Drizzle v0 (`>=0.30 <1`) |
 | `permix/effect` | Effect `Layer` / `Context` |
-| `permix/better-auth` | Access-control-driven Permix |
 
 See the [examples directory](https://github.com/letstri/permix/tree/main/examples) (`next`, `tanstack-start`, `svelte`, `rebac`, and updated `react`, `vue`, …).
 
@@ -404,9 +401,9 @@ tRPC/oRPC: `setupContext`, dot-path `checkMiddleware`, `forbiddenError` → `onF
 
 <Step>
 
-### Revisit Better Auth (if used)
+### Remove Better Auth plugin (if used)
 
-Follow the new [Better Auth](/docs/integrations/better-auth) guide.
+Drop `permixPlugin`, `permixClient`, and `permix/better-auth`. Wire Better Auth roles to core `permix.setup()` — see [Better Auth](#better-auth) above.
 
 </Step>
 

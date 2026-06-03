@@ -204,6 +204,18 @@ export interface Permix<D extends Definition> {
   getRules: () => Rules<D> | null
 
   /**
+   * Type-only carrier for the Permix definition schema. Use with `typeof` to
+   * derive the definition without restating it. Always `undefined` at runtime.
+   *
+   * @example
+   * ```ts
+   * type Def = typeof permix.$inferDefinition
+   * const other = createPermix<typeof permix.$inferDefinition>()
+   * ```
+   */
+  readonly $inferDefinition: D
+
+  /**
    * Type-only carrier for the union of all valid permission paths
    * (e.g. `'user.create' | 'post.read'`). Use with `typeof` to derive
    * path types without repeating the definition. Always `undefined` at runtime.
@@ -299,6 +311,7 @@ export function createPermix<D extends Definition>(initialRules?: Rules<D>): Per
     isReady: () => ready,
     isReadyAsync: () => readyPromise,
     getRules: () => rules,
+    $inferDefinition: undefined as unknown as D,
     $inferPath: undefined as unknown as RulesPaths<D>,
   }
 }

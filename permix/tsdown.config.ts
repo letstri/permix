@@ -19,7 +19,6 @@ export default defineConfig({
     './src/effect/index.ts',
     './src/drizzle/index.ts',
     './src/drizzle/legacy/index.ts',
-    './src/better-auth/index.ts',
     './src/next/index.ts',
     './src/tanstack-start/index.ts',
   ],

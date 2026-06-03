@@ -79,6 +79,7 @@ export function createPermix<D extends Definition>() {
     get,
     getRules,
     template,
+    $inferDefinition: undefined as unknown as D,
     $inferPath: undefined as unknown as RulesPaths<D>,
   }
 }

@@ -58,6 +58,7 @@ function buildPermix<D extends Definition, const Key extends string>(
     get key() {
       return resolveKey()
     },
+    $inferDefinition: undefined as unknown as D,
     $inferPath: undefined as unknown as RulesPaths<D>,
   }
 }

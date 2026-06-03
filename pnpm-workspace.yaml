@@ -1,5 +1,3 @@
-minimumReleaseAgeExclude:
-  - vite@8.0.16
 shellEmulator: true
 packages:
   - permix
@@ -8,6 +6,4 @@ packages:
 allowBuilds:
   better-sqlite3: true
   esbuild: false
-  lightningcss: true
   sharp: false
-  unrs-resolver: false
