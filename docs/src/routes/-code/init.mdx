@@ -1,0 +1,16 @@
+```tsx
+import { createPermix } from 'permix'
+
+interface Post {
+  id: string
+  published: boolean
+}
+
+// Create the permix instance
+export const permix = createPermix<{
+  post: {
+    dataType: Post
+    action: 'create' | 'update' | 'delete'
+  }
+}>()
+```

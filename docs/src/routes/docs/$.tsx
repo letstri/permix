@@ -11,7 +11,6 @@ import {
   MarkdownCopyButton,
   ViewOptionsPopover,
 } from 'fumadocs-ui/layouts/docs/page'
-import { createRelativeLink } from 'fumadocs-ui/mdx'
 import { Suspense } from 'react'
 import { useMDXComponents } from '@/components/mdx'
 import { SidebarScrollFix } from '@/components/sidebar-scroll'
@@ -43,22 +42,13 @@ const clientLoader = browserCollections.docs.createClientLoader({
     {
       markdownUrl,
       path,
-      slugs,
     }: {
       markdownUrl: string
       path: string
-      slugs: string[]
     },
   ) {
-    const page = source.getPage(slugs)
     // eslint-disable-next-line react/rules-of-hooks
-    const components = useMDXComponents(
-      page
-        ? {
-            a: createRelativeLink(source, page),
-          }
-        : undefined,
-    )
+    const components = useMDXComponents()
 
     return (
       <DocsPage
@@ -94,12 +84,12 @@ export const Route = createFileRoute('/docs/$')({
 })
 
 function Page() {
-  const { path, pageTree, markdownUrl, slugs } = useFumadocsLoader(Route.useLoaderData())
+  const { path, pageTree, markdownUrl } = useFumadocsLoader(Route.useLoaderData())
 
   return (
     <DocsLayout {...baseOptions()} tree={pageTree}>
       <SidebarScrollFix />
-      <Suspense>{clientLoader.useContent(path, { markdownUrl, path, slugs })}</Suspense>
+      <Suspense>{clientLoader.useContent(path, { markdownUrl, path })}</Suspense>
     </DocsLayout>
   )
 }

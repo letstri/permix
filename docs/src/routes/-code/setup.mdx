@@ -1,0 +1,15 @@
+```ts
+import { permix } from './permix'
+
+// Fetch the user
+const user = await fetchUser()
+
+// Setup the permissions
+permix.setup({
+  post: {
+    create: true,
+    edit: post => post ? !post.published : user.role === 'admin',
+    delete: user.role === 'admin',
+  },
+})
+```

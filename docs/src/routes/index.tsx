@@ -3,47 +3,9 @@ import { CodeBlock, Pre } from 'fumadocs-ui/components/codeblock'
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs'
 import { HomeLayout } from 'fumadocs-ui/layouts/home'
 import { baseOptions } from '@/lib/layout.shared'
-
-const initCode = `import { createPermix } from 'permix'
-
-interface Post {
-  id: string
-  published: boolean
-  authorId: string
-}
-
-// Create the permix instance
-export const permix = createPermix<{
-  post: [
-    { name: 'create', type: Post },
-    { name: 'edit', type: Post },
-    { name: 'delete', type: Post },
-  ]
-}>()`
-
-const setupCode = `import { permix } from './permix'
-
-// Fetch the user
-const user = await fetchUser()
-
-// Setup the permissions
-permix.setup({
-  post: {
-    create: true,
-    edit: post => post ? !post.published : user.role === 'admin',
-    delete: user.role === 'admin',
-  },
-})`
-
-const usageCode = `import { permix } from './permix'
-
-// Can I delete any post?
-permix.check('post.delete')
-
-const post = await fetchPost()
-
-// Can I edit this post?
-permix.check('post.edit', post)`
+import InitCode from './-code/init.mdx'
+import SetupCode from './-code/setup.mdx'
+import UsageCode from './-code/usage.mdx'
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -52,8 +14,8 @@ export const Route = createFileRoute('/')({
 function Home() {
   return (
     <HomeLayout {...baseOptions()}>
-      <div className="min-h-screen">
-        <div className="container mx-auto grid grid-cols-1 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:px-8">
+      <div className="min-h-screen py-20">
+        <div className="container mx-auto grid grid-cols-1 px-4 mb-10 sm:px-6 lg:grid-cols-2 lg:px-8">
           <div className="pt-6 lg:pt-24">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl">
               <span className="block">Permix</span>
@@ -64,25 +26,25 @@ function Home() {
           </div>
           <div>
             <Tabs items={['Init', 'Setup', 'Usage']}>
-              <Tab value="Init">
+              <Tab>
                 <CodeBlock>
-                  <Pre>{initCode}</Pre>
+                  <Pre><InitCode /></Pre>
                 </CodeBlock>
               </Tab>
-              <Tab value="Setup">
+              <Tab>
                 <CodeBlock>
-                  <Pre>{setupCode}</Pre>
+                  <Pre><SetupCode /></Pre>
                 </CodeBlock>
               </Tab>
-              <Tab value="Usage">
+              <Tab>
                 <CodeBlock>
-                  <Pre>{usageCode}</Pre>
+                  <Pre><UsageCode /></Pre>
                 </CodeBlock>
               </Tab>
             </Tabs>
           </div>
         </div>
-        <div className="container relative z-10 grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8">
+        <div className="container mx-auto relative z-10 grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8">
           {[
             {
               emoji: '🔒',

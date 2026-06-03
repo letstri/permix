@@ -10,7 +10,7 @@
       "collections/*": ["./.source/*"]
     },
     "resolveJsonModule": true,
-    "types": ["vite/client"],
+    "types": ["vite/client", "mdx"],
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
