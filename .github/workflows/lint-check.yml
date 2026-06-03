@@ -27,7 +27,7 @@ jobs:
           version: 11.5.0
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        run: pnpm install --frozen-lockfile
 
       - name: Lint
         run: pnpm run lint

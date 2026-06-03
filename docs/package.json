@@ -1,5 +1,5 @@
 {
-  "name": "@permix/docs",
+  "name": "docs",
   "type": "module",
   "version": "0.0.0",
   "private": true,
@@ -11,7 +11,7 @@
     "dev": "vite dev",
     "start": "vite preview",
     "preview": "vite preview",
-    "types:check": "fumadocs-mdx && tsc --noEmit",
+    "check-types": "fumadocs-mdx && tsc --noEmit",
     "postinstall": "fumadocs-mdx"
   },
   "dependencies": {
