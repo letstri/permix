@@ -8,9 +8,10 @@ interface Post {
 
 // Create the permix instance
 export const permix = createPermix<{
-  post: {
-    dataType: Post
-    action: 'create' | 'update' | 'delete'
-  }
+  post: [
+    'create',
+    { name: 'edit', type: Post },
+    'delete',
+  ]
 }>()
 ```

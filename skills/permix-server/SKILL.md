@@ -78,8 +78,12 @@ app.get('/posts/:id', (req, res) => {
 | oRPC | `permix/orpc` |
 | Generic HTTP | `permix/node` or `permix/server` |
 | Elysia | `permix/elysia` |
+| Effect | `permix/effect` — see integration docs |
+| Drizzle ORM | `permix/drizzle` (and `permix/drizzle/legacy`) — see integration docs |
 
 Use the same `D` schema shape as the client instance.
+
+Effect and Drizzle are optional peer dependencies; follow https://permix.letstri.dev/docs/integrations/effect and https://permix.letstri.dev/docs/integrations/drizzle rather than inventing middleware patterns.
 
 ## tRPC / oRPC
 

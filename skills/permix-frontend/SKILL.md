@@ -145,4 +145,8 @@ Requires Svelte 5. Provider + hooks from `permix/svelte`; mirror the React steps
 
 - React: https://github.com/letstri/permix/tree/main/examples/react
 - Vue: https://github.com/letstri/permix/tree/main/examples/vue
+- Solid: https://github.com/letstri/permix/tree/main/examples/solid
+- Svelte: https://github.com/letstri/permix/tree/main/examples/svelte
+- Next.js (SSR): https://github.com/letstri/permix/tree/main/examples/next
 - Role templates: https://github.com/letstri/permix/tree/main/examples/role-based
+- ReBAC: https://github.com/letstri/permix/tree/main/examples/rebac

@@ -10,6 +10,8 @@ description: >-
 
 Docs: https://permix.letstri.dev/docs/quick-start
 
+Upgrading from v3? Use action tuples, not `{ action, dataType }` — https://permix.letstri.dev/docs/migration-v3-to-v4
+
 ## Install
 
 ```bash
@@ -136,6 +138,20 @@ permix.check('post.read') // boolean
 ```
 
 Before `setup`, `check` throws `PermixNotReadyError`. Unknown paths throw `PermixRuleNotDefinedError`.
+
+## 7. React to permission changes (optional)
+
+```ts
+permix.hook('setup', () => {
+  // re-run when rules change (e.g. refresh UI cache)
+})
+
+permix.hookOnce('ready', () => {
+  // first successful setup only
+})
+```
+
+Docs: https://permix.letstri.dev/docs/guide/events
 
 ## Checklist for new apps
 
