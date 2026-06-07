@@ -19,8 +19,14 @@ export function PermixProvider<D extends Definition>({
   }))
 
   React.useEffect(() => {
-    const setup = permix.hook('setup', () => setContext(c => ({ ...c, rules: permix.getRules() })))
-    const ready = permix.hook('ready', () => setContext(c => ({ ...c, isReady: permix.isReady() })))
+    const syncRules = () => {
+      queueMicrotask(() => setContext(c => ({ ...c, rules: permix.getRules() })))
+    }
+    const syncReady = () => {
+      queueMicrotask(() => setContext(c => ({ ...c, isReady: permix.isReady() })))
+    }
+    const setup = permix.hook('setup', syncRules)
+    const ready = permix.hook('ready', syncReady)
 
     return () => {
       setup()
@@ -39,6 +45,8 @@ export function PermixProvider<D extends Definition>({
 export function PermixHydrate({ children, state }: { children: React.ReactNode, state: DehydratedState<any> }) {
   const { permix } = usePermixContext()
 
+  // Run before children render so `check()` can use hydrated booleans on the first pass.
+  // PermixProvider defers context updates from the `setup` hook to avoid setState during render.
   // eslint-disable-next-line react/use-memo
   React.useMemo(() => permix.hydrate(state), [permix, state])
 
