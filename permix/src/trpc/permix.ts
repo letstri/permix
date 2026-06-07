@@ -1,4 +1,3 @@
-import type { AnyMiddlewareBuilder } from '@trpc/server/unstable-core-do-not-import'
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
 import type { Definition } from '../core/definitions'
@@ -31,7 +30,7 @@ function buildPermix<D extends Definition, const Key extends string>(
     return { [resolveKey() as Key]: instance } as { [P in Key]: PermixCore<D> }
   }
 
-  function checkMiddleware(...args: CheckArgs<D>): AnyMiddlewareBuilder {
+  function checkMiddleware(...args: CheckArgs<D>) {
     return t.middleware(async (opts) => {
       const ctx = opts.ctx as Record<string, PermixCore<D>>
       const instance = ctx[resolveKey()]

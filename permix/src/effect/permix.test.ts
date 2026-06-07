@@ -1,6 +1,6 @@
 import type { ValidateDefinition } from '../core'
 import { Context, Effect } from 'effect'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, expectTypeOf, it } from 'vitest'
 import { PermixNotReadyError, PermixRuleNotDefinedError } from '../core'
 import { createPermix } from './permix'
 
@@ -301,11 +301,9 @@ describe('createPermix', () => {
     expect(result).toBe(true)
   })
 
-  it('should surface PermixNotReadyError when hydrate throws', async () => {
+  it('should type the error channel of hydrate as PermixNotReadyError', () => {
     const permix = createPermix<PermissionsDefinition>()
 
-    // Verify the error channel is typed — Effect.flip compiles only when
-    // the error type includes PermixNotReadyError.
     const flipped = Effect.flip(
       permix.hydrate({
         post: { create: true, read: false, update: false },
@@ -313,9 +311,7 @@ describe('createPermix', () => {
       }).pipe(Effect.provide(permix.layer())),
     )
 
-    // The error type is PermixNotReadyError
-    const _: Effect.Effect<PermixNotReadyError, void, never> = flipped
-    expect(_).toBeDefined()
+    expectTypeOf(flipped).toMatchTypeOf<Effect.Effect<PermixNotReadyError, void, never>>()
   })
 
   it('should surface PermixNotReadyError when dehydrate is called before setup', async () => {

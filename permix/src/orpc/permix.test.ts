@@ -31,7 +31,7 @@ describe('createPermix', () => {
 
   const permix = createPermix<Def>().contextKey('someCustomName')
 
-  it('should throw ts error for invalid path', () => {
+  it('should throw ts error', () => {
     // @ts-expect-error invalid permission path
     permix.checkMiddleware('post.delete')
   })
@@ -62,9 +62,9 @@ describe('createPermix', () => {
 
   it('should throw if called without setup', async () => {
     const router = orpcPermix.router({
-      // @ts-expect-error ctx.someCustomName does not exist
+      // @ts-expect-error context.someCustomName does not exist
       createPost: orpcPermix
-        // @ts-expect-error ctx.someCustomName does not exist
+        // @ts-expect-error context.someCustomName does not exist
         .use(permix.checkMiddleware('post.create'))
         .handler(() => {
           return { success: true }
@@ -383,5 +383,26 @@ describe('createPermix', () => {
     })
     expect(result.response?.status).toEqual(200)
     expect(await result.response?.json()).toEqual({ json: { success: true } })
+  })
+
+  it('should throw ts error when using checkMiddleware from a different permix instance', () => {
+    const admin = createPermix<Def>().contextKey('admin')
+    const guest = createPermix<Def>().contextKey('guest')
+
+    const withAdmin = orpcPermix
+      .use(({ next }) => {
+        return next({
+          context: admin.setupContext({
+            post: { create: true, read: true, update: true },
+            user: { delete: true },
+          }),
+        })
+      })
+
+    // Using admin's checkMiddleware after admin's setupContext is fine
+    withAdmin.use(admin.checkMiddleware('post.create'))
+
+    // @ts-expect-error using guest's checkMiddleware without guest's setupContext
+    withAdmin.use(guest.checkMiddleware('post.create'))
   })
 })

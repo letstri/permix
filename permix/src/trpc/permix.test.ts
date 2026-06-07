@@ -20,7 +20,7 @@ describe('createPermix', () => {
 
   const permix = createPermix<Def>().contextKey('someCustomName')
 
-  it('should throw ts error for invalid path', () => {
+  it('should throw ts error', () => {
     // @ts-expect-error invalid permission path
     permix.checkMiddleware('post.delete')
   })
@@ -49,6 +49,7 @@ describe('createPermix', () => {
   it('should throw if called without setup', async () => {
     const router = t.router({
       createPost: t.procedure
+        // @ts-expect-error ctx.someCustomName does not exist
         .use(permix.checkMiddleware('post.create'))
         .query(() => {
           return { success: true }
@@ -220,12 +221,15 @@ describe('createPermix', () => {
 
   it('should save types for context and input', async () => {
     const protectedProcedure = t.procedure
-      .use(({ next }) => {
+      .use(({ next, ctx }) => {
         return next({
-          ctx: permix.setupContext({
-            post: { create: true, read: true, update: true },
-            user: { delete: true },
-          }),
+          ctx: {
+            ...ctx,
+            ...permix.setupContext({
+              post: { create: true, read: true, update: true },
+              user: { delete: true },
+            }),
+          },
         })
       })
 
@@ -237,6 +241,7 @@ describe('createPermix', () => {
         }))
         .query(({ ctx, input }) => {
           return {
+            // @ts-expect-error user.id is string
             userId: ctx.user.id * 1,
             // @ts-expect-error userId is string
             inputUserId: input.userId * 1,
@@ -320,5 +325,33 @@ describe('createPermix', () => {
 
     const result = await t.createCallerFactory(router)({ user: { id: '1' } }).createPost()
     expect(result).toEqual({ success: true })
+  })
+
+  it('should throw at runtime when using checkMiddleware from a different permix instance', async () => {
+    const admin = createPermix<Def>().contextKey('admin')
+    const guest = createPermix<Def>().contextKey('guest')
+
+    const protectedProcedure = t.procedure
+      .use(({ next }) => {
+        return next({
+          ctx: admin.setupContext({
+            post: { create: true, read: true, update: true },
+            user: { delete: true },
+          }),
+        })
+      })
+
+    const router = t.router({
+      createPost: protectedProcedure
+        // @ts-expect-error ctx.guest does not exist
+        .use(guest.checkMiddleware('post.create'))
+        .query(() => {
+          return { success: true }
+        }),
+    })
+
+    await expect(
+      t.createCallerFactory(router)({ user: { id: '1' } }).createPost(),
+    ).rejects.toThrow()
   })
 })

@@ -67,7 +67,7 @@ describe('createPermix', () => {
     expect(permix.check('read')).toBe(true)
   })
 
-  it('should allow check with explicit undefined data after reaching a boolean leaf', () => {
+  it('should tolerate explicit undefined data at runtime even though it is a type error', () => {
     const permix = createPermix<{ post: ['create'] }>()
 
     permix.setup({ post: { create: true } })
@@ -176,8 +176,7 @@ describe('createPermix', () => {
     expect(AVAILABLE_PERMISSIONS).toEqual(['user.create', 'job.remove'])
 
     // @ts-expect-error 'user.unknown' is not a valid permission path
-    const INVALID = ['user.unknown'] satisfies (typeof permix.$inferPath)[]
-    expect(INVALID).toEqual(['user.unknown'])
+    const _INVALID = ['user.unknown'] satisfies (typeof permix.$inferPath)[]
   })
 
   it('should resolve permissions once setup runs asynchronously', async () => {
