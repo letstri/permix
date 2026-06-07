@@ -2,9 +2,9 @@ import type { AnyMiddlewareBuilder } from '@trpc/server/unstable-core-do-not-imp
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
 import type { Definition } from '../core/definitions'
-import type { Rules, RulesPaths } from '../core/permix'
+import type { PermixHooks, Rules, RulesPaths } from '../core/permix'
 import { initTRPC, TRPCError } from '@trpc/server'
-import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
+import { createCheckContext, createHooks, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
 
 export interface PermixOptions<D extends Definition> {
   onForbidden?: (params: CheckContext<D> & { ctx: Record<string, any>, next: (...args: any[]) => any }) => any
@@ -21,10 +21,14 @@ function buildPermix<D extends Definition, const Key extends string>(
     })
   })
 
+  const hooks = createHooks<PermixHooks<D>>()
+
   const t = initTRPC.context<{ [P in Key]: PermixCore<D> }>().create()
 
   function setupContext(rules: Rules<D>): { [P in Key]: PermixCore<D> } {
-    return { [resolveKey() as Key]: createPermixCore<D>(rules) } as { [P in Key]: PermixCore<D> }
+    const instance = createPermixCore<D>(rules)
+    instance.hook('check', context => hooks.callHook('check', context))
+    return { [resolveKey() as Key]: instance } as { [P in Key]: PermixCore<D> }
   }
 
   function checkMiddleware(...args: CheckArgs<D>): AnyMiddlewareBuilder {
@@ -57,6 +61,8 @@ function buildPermix<D extends Definition, const Key extends string>(
     checkMiddleware,
     getRules,
     template,
+    hook: hooks.hook,
+    hookOnce: hooks.hookOnce,
     get key() {
       return resolveKey()
     },

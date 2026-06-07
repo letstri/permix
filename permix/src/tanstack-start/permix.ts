@@ -2,11 +2,11 @@ import type { FunctionMiddlewareServerNextFn, FunctionServerResultWithContext } 
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
 import type { Definition } from '../core/definitions'
-import type { Rules, RulesPaths } from '../core/permix'
+import type { PermixHooks, Rules, RulesPaths } from '../core/permix'
 import type { DehydratedState } from '../core/rules'
 import type { MaybePromise } from '../utils'
 import { createMiddleware } from '@tanstack/react-start'
-import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixForbiddenError, PermixNotFoundError } from '../core'
+import { createCheckContext, createHooks, createPermix as createPermixCore, createTemplate, PermixForbiddenError, PermixNotFoundError } from '../core'
 
 export interface SetupContext {
   request: Request
@@ -35,6 +35,8 @@ function buildPermix<D extends Definition>(
   const onForbidden = options.onForbidden ?? (() => {
     throw new PermixForbiddenError()
   })
+
+  const hooks = createHooks<PermixHooks<D>>()
 
   /**
    * Returns the request-scoped Permix instance from a TanStack Start context
@@ -72,7 +74,9 @@ function buildPermix<D extends Definition>(
         ? await callbackOrRules({ request })
         : callbackOrRules
 
-      return next({ context: { [resolveKey()]: createPermixCore<D>(rules) } })
+      const instance = createPermixCore<D>(rules)
+      instance.hook('check', context => hooks.callHook('check', context))
+      return next({ context: { [resolveKey()]: instance } })
     })
   }
 
@@ -126,6 +130,8 @@ function buildPermix<D extends Definition>(
     dehydrate,
     getRules,
     template,
+    hook: hooks.hook,
+    hookOnce: hooks.hookOnce,
     get key() {
       return resolveKey()
     },

@@ -232,3 +232,13 @@ const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   })
 })
 ```
+
+### Hooks
+
+You can register hooks at the factory level to listen for events across all requests:
+
+```ts
+permix.hook('check', ({ path, data }) => {
+  console.log(`Permission checked: ${path}`, data)
+})
+```

@@ -295,3 +295,13 @@ export default {
 ```
 
 For anything beyond a couple of middlewares, srvx (or any other web-standard runtime) will compose them for you.
+
+### Hooks
+
+You can register hooks at the factory level to listen for events across all requests:
+
+```ts
+permix.hook('check', ({ path, data }) => {
+  console.log(`Permission checked: ${path}`, data)
+})
+```

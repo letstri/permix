@@ -323,3 +323,13 @@ Returns an object with the following methods:
 | Option | Description |
 |---|---|
 | `onForbidden({ path, data })` | Called when `checkMiddleware` denies a request. Defaults to throwing a `PermixError`. |
+
+### Hooks
+
+You can register hooks at the factory level to listen for events across all requests:
+
+```ts
+permix.hook('check', ({ path, data }) => {
+  console.log(`Permission checked: ${path}`, data)
+})
+```

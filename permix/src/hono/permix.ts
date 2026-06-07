@@ -2,10 +2,10 @@ import type { Context, MiddlewareHandler } from 'hono'
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
 import type { Definition } from '../core/definitions'
-import type { Rules, RulesPaths } from '../core/permix'
+import type { PermixHooks, Rules, RulesPaths } from '../core/permix'
 import type { MaybePromise } from '../utils'
 import { createMiddleware } from 'hono/factory'
-import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
+import { createCheckContext, createHooks, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
 
 export interface MiddlewareContext {
   c: Context
@@ -31,6 +31,8 @@ function buildPermix<D extends Definition>(
 ) {
   const onForbidden = options.onForbidden ?? (({ c }) => c.json({ error: 'Forbidden' }, 403))
 
+  const hooks = createHooks<PermixHooks<D>>()
+
   function get(c: Context): PermixCore<D> | null {
     const instance = c.get(keyToString(resolveKey())) as PermixCore<D> | undefined
     return instance ?? null
@@ -51,7 +53,9 @@ function buildPermix<D extends Definition>(
       const rules = typeof callbackOrRules === 'function'
         ? await callbackOrRules({ c })
         : callbackOrRules
-      c.set(keyToString(resolveKey()), createPermixCore<D>(rules))
+      const instance = createPermixCore<D>(rules)
+      instance.hook('check', context => hooks.callHook('check', context))
+      c.set(keyToString(resolveKey()), instance)
       await next()
     })
   }
@@ -89,6 +93,8 @@ function buildPermix<D extends Definition>(
     get,
     getOrThrow,
     getRules,
+    hook: hooks.hook,
+    hookOnce: hooks.hookOnce,
     get key() {
       return resolveKey()
     },
