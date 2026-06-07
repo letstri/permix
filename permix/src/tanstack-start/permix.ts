@@ -147,8 +147,8 @@ function buildPermix<D extends Definition>(
  * instance across global middleware, server routes, server functions, and the
  * router for the lifetime of each request.
  *
- * Use `.contextKey('name')` to set a custom context key (defaults to a unique
- * `Symbol('permix')`).
+ * Use `.contextKey('name')` to set a custom context key (defaults to
+ * `'__permix'`).
  *
  * @example
  * ```ts
@@ -186,15 +186,17 @@ function buildPermix<D extends Definition>(
  * @link https://permix.letstri.dev/docs/integrations/tanstack-start
  */
 export function createPermix<D extends Definition>(options: PermixOptions<D> = {}) {
-  let key: string | symbol = Symbol('permix')
+  let key: string = '__permix'
   const permix = buildPermix<D>(() => key, options)
 
-  return Object.assign(permix, {
-    contextKey(newKey: string | symbol) {
+  const instance = Object.assign(permix, {
+    contextKey(newKey: string) {
       key = newKey
-      return permix
+      return instance
     },
   })
+
+  return instance
 }
 
 /** Return type of {@link createPermix}. */

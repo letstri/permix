@@ -5,11 +5,9 @@ description: Learn how to use Permix with TanStack Start
 
 ## Overview
 
-Permix provides a dedicated integration for [TanStack Start](https://tanstack.com/start) through `permix/tanstack-start`. It exposes a `createPermix` factory that returns a **per-request** Permix instance backed by TanStack Start's [server request context](https://tanstack.com/start/latest/docs/framework/react/guide/middleware), which is shared across global middleware, server routes, server functions, and the router.
+Permix provides a dedicated integration for [TanStack Start](https://tanstack.com/start) through `permix/tanstack-start`. It exposes a `createPermix` factory that returns a **per-request** Permix instance backed by TanStack Start's [server request context](https://tanstack.com/start/latest/docs/framework/react/guide/middleware).
 
-You `setupMiddleware()` the rules once per request and `get()` them anywhere on the server — `beforeLoad`, loaders, server routes, and server functions — without threading the instance through props.
-
-The client side reuses the existing React integration (`permix/react`): the server `dehydrate()`s its state and the client hydrates it into its own singleton via `PermixProvider` + `PermixHydrate`.
+You `setupMiddleware()` the rules once per request and `get()` them anywhere on the server — `beforeLoad`, loaders, server routes, and server functions — without threading the instance through props. The client side reuses the React integration (`permix/react`) via `PermixProvider` + `PermixHydrate`.
 
 <Callout>
 Before getting started with the TanStack Start integration, make sure you've completed the initial setup steps in the [Quick Start](/docs/quick-start) guide. Familiarity with the [Hydration guide](/docs/guide/hydration) helps too.
@@ -48,7 +46,7 @@ export const permix = createPermix<PermissionsDefinition>()
 The returned helper does **not** hold any permission state at module scope — every request gets its own isolated instance.
 
 <Callout>
-By default the instance is stored on the request context under a unique `Symbol`. Call `.contextKey('permissions')` if you need a custom, well-known key (e.g. when running multiple Permix instances side by side).
+By default the instance is stored on the request context under `'__permix'`. Call `.contextKey('permissions')` if you need a custom key (e.g. when running multiple Permix instances side by side).
 </Callout>
 
 </Step>
@@ -178,13 +176,25 @@ const permix = createPermix<Definition>({
 
 Use `dehydrate(context)` to serialize the request's permissions and hand them to a client provider. The server cannot send the Permix instance itself across the boundary — only the JSON state.
 
+<Callout>
+Route loaders in TanStack Start are **isomorphic** — they run on both server and client. Since the Permix instance only exists in the server context, you must call `dehydrate()` inside a `createServerFn` to ensure it always executes on the server.
+</Callout>
+
+```ts title="src/lib/permix.server.ts"
+import { createServerFn } from '@tanstack/react-start'
+import { permix } from './permix'
+
+export const getPermixState = createServerFn()
+  .handler(({ context }) => permix.dehydrate(context))
+```
+
 ```tsx title="src/routes/__root.tsx"
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
-import { permix } from '../lib/permix'
+import { getPermixState } from '../lib/permix.server'
 import { Providers } from '../providers'
 
 export const Route = createRootRouteWithContext()({
-  loader: ({ context }) => ({ state: permix.dehydrate(context) }),
+  loader: async () => ({ state: await getPermixState() }),
   component: RootComponent,
 })
 
@@ -293,12 +303,7 @@ permix.setupMiddleware(async ({ request }) => {
 
 ## How per-request isolation works
 
-`setupMiddleware` creates a single core instance per request and stores it on TanStack Start's server request context. Inside one request:
-
-- The middleware runs once and `setup()`s the rules.
-- All subsequent `get()` / `getOrThrow()` / `check()` calls in the same request — across `beforeLoad`, loaders, server routes, and server functions — read that one instance.
-
-Across concurrent requests, each request gets its **own** instance. State never leaks between users.
+`setupMiddleware` creates a fresh core instance per request and stores it on TanStack Start's server request context. All subsequent `get()` / `getOrThrow()` / `check()` calls within the same request share that one instance. Across concurrent requests, each gets its **own** instance — state never leaks between users.
 
 ## API
 
