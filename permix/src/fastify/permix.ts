@@ -2,10 +2,10 @@ import type { FastifyPluginAsync, FastifyReply, FastifyRequest, preHandlerHookHa
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
 import type { Definition } from '../core/definitions'
-import type { Rules, RulesPaths } from '../core/permix'
+import type { PermixHooks, Rules, RulesPaths } from '../core/permix'
 import type { MaybePromise } from '../utils'
 import fp from 'fastify-plugin'
-import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
+import { createCheckContext, createHooks, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
 
 let pluginCounter = 0
 
@@ -31,6 +31,8 @@ function buildPermix<D extends Definition>(
   })
 
   const pluginName = `permix-${pluginCounter++}`
+
+  const hooks = createHooks<PermixHooks<D>>()
 
   function get(request: FastifyRequest): PermixCore<D> | null {
     try {
@@ -60,7 +62,9 @@ function buildPermix<D extends Definition>(
         const rules = typeof callbackOrRules === 'function'
           ? await callbackOrRules({ request, reply })
           : callbackOrRules
-        request.setDecorator(resolveKey(), createPermixCore<D>(rules))
+        const instance = createPermixCore<D>(rules)
+        instance.hook('check', context => hooks.callHook('check', context))
+        request.setDecorator(resolveKey(), instance)
       })
     }, {
       fastify: '5.x',
@@ -99,6 +103,8 @@ function buildPermix<D extends Definition>(
     get,
     getOrThrow,
     getRules,
+    hook: hooks.hook,
+    hookOnce: hooks.hookOnce,
     get key() {
       return resolveKey()
     },

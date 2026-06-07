@@ -1,7 +1,7 @@
-import type { CheckArgs } from './check'
+import type { CheckArgs, CheckContext } from './check'
 import type { Action, ActionName, Definition } from './definitions'
 import type { DehydratedState, Rules } from './rules'
-import { createCheck } from './check'
+import { createCheck, createCheckContext } from './check'
 import { PermixNotReadyError } from './errors'
 import { createHooks } from './hooks'
 import { createRules, dehydrateRules, hydrateRules } from './rules'
@@ -49,9 +49,10 @@ export type DataAtPath<D, P extends string, N extends unknown[] = Depth>
 export type CheckerFn<D extends Definition>
   = <P extends RulesPaths<D>>(path: P, ...data: DataAtPath<D, P>) => boolean
 
-export interface PermixHooks {
+export interface PermixHooks<D extends Definition = Definition> {
   setup: () => void
   ready: () => void
+  check: (context: CheckContext<D>) => void
 }
 
 export interface Permix<D extends Definition> {
@@ -164,7 +165,7 @@ export interface Permix<D extends Definition> {
    * })
    * ```
    */
-  hook: <K extends keyof PermixHooks>(name: K, fn: PermixHooks[K]) => () => void
+  hook: <K extends keyof PermixHooks<D>>(name: K, fn: PermixHooks<D>[K]) => () => void
 
   /**
    * Register a hook that fires only once for the named event.
@@ -176,7 +177,7 @@ export interface Permix<D extends Definition> {
    * })
    * ```
    */
-  hookOnce: <K extends keyof PermixHooks>(name: K, fn: PermixHooks[K]) => void
+  hookOnce: <K extends keyof PermixHooks<D>>(name: K, fn: PermixHooks<D>[K]) => void
 
   /**
    * Returns `true` if `setup()` has been called at least once (or initial
@@ -277,11 +278,13 @@ export interface Permix<D extends Definition> {
 export function createPermix<D extends Definition>(initialRules?: Rules<D>): Permix<D> {
   let rules: Rules<D> | null = initialRules ?? null
   let ready = !!initialRules
-  const hooks = createHooks<PermixHooks>()
+  const hooks = createHooks<PermixHooks<D>>()
 
   const { promise: readyPromise, resolve: resolveReady } = ready
     ? { promise: Promise.resolve(), resolve: () => {} }
     : Promise.withResolvers<void>()
+
+  const checkFn = createCheck<D>(() => rules)
 
   return {
     setup(r) {
@@ -293,7 +296,11 @@ export function createPermix<D extends Definition>(initialRules?: Rules<D>): Per
         hooks.callHook('ready')
       }
     },
-    check: createCheck<D>(() => rules),
+    check(...args: CheckArgs<D>): boolean {
+      const context = createCheckContext<D>(...args)
+      hooks.callHook('check', context)
+      return checkFn(...args)
+    },
     dehydrate() {
       if (!rules)
         throw new PermixNotReadyError()

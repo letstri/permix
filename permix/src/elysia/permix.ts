@@ -2,9 +2,9 @@ import type { Context } from 'elysia'
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
 import type { Definition } from '../core/definitions'
-import type { Rules, RulesPaths } from '../core/permix'
+import type { PermixHooks, Rules, RulesPaths } from '../core/permix'
 import type { MaybePromise } from '../utils'
-import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
+import { createCheckContext, createHooks, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
 
 export interface MiddlewareContext {
   context: Context
@@ -27,6 +27,8 @@ function buildPermix<D extends Definition>(
     return { error: 'Forbidden' }
   })
 
+  const hooks = createHooks<PermixHooks<D>>()
+
   function get(context: Context): PermixCore<D> | null {
     const instance = (context.store as any)[resolveKey()] as PermixCore<D> | undefined
     return instance ?? null
@@ -47,7 +49,9 @@ function buildPermix<D extends Definition>(
       const rules = typeof callbackOrRules === 'function'
         ? await callbackOrRules({ context })
         : callbackOrRules
-      ;(context.store as any)[resolveKey()] = createPermixCore<D>(rules)
+      const instance = createPermixCore<D>(rules)
+      instance.hook('check', ctx => hooks.callHook('check', ctx))
+      ;(context.store as any)[resolveKey()] = instance
     }
   }
 
@@ -77,6 +81,8 @@ function buildPermix<D extends Definition>(
     get,
     getOrThrow,
     getRules,
+    hook: hooks.hook,
+    hookOnce: hooks.hookOnce,
     get key() {
       return resolveKey()
     },

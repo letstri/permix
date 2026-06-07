@@ -82,11 +82,11 @@ export function createPermix<D extends Definition>(options: PermixOptions = {}) 
     return Effect.map(Tag, instance => instance.getRules())
   }
 
-  function hook<K extends keyof PermixHooks>(name: K, fn: PermixHooks[K]): Effect.Effect<() => void, never, PermixCore<D>> {
+  function hook<K extends keyof PermixHooks<D>>(name: K, fn: PermixHooks<D>[K]): Effect.Effect<() => void, never, PermixCore<D>> {
     return Effect.map(Tag, instance => instance.hook(name, fn))
   }
 
-  function hookOnce<K extends keyof PermixHooks>(name: K, fn: PermixHooks[K]): Effect.Effect<void, never, PermixCore<D>> {
+  function hookOnce<K extends keyof PermixHooks<D>>(name: K, fn: PermixHooks<D>[K]): Effect.Effect<void, never, PermixCore<D>> {
     return Effect.map(Tag, instance => instance.hookOnce(name, fn))
   }
 

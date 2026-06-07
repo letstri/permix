@@ -688,6 +688,39 @@ describe('deep rules', () => {
       expect(permix.isReady()).toBe(true)
     })
 
+    it('should call check hook with path and data', () => {
+      const permix = createPermix<{
+        post: ['create', { name: 'edit', type: { authorId: string }, required: true }]
+      }>()
+
+      const fn = vi.fn()
+      permix.hook('check', fn)
+
+      permix.setup({
+        post: { create: true, edit: post => post.authorId === '1' },
+      })
+
+      permix.check('post.create')
+      expect(fn).toHaveBeenCalledWith({ path: 'post.create' })
+
+      permix.check('post.edit', { authorId: '1' })
+      expect(fn).toHaveBeenCalledWith({ path: 'post.edit', data: { authorId: '1' } })
+    })
+
+    it('should call check hook with null path for callback form', () => {
+      const permix = createPermix<{
+        post: ['create', 'read']
+      }>()
+
+      const fn = vi.fn()
+      permix.hook('check', fn)
+
+      permix.setup({ post: { create: true, read: false } })
+
+      permix.check(c => c('post.create') && c('post.read'))
+      expect(fn).toHaveBeenCalledWith({ path: null })
+    })
+
     it('should resolve isReadyAsync immediately if already ready', async () => {
       const permix = createPermix<{
         post: ['create']

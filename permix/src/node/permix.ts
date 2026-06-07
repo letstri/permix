@@ -2,9 +2,9 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
 import type { Definition } from '../core/definitions'
-import type { Rules, RulesPaths } from '../core/permix'
+import type { PermixHooks, Rules, RulesPaths } from '../core/permix'
 import type { MaybePromise } from '../utils'
-import { createCheckContext, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
+import { createCheckContext, createHooks, createPermix as createPermixCore, createTemplate, PermixNotFoundError } from '../core'
 
 type NextFunction = (err?: unknown) => void
 
@@ -34,6 +34,8 @@ function buildPermix<D extends Definition>(
     res.end(JSON.stringify({ error: 'Forbidden' }))
   })
 
+  const hooks = createHooks<PermixHooks<D>>()
+
   function get(req: IncomingMessage): PermixCore<D> | null {
     const instance = (req as any)[resolveKey()] as PermixCore<D> | undefined
     return instance ?? null
@@ -55,7 +57,9 @@ function buildPermix<D extends Definition>(
       const rules = typeof callbackOrRules === 'function'
         ? await callbackOrRules({ req, res, next })
         : callbackOrRules
-      ;(req as any)[resolveKey()] = createPermixCore<D>(rules)
+      const instance = createPermixCore<D>(rules)
+      instance.hook('check', context => hooks.callHook('check', context))
+      ;(req as any)[resolveKey()] = instance
       return next()
     }
   }
@@ -93,6 +97,8 @@ function buildPermix<D extends Definition>(
     get,
     getOrThrow,
     getRules,
+    hook: hooks.hook,
+    hookOnce: hooks.hookOnce,
     get key() {
       return resolveKey()
     },

@@ -1,6 +1,6 @@
 import type { Permix as PermixCore } from '../core'
 import type { Definition } from '../core/definitions'
-import type { Rules, RulesPaths } from '../core/permix'
+import type { PermixHooks, Rules, RulesPaths } from '../core/permix'
 import type { DehydratedState } from '../core/rules'
 import { cache } from 'react'
 import { createPermix as createPermixCore, createTemplate } from '../core'
@@ -72,6 +72,14 @@ export function createPermix<D extends Definition>() {
     return createTemplate<D, T>(rules)
   }
 
+  function hook<K extends keyof PermixHooks<D>>(name: K, fn: PermixHooks<D>[K]) {
+    return getPermix().hook(name, fn)
+  }
+
+  function hookOnce<K extends keyof PermixHooks<D>>(name: K, fn: PermixHooks<D>[K]) {
+    return getPermix().hookOnce(name, fn)
+  }
+
   return {
     setup,
     check,
@@ -79,6 +87,8 @@ export function createPermix<D extends Definition>() {
     get,
     getRules,
     template,
+    hook,
+    hookOnce,
     $inferDefinition: undefined as unknown as D,
     $inferPath: undefined as unknown as RulesPaths<D>,
   }
