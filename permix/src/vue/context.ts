@@ -8,7 +8,7 @@ export interface PermixContext<T extends Definition> {
   rules: Rules<T> | null
 }
 
-export const PERMIX_CONTEXT_KEY = Symbol('vue-permix') as InjectionKey<Ref<PermixContext<any>>>
+const PERMIX_CONTEXT_KEY = Symbol('vue-permix') as InjectionKey<Ref<PermixContext<any>>>
 
 export function providePermixContext(permix: Permix<any>) {
   if (!permix) {

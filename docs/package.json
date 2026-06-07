@@ -24,13 +24,11 @@
     "fumadocs-mdx": "15.0.10",
     "fumadocs-twoslash": "^3.2.0",
     "fumadocs-ui": "16.9.3",
-    "lucide-react": "^1.17.0",
     "mermaid": "^11.15.0",
     "permix": "workspace:*",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "tailwind-merge": "^3.6.0",
-    "twoslash": "^0.3.8",
     "vite": "^8.0.16"
   },
   "devDependencies": {

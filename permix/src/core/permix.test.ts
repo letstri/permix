@@ -159,7 +159,6 @@ describe('createPermix', () => {
   })
 
   it('should expose type-only $inferDefinition and $inferPath helpers', () => {
-    // eslint-disable-next-line unused-imports/no-unused-vars
     const permix = createPermix<{
       user: ['create']
       job: ['remove']
