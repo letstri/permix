@@ -98,10 +98,10 @@ describe('tanstack-start createPermix', () => {
     expect(instanceB.check('post.create')).toBe(false)
   })
 
-  it('uses a fresh Symbol as the default context key', async () => {
+  it('uses a string as the default context key', async () => {
     const permix = createPermix<PermissionsDefinition>()
 
-    expect(typeof permix.key).toBe('symbol')
+    expect(permix.key).toBe('__permix')
 
     const middleware = permix.setupMiddleware({ post: { create: true, read: true } })
     const run = runServer(middleware, { request: new Request('http://localhost') })
