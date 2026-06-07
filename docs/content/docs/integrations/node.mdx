@@ -288,3 +288,13 @@ This integration is designed for raw Node.js HTTP servers. If you're using a web
 
 - For Express, use [Permix Express integration](/docs/integrations/express)
 - For Hono, use [Permix Hono integration](/docs/integrations/hono)
+
+### Hooks
+
+You can register hooks at the factory level to listen for events across all requests:
+
+```ts
+permix.hook('check', ({ path, data }) => {
+  console.log(`Permission checked: ${path}`, data)
+})
+```
