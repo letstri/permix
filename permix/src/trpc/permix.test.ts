@@ -221,15 +221,12 @@ describe('createPermix', () => {
 
   it('should save types for context and input', async () => {
     const protectedProcedure = t.procedure
-      .use(({ next, ctx }) => {
+      .use(({ next }) => {
         return next({
-          ctx: {
-            ...ctx,
-            ...permix.setupContext({
-              post: { create: true, read: true, update: true },
-              user: { delete: true },
-            }),
-          },
+          ctx: permix.setupContext({
+            post: { create: true, read: true, update: true },
+            user: { delete: true },
+          }),
         })
       })
 
