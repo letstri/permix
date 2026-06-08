@@ -1,3 +1,4 @@
+import type { TRPCMiddlewareBuilder } from '@trpc/server'
 import type { Permix as PermixCore } from '../core'
 import type { CheckArgs, CheckContext } from '../core/check'
 import type { Definition } from '../core/definitions'
@@ -8,6 +9,10 @@ import { createCheckContext, createHooks, createPermix as createPermixCore, crea
 export interface PermixOptions<D extends Definition> {
   onForbidden?: (params: CheckContext<D> & { ctx: Record<string, any>, next: (...args: any[]) => any }) => any
 }
+
+type TrpcContext<D extends Definition, Key extends string> = { [P in Key]: PermixCore<D> }
+type TrpcRootContext<D extends Definition, Key extends string>
+  = TrpcContext<D, Key> extends (...args: any[]) => infer TReturn ? Awaited<TReturn> : TrpcContext<D, Key>
 
 function buildPermix<D extends Definition, const Key extends string>(
   resolveKey: () => string,
@@ -44,7 +49,7 @@ function buildPermix<D extends Definition, const Key extends string>(
       }
 
       return forbiddenHandler({ ...opts, ...createCheckContext(...args) })
-    })
+    }) as TRPCMiddlewareBuilder<TrpcRootContext<D, Key>, object, unknown, unknown>
   }
 
   function getRules(ctx: Record<string, PermixCore<D> | undefined>): Rules<D> | null {
@@ -63,7 +68,7 @@ function buildPermix<D extends Definition, const Key extends string>(
     hook: hooks.hook,
     hookOnce: hooks.hookOnce,
     get key() {
-      return resolveKey()
+      return resolveKey() as Key
     },
     $inferDefinition: undefined as unknown as D,
     $inferPath: undefined as unknown as RulesPaths<D>,
