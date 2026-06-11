@@ -4,6 +4,16 @@ description: >-
   Checks permissions with Permix check(): dot paths, callbacks, ~all and ~any,
   ActionSpec with entity data, ReBAC closures, isReady. Use when implementing
   authorization checks, resource-level rules, or permix.check in app code.
+type: core
+library: permix
+library_version: '4.1.1'
+requires:
+  - permix-getting-started
+sources:
+  - 'letstri/permix:docs/content/docs/guide/check.mdx'
+  - 'letstri/permix:docs/content/docs/guide/rebac.mdx'
+  - 'letstri/permix:docs/content/docs/guide/ready.mdx'
+  - 'letstri/permix:permix/src/core/check.ts'
 ---
 
 # Permix — checking permissions

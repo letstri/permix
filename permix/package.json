@@ -34,7 +34,8 @@
     "security",
     "permissions-management",
     "frontend",
-    "javascript"
+    "javascript",
+    "tanstack-intent"
   ],
   "exports": {
     ".": {
@@ -122,12 +123,14 @@
     "node": ">=22"
   },
   "scripts": {
-    "prepublishOnly": "run-s check-types test build scripts:copy-readme",
+    "prepublishOnly": "run-s check-types test build scripts:copy-readme skills:validate",
     "build": "tsdown && pnpm run build:svelte",
     "build:svelte": "svelte-package -i src/svelte -o dist/svelte && node ./scripts/build-svelte.ts",
     "test": "vitest run",
     "check-types": "tsc --build && svelte-check --tsconfig ./tsconfig.svelte.json",
-    "scripts:copy-readme": "node ./scripts/copy-readme.ts"
+    "scripts:copy-readme": "node ./scripts/copy-readme.ts",
+    "skills:validate": "intent validate skills",
+    "skills:stale": "intent stale skills"
   },
   "peerDependencies": {
     "@orpc/server": ">=1",
@@ -201,6 +204,7 @@
     "@solidjs/testing-library": "^0.8.10",
     "@sveltejs/package": "^2.5.7",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
+    "@tanstack/intent": "^0.0.42",
     "@tanstack/react-start": "^1.168.18",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

@@ -4,6 +4,18 @@ description: >-
   Serializes Permix permissions for SSR: dehydrate, hydrate, client setup,
   PermixHydrate, Next.js and TanStack Start. Use when passing permissions from
   server to client or permix.dehydrate in SSR apps.
+type: sub-skill
+library: permix
+library_version: '4.1.1'
+requires:
+  - permix-getting-started
+  - permix-frontend
+sources:
+  - 'letstri/permix:docs/content/docs/guide/hydration.mdx'
+  - 'letstri/permix:docs/content/docs/integrations/next.mdx'
+  - 'letstri/permix:docs/content/docs/integrations/tanstack-start.mdx'
+  - 'letstri/permix:permix/src/next/index.ts'
+  - 'letstri/permix:permix/src/tanstack-start/index.ts'
 ---
 
 # Permix — SSR and hydration

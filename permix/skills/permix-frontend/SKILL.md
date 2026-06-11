@@ -4,6 +4,21 @@ description: >-
   Integrates Permix in React, Vue, Solid, or Svelte: Provider, usePermix, createComponents,
   isReady, setup after login. Use when building UI permission gates, hooks, or
   permix/react, permix/vue, permix/solid, permix/svelte in a frontend app.
+type: core
+library: permix
+library_version: '4.1.1'
+requires:
+  - permix-getting-started
+  - permix-check
+sources:
+  - 'letstri/permix:docs/content/docs/integrations/react.mdx'
+  - 'letstri/permix:docs/content/docs/integrations/vue.mdx'
+  - 'letstri/permix:docs/content/docs/integrations/solid.mdx'
+  - 'letstri/permix:docs/content/docs/integrations/svelte.mdx'
+  - 'letstri/permix:permix/src/react/index.ts'
+  - 'letstri/permix:permix/src/vue/index.ts'
+  - 'letstri/permix:permix/src/solid/index.ts'
+  - 'letstri/permix:permix/src/svelte/index.ts'
 ---
 
 # Permix — frontend (React / Vue / Solid / Svelte)

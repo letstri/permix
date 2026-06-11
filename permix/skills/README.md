@@ -1,35 +1,54 @@
-# Permix Cursor skills (for application developers)
+# Permix agent skills (TanStack Intent)
 
 These skills teach AI assistants how to integrate [Permix](https://permix.letstri.dev) in **your** app — not how to work on the Permix library monorepo.
 
 **Permix v4** uses action tuples (`post: ['read', { name: 'edit', type: Post }]`), not the v3 `{ action, dataType }` shape. Upgrading? See [migration guide](https://permix.letstri.dev/docs/migration-v3-to-v4).
 
-## Install in your project
+Skills ship inside the `permix` npm package and are versioned with each release. They include `sources` metadata pointing at docs and source files so maintainers can detect drift when documentation changes.
 
-Copy the skill folders into your app’s `.cursor/skills/` directory:
+## Install via npm (recommended)
+
+After adding Permix to your project:
 
 ```bash
-# From a clone of the permix repo
-cp -r /path/to/permix/skills/permix-* /path/to/your-app/.cursor/skills/
+pnpm add permix
+pnpm dlx @tanstack/intent@latest install
 ```
 
-Or install only what you need:
+Intent discovers `permix` in `node_modules`, reads the skills bundled with your installed version, and writes lightweight skill-loading guidance into your agent config (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`, etc.).
+
+List or load a specific skill:
 
 ```bash
-cp -r /path/to/permix/skills/permix-getting-started /path/to/your-app/.cursor/skills/
+pnpm dlx @tanstack/intent@latest list
+pnpm dlx @tanstack/intent@latest load permix#permix-getting-started
+```
+
+When you `pnpm update permix`, skills update with the package — knowledge travels through npm, not model training cutoffs.
+
+## Manual install (Cursor)
+
+Copy skill folders into `.cursor/skills/`:
+
+```bash
+cp -r node_modules/permix/skills/permix-* .cursor/skills/
 ```
 
 Restart Cursor or start a new agent chat so skills are picked up.
 
 ## Skills
 
-| Skill | When to use |
-|-------|-------------|
-| [permix-getting-started](./permix-getting-started/SKILL.md) | New project, schema, `setup`, roles/templates |
-| [permix-check](./permix-check/SKILL.md) | `check`, dynamic rules, ReBAC, `~all` / `~any` |
-| [permix-frontend](./permix-frontend/SKILL.md) | React, Vue, Solid, or Svelte UI integration |
-| [permix-server](./permix-server/SKILL.md) | Express, Hono, Fastify, tRPC, oRPC middleware |
-| [permix-ssr](./permix-ssr/SKILL.md) | `dehydrate` / `hydrate`, Next.js, TanStack Start |
+| Skill | Intent id | When to use |
+|-------|-----------|-------------|
+| [permix-getting-started](./permix-getting-started/SKILL.md) | `permix#permix-getting-started` | New project, schema, `setup`, roles/templates |
+| [permix-check](./permix-check/SKILL.md) | `permix#permix-check` | `check`, dynamic rules, ReBAC, `~all` / `~any` |
+| [permix-frontend](./permix-frontend/SKILL.md) | `permix#permix-frontend` | React, Vue, Solid, or Svelte UI integration |
+| [permix-server](./permix-server/SKILL.md) | `permix#permix-server` | Express, Hono, Fastify, tRPC, oRPC middleware |
+| [permix-ssr](./permix-ssr/SKILL.md) | `permix#permix-ssr` | `dehydrate` / `hydrate`, Next.js, TanStack Start |
+
+## Registry and version history
+
+The package includes the `tanstack-intent` npm keyword. Published versions are indexed on the [Agent Skills Registry](https://tanstack.com/intent/registry) with skill history per release.
 
 ## Without skills
 
@@ -38,8 +57,6 @@ Restart Cursor or start a new agent chat so skills are picked up.
 
 ## Optional integrations (docs only)
 
-These adapters are documented on the site; no dedicated skill yet — use the integration pages:
-
 | Topic | Docs |
 |-------|------|
 | Effect | https://permix.letstri.dev/docs/integrations/effect |
@@ -47,3 +64,14 @@ These adapters are documented on the site; no dedicated skill yet — use the in
 | Events (`hook`, `hookOnce`) | https://permix.letstri.dev/docs/guide/events |
 
 Examples: https://github.com/letstri/permix/tree/main/examples
+
+## Maintainer workflow (this repo)
+
+From `permix/`:
+
+```bash
+pnpm run skills:validate   # structure + packaging before publish
+pnpm run skills:stale      # flag drift vs docs/sources
+```
+
+CI runs `intent validate` on PRs and `intent stale` after releases (`.github/workflows/check-skills.yml`). Update `library_version` in SKILL frontmatter when cutting a release.

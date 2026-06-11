@@ -31,9 +31,15 @@ permix.check('post.read') // true
 
 Permix has other powerful features, so here's check out the [docs](https://permix.letstri.dev/docs) or the [examples](https://github.com/letstri/permix/tree/main/examples) directory.
 
-## Cursor skills
+## Agent skills (TanStack Intent)
 
-Copy [skills/](skills/README.md) into your app’s `.cursor/skills/` so AI assistants follow Permix patterns (setup, check, React, server middleware, SSR).
+Permix ships [versioned agent skills](permix/skills/README.md) inside the npm package. Install `permix`, then run:
+
+```bash
+pnpm dlx @tanstack/intent@latest install
+```
+
+Skills are indexed on the [Agent Skills Registry](https://tanstack.com/intent/registry) and update when you update the package.
 
 ## License
 

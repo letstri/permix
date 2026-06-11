@@ -4,6 +4,24 @@ description: >-
   Protects HTTP/RPC routes with Permix server adapters: setupMiddleware,
   checkMiddleware, per-request instance. Use with permix/express, hono, fastify,
   trpc, orpc, node, or server middleware in backend apps.
+type: core
+library: permix
+library_version: '4.1.1'
+requires:
+  - permix-getting-started
+  - permix-check
+sources:
+  - 'letstri/permix:docs/content/docs/integrations/express.mdx'
+  - 'letstri/permix:docs/content/docs/integrations/hono.mdx'
+  - 'letstri/permix:docs/content/docs/integrations/fastify.mdx'
+  - 'letstri/permix:docs/content/docs/integrations/trpc.mdx'
+  - 'letstri/permix:docs/content/docs/integrations/orpc.mdx'
+  - 'letstri/permix:docs/content/docs/integrations/node.mdx'
+  - 'letstri/permix:docs/content/docs/integrations/server.mdx'
+  - 'letstri/permix:docs/content/docs/integrations/elysia.mdx'
+  - 'letstri/permix:permix/src/express/index.ts'
+  - 'letstri/permix:permix/src/hono/index.ts'
+  - 'letstri/permix:permix/src/trpc/index.ts'
 ---
 
 # Permix — server middleware

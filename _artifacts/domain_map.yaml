@@ -1,0 +1,233 @@
+# domain_map.yaml
+# Library: Permix
+# Version: 4.1.1
+
+library:
+  name: permix
+  version: '4.1.1'
+  repository: 'https://github.com/letstri/permix'
+  description: >
+    Lightweight, framework-agnostic, type-safe permissions for JavaScript apps.
+    Define a schema with createPermix, assign rules with setup, check with
+    dot-path strings, and integrate via React/Vue/Solid/Svelte and server adapters.
+  primary_framework: framework-agnostic
+
+domains:
+  - name: 'Core setup'
+    slug: core-setup
+    description: >
+      Schema definition, setup, templates, createRules, events, and migration
+      from Permix v3 to v4.
+
+  - name: 'Authorization checks'
+    slug: authorization
+    description: >
+      check() paths, callbacks, ~all/~any aggregates, ReBAC/ABAC entity rules,
+      and readiness (isReady).
+
+  - name: 'Frontend integration'
+    slug: frontend
+    description: >
+      Provider, hooks, and declarative components for React, Vue, Solid, and Svelte.
+
+  - name: 'Server integration'
+    slug: server
+    description: >
+      Per-request setupMiddleware and checkMiddleware for Express, Hono, Fastify,
+      tRPC, oRPC, Node, and Elysia.
+
+  - name: 'SSR and hydration'
+    slug: ssr
+    description: >
+      dehydrate/hydrate snapshots, PermixHydrate, Next.js and TanStack Start wiring.
+
+skills:
+  - name: 'Getting started'
+    slug: permix-getting-started
+    domain: core-setup
+    description: >
+      Install permix, define createPermix schema, call setup, use template and
+      createRules for role presets.
+    type: core
+    packages:
+      - permix
+    covers:
+      - createPermix
+      - setup
+      - template
+      - createRules
+      - hook / hookOnce
+    tasks:
+      - 'Add Permix to a new application'
+      - 'Define permission schema and role templates'
+      - 'Migrate from Permix v3 action objects to v4 tuples'
+    sources:
+      - 'letstri/permix:docs/content/docs/quick-start.mdx'
+      - 'letstri/permix:docs/content/docs/guide/setup.mdx'
+      - 'letstri/permix:docs/content/docs/guide/template.mdx'
+      - 'letstri/permix:docs/content/docs/guide/instance.mdx'
+      - 'letstri/permix:docs/content/docs/guide/events.mdx'
+      - 'letstri/permix:docs/content/docs/migration-v3-to-v4.mdx'
+      - 'letstri/permix:permix/src/core/index.ts'
+
+  - name: 'Checking permissions'
+    slug: permix-check
+    domain: authorization
+    description: >
+      Dot-path check, callback combinators, ~all/~any, entity-aware ReBAC rules,
+      isReady / isReadyAsync.
+    type: core
+    packages:
+      - permix
+    covers:
+      - check
+      - isReady
+      - ReBAC closures
+      - "'~all' / '~any'"
+    tasks:
+      - 'Gate UI or API logic with permix.check'
+      - 'Implement resource-level authorization with entity data'
+    sources:
+      - 'letstri/permix:docs/content/docs/guide/check.mdx'
+      - 'letstri/permix:docs/content/docs/guide/rebac.mdx'
+      - 'letstri/permix:docs/content/docs/guide/ready.mdx'
+      - 'letstri/permix:permix/src/core/check.ts'
+
+  - name: 'Frontend integration'
+    slug: permix-frontend
+    domain: frontend
+    description: >
+      PermixProvider, usePermix, createComponents, isReady UX for React, Vue,
+      Solid, and Svelte.
+    type: core
+    packages:
+      - permix
+    subsystems:
+      - react
+      - vue
+      - solid
+      - svelte
+    covers:
+      - PermixProvider
+      - usePermix
+      - createComponents
+      - Check component
+    tasks:
+      - 'Wrap the app tree and hide actions based on permissions'
+      - 'Integrate permix/react, permix/vue, permix/solid, or permix/svelte'
+    sources:
+      - 'letstri/permix:docs/content/docs/integrations/react.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/vue.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/solid.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/svelte.mdx'
+      - 'letstri/permix:permix/src/react/index.ts'
+      - 'letstri/permix:permix/src/vue/index.ts'
+      - 'letstri/permix:permix/src/solid/index.ts'
+      - 'letstri/permix:permix/src/svelte/index.ts'
+
+  - name: 'Server middleware'
+    slug: permix-server
+    domain: server
+    description: >
+      setupMiddleware, checkMiddleware, getOrThrow for Express-style HTTP and RPC adapters.
+    type: core
+    packages:
+      - permix
+    subsystems:
+      - express
+      - hono
+      - fastify
+      - trpc
+      - orpc
+      - node
+      - elysia
+    covers:
+      - setupMiddleware
+      - checkMiddleware
+      - getOrThrow
+    tasks:
+      - 'Protect HTTP or RPC routes on the server'
+      - 'Derive rules from authenticated request context'
+    sources:
+      - 'letstri/permix:docs/content/docs/integrations/express.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/hono.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/fastify.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/trpc.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/orpc.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/node.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/server.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/elysia.mdx'
+      - 'letstri/permix:permix/src/express/index.ts'
+      - 'letstri/permix:permix/src/hono/index.ts'
+      - 'letstri/permix:permix/src/trpc/index.ts'
+
+  - name: 'SSR and hydration'
+    slug: permix-ssr
+    domain: ssr
+    description: >
+      dehydrate server state, hydrate on client, PermixHydrate, Next.js and
+      TanStack Start helpers.
+    type: sub-skill
+    packages:
+      - permix
+    covers:
+      - dehydrate
+      - hydrate
+      - PermixHydrate
+    tasks:
+      - 'Pass permission booleans from server render to client'
+      - 'Wire permix/next or permix/tanstack-start'
+    sources:
+      - 'letstri/permix:docs/content/docs/guide/hydration.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/next.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/tanstack-start.mdx'
+      - 'letstri/permix:permix/src/next/index.ts'
+      - 'letstri/permix:permix/src/tanstack-start/index.ts'
+
+coverage:
+  ignored_packages:
+    - docs
+    - examples/*
+    - next
+    - tanstack-start
+
+failure_modes:
+  - mistake: 'Using v3 { action, dataType } schema shape'
+    impact: 'Type errors and wrong check paths after upgrading to v4'
+    correct_pattern: |
+      post: ['read', { name: 'update', type: Post }]
+    source: 'letstri/permix:docs/content/docs/migration-v3-to-v4.mdx'
+    priority: CRITICAL
+    status: active
+    version_context: 'Permix v4 uses action tuples; agents trained on v3 docs still emit objects'
+    skills: [permix-getting-started]
+
+  - mistake: 'Checking permissions before setup completes'
+    impact: 'PermixNotReadyError or false negatives in UI'
+    correct_pattern: |
+      await permix.isReadyAsync()
+      if (check('post.read')) { ... }
+    source: 'letstri/permix:docs/content/docs/guide/ready.mdx'
+    priority: HIGH
+    status: active
+    skills: [permix-check, permix-frontend]
+
+  - mistake: 'Relying on dehydrate alone for dynamic rules'
+    impact: 'Function-based ReBAC checks wrong after SSR hydrate'
+    correct_pattern: |
+      permix.hydrate(state)
+      permix.setup(clientRulesForUser)
+    source: 'letstri/permix:docs/content/docs/guide/hydration.mdx'
+    priority: CRITICAL
+    status: active
+    skills: [permix-ssr]
+
+  - mistake: 'Client-only authorization without server middleware'
+    impact: 'Security bypass; attackers can call APIs directly'
+    correct_pattern: |
+      app.use(permix.setupMiddleware(rules))
+      app.post('/posts', permix.checkMiddleware('post.create'), handler)
+    source: 'letstri/permix:docs/content/docs/integrations/express.mdx'
+    priority: CRITICAL
+    status: active
+    skills: [permix-server]
