@@ -2,7 +2,7 @@
   "name": "permix",
   "displayName": "Permix",
   "type": "module",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "private": false,
   "packageManager": "pnpm@11.5.0",
   "description": "Permix is a lightweight, framework-agnostic, type-safe permissions management library for JavaScript applications on the client and server sides.",
@@ -115,10 +115,11 @@
   "main": "./dist/core/index.mjs",
   "types": "./dist/core/index.d.mts",
   "files": [
-    "dist"
+    "dist",
+    "skills"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "scripts": {
     "prepublishOnly": "run-s check-types test build scripts:copy-readme",
