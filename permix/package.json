@@ -37,6 +37,10 @@
     "javascript",
     "tanstack-intent"
   ],
+  "intent": {
+    "repo": "letstri/permix",
+    "docs": "../docs/content/docs"
+  },
   "exports": {
     ".": {
       "types": "./dist/core/index.d.mts",
