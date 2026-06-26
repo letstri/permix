@@ -7,7 +7,7 @@ description: Learn how to use Permix with TanStack Start
 
 Permix provides a dedicated integration for [TanStack Start](https://tanstack.com/start) through `permix/tanstack-start`. It exposes a `createPermix` factory that returns a **per-request** Permix instance backed by TanStack Start's [server request context](https://tanstack.com/start/latest/docs/framework/react/guide/middleware).
 
-You `setupMiddleware()` the rules once per request and `get()` them anywhere on the server — `beforeLoad`, loaders, server routes, and server functions — without threading the instance through props. The client side reuses the React integration (`permix/react`) via `PermixProvider` + `PermixHydrate`.
+You `setupMiddleware()` the rules once per request and `get()` them on the server inside **server functions** and **server routes** — without threading the instance through props. The client side reuses the React integration (`permix/react`) via `PermixProvider` + `PermixHydrate`.
 
 <Callout>
 Before getting started with the TanStack Start integration, make sure you've completed the initial setup steps in the [Quick Start](/docs/quick-start) guide. Familiarity with the [Hydration guide](/docs/guide/hydration) helps too.
@@ -88,55 +88,45 @@ You can also attach `setupMiddleware()` to a specific server route's `middleware
 
 <Step>
 
-## Type the router context
-
-So `get(context)` is fully typed inside `beforeLoad` and loaders, declare the context key on your root route with `createRootRouteWithContext`. Chain `.contextKey('permix')` when creating the integration so the key matches your router context type:
-
-```tsx title="src/lib/permix.ts"
-import { createPermix } from 'permix/tanstack-start'
-
-export const permix = createPermix<PermissionsDefinition>().contextKey('permix')
-```
-
-```tsx title="src/routes/__root.tsx"
-import type { Permix } from 'permix'
-import type { PermissionsDefinition } from '../lib/permix'
-import { createRootRouteWithContext } from '@tanstack/react-router'
-
-export const Route = createRootRouteWithContext<{
-  permix: Permix<PermissionsDefinition>
-}>()({
-  // ...
-})
-```
-
-</Step>
-
-<Step>
-
 ## Check on the server
 
-Anywhere a `beforeLoad`, loader, server route, or server function runs in that request, read the instance with `get()` and call `check()`:
+The request-scoped instance lives on TanStack Start's **server** request context, which is shared with server functions and server routes. Read it with `getOrThrow(context)` (or `get(context)`) inside a `createServerFn` handler and call `check()`:
 
-```tsx title="src/routes/posts.$id.tsx"
-import { createFileRoute, notFound } from '@tanstack/react-router'
+```ts title="src/server/posts.ts"
+import { notFound } from '@tanstack/react-router'
+import { createServerFn } from '@tanstack/react-start'
 import { permix } from '../lib/permix'
 import { getPost } from '../lib/posts'
 
-export const Route = createFileRoute('/posts/$id')({
-  loader: async ({ params, context }) => {
-    const post = await getPost(params.id)
+export const getPostPageData = createServerFn()
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data, context }) => {
+    const post = await getPost(data.id)
 
-    if (!permix.get(context)?.check('post.read', post)) {
+    if (!post || !permix.getOrThrow(context).check('post.read', post)) {
       throw notFound()
     }
 
     return { post }
-  },
+  })
+```
+
+Then call the server function from your route loader:
+
+```tsx title="src/routes/posts.$id.tsx"
+import { createFileRoute } from '@tanstack/react-router'
+import { getPostPageData } from '../server/posts'
+
+export const Route = createFileRoute('/posts/$id')({
+  loader: ({ params }) => getPostPageData({ data: { id: params.id } }),
 })
 ```
 
-Prefer `getOrThrow(context)` when you want a [`PermixNotFoundError`](/docs/guide/instance) instead of a nullable value when setup didn't run.
+<Callout type="warn">
+Don't call `permix.get(context)` directly inside a route `loader` or `beforeLoad`. Those run **isomorphically** (on both server and client), and the `context` they receive is the [router context](https://tanstack.com/router/latest/docs/framework/react/guide/router-context) — not the server request context where `setupMiddleware()` stored the instance. Always do server checks inside a `createServerFn` (or a server route) so they execute on the server with access to the instance.
+</Callout>
+
+Use `get(context)` instead of `getOrThrow(context)` when you want a nullable value rather than a [`PermixNotFoundError`](/docs/guide/instance) if setup didn't run.
 
 </Step>
 
@@ -189,11 +179,11 @@ export const getPermixState = createServerFn()
 ```
 
 ```tsx title="src/routes/__root.tsx"
-import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
+import { createRootRoute, Outlet } from '@tanstack/react-router'
 import { getPermixState } from '../lib/permix.server'
 import { Providers } from '../providers'
 
-export const Route = createRootRouteWithContext()({
+export const Route = createRootRoute({
   loader: async () => ({ state: await getPermixState() }),
   component: RootComponent,
 })
