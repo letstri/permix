@@ -8,9 +8,10 @@ description: >-
   elysia). Use for anything past initial setup — checking permissions,
   gating UI, or protecting routes. For creating the schema and first
   `permix.setup()`, use permix-getting-started first.
-type: core
-library: permix
-library_version: '4.1.2'
+metadata:
+  type: core
+  library: permix
+  library_version: '4.1.2'
 requires:
   - permix-getting-started
 sources:
