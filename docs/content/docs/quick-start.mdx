@@ -10,13 +10,41 @@ Want to explore Permix before installing? Try our interactive sandbox environmen
 
 [Try Permix Sandbox](https://stackblitz.com/edit/permix-sandbox?file=src%2Fmain.ts&terminal=dev)
 
+## Installation via Agents
+
+Using Claude Code, Cursor, or another agent that supports skills? Add Permix skills, then hand it this prompt to set up permissions for you:
+
+```bash
+npx skills add letstri/permix
+```
+
+```
+Install and set up a base Permix architecture for this project.
+
+1. Detect my stack (framework(s), server/client split, e.g. React, Vue, Solid,
+   Svelte, Next.js, TanStack Start, Node, Hono, Express, tRPC, oRPC, Fastify,
+   Elysia, Drizzle) and install `permix` plus the matching integration
+   package(s) from https://permix.letstri.dev/docs.
+2. Scan the codebase for my real resources/entities (DB models, API routes,
+   UI sections) and design a `createPermix<...>` schema from them instead of
+   placeholder data.
+3. Wire `permix.setup()` with actual rules for those resources, driven by my
+   auth/session/role data wherever it already exists.
+4. Add server-side checks (middleware) on the matching integration and
+   client-side checks/guards in the relevant components or routes.
+5. Follow the getting-started, setup, template, and framework integration
+   guides in the Permix skill for conventions and API shape.
+```
+
+Or continue with the manual installation below.
+
 ## Installation
 
 <Steps>
 
 <Step>
 
-### Install Permix
+### Install a package
 
 Typically you'll need to install Permix using your package manager:
 
