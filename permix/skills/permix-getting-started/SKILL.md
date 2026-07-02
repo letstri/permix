@@ -4,9 +4,10 @@ description: >-
   Sets up Permix in an application: install, createPermix schema, setup rules,
   templates for roles, createRules. Use when adding Permix, defining permission
   types, role-based access, or permix.setup in a user project.
-type: core
-library: permix
-library_version: '4.1.2'
+metadata:
+  type: core
+  library: permix
+  library_version: '4.1.2'
 requires: []
 sources:
   - 'letstri/permix:docs/content/docs/quick-start.mdx'

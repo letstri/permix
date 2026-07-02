@@ -146,15 +146,6 @@ skills:
       - 'letstri/permix:docs/content/docs/integrations/server.mdx'
       - 'letstri/permix:docs/content/docs/integrations/elysia.mdx'
       - 'letstri/permix:permix/src/core/check.ts'
-      - 'letstri/permix:permix/src/react/index.ts'
-      - 'letstri/permix:permix/src/vue/index.ts'
-      - 'letstri/permix:permix/src/solid/index.ts'
-      - 'letstri/permix:permix/src/svelte/index.ts'
-      - 'letstri/permix:permix/src/next/index.ts'
-      - 'letstri/permix:permix/src/tanstack-start/index.ts'
-      - 'letstri/permix:permix/src/express/index.ts'
-      - 'letstri/permix:permix/src/hono/index.ts'
-      - 'letstri/permix:permix/src/trpc/index.ts'
 
 coverage:
   ignored_packages:
