@@ -34,7 +34,7 @@
     "---",
     "[Examples](https://github.com/letstri/permix/tree/main/examples)",
     "---LLMs---",
-    "[llms.txt](/llms.txt)",
-    "[llms-full.txt](/llms-full.txt)"
+    "external:[llms.txt](/llms.txt)",
+    "external:[llms-full.txt](/llms-full.txt)"
   ]
 }
