@@ -1,26 +1,3 @@
----
-name: permix-frontend
-description: >-
-  Integrates Permix in React, Vue, Solid, or Svelte: Provider, usePermix, createComponents,
-  isReady, setup after login. Use when building UI permission gates, hooks, or
-  permix/react, permix/vue, permix/solid, permix/svelte in a frontend app.
-type: core
-library: permix
-library_version: '4.1.1'
-requires:
-  - permix-getting-started
-  - permix-check
-sources:
-  - 'letstri/permix:docs/content/docs/integrations/react.mdx'
-  - 'letstri/permix:docs/content/docs/integrations/vue.mdx'
-  - 'letstri/permix:docs/content/docs/integrations/solid.mdx'
-  - 'letstri/permix:docs/content/docs/integrations/svelte.mdx'
-  - 'letstri/permix:permix/src/react/index.ts'
-  - 'letstri/permix:permix/src/vue/index.ts'
-  - 'letstri/permix:permix/src/solid/index.ts'
-  - 'letstri/permix:permix/src/svelte/index.ts'
----
-
 # Permix — frontend (React / Vue / Solid / Svelte)
 
 Pick the package subpath for your framework. Pattern is the same: one shared `permix` instance, call `setup` when the user is known, wrap the tree, check in components.
@@ -102,7 +79,7 @@ export const { Check } = createComponents(permix)
 
 ### SSR
 
-Use `PermixHydrate` + call `setup` again on the client for function rules — see **permix-ssr** skill.
+Use `PermixHydrate` + call `setup` again on the client for function rules — see **SSR and hydration** below.
 
 ## Vue
 
@@ -155,6 +132,85 @@ Requires Svelte 5. Provider + hooks from `permix/svelte`; mirror the React steps
 - Show loading or skeleton while `!isReady` — `check` returns `false` when rules are not ready in hooks.
 - Hide destructive actions when denied; prefer disabling with tooltip only if you explain why.
 - Keep permission strings in sync with server middleware paths.
+
+## SSR and hydration
+
+Docs: https://permix.letstri.dev/docs/guide/hydration
+
+Send a JSON snapshot of booleans to the browser so the first paint can respect permissions without re-fetching policy on the client.
+
+### Server
+
+```ts
+permix.setup(serverRules)
+
+const state = permix.dehydrate()
+// { post: { create: true, read: false } } — functions evaluated once without data
+```
+
+Pass `state` to the client (embed in HTML, RSC payload, loader data, etc.).
+
+### Client
+
+```ts
+permix.hydrate(state)
+// isReady() is still FALSE — hydrate only restores booleans
+```
+
+Function-based rules are **lost** in JSON (dehydration calls functions with no data; missing required data → `false`).
+
+**Always call `setup` again on the client** with full rules (including closures):
+
+```ts
+permix.hydrate(serverState)
+permix.setup(clientRulesForUser) // restores functions + sets ready
+```
+
+Skipping client `setup` after hydrate leaves dynamic/ReBAC checks wrong.
+
+### React
+
+```tsx
+import { DehydratedState, PermixHydrate, PermixProvider } from 'permix/react'
+
+function App({ dehydratedState }: { dehydratedState: DehydratedState<typeof schema> }) {
+  return (
+    <PermixProvider permix={permix}>
+      <PermixHydrate state={dehydratedState}>
+        <YourApp />
+      </PermixHydrate>
+    </PermixProvider>
+  )
+}
+```
+
+Run client `permix.setup(...)` where you restore the session (e.g. after `PermixHydrate` mounts or in the same auth effect).
+
+### Next.js / TanStack Start
+
+Use framework helpers from `permix/next` or `permix/tanstack-start` when available — they wire dehydrate/hydrate into the framework data flow.
+
+Docs:
+
+- https://permix.letstri.dev/docs/integrations/next
+- https://permix.letstri.dev/docs/integrations/tanstack-start
+
+### Flow diagram
+
+```text
+Server: setup(rules) → dehydrate() → send state
+Client: hydrate(state) → setup(fullRules) → isReady() → check() / usePermix
+```
+
+### Pitfalls
+
+| Issue | Cause |
+|-------|--------|
+| UI stuck not ready | `hydrate` without follow-up `setup` |
+| Wrong dynamic checks | Relying on dehydrated booleans only |
+| Mismatch server/client | Different schemas or missing actions in client `setup` |
+
+For static-only permissions (all booleans), dehydrate + hydrate + `setup` with the same booleans is enough; still call `setup` to mark ready.
 
 ## Examples in the Permix repo
 

@@ -1,13 +1,13 @@
 # _artifacts/skill_tree.yaml
 library:
   name: permix
-  version: '4.1.1'
+  version: '4.1.2'
   repository: 'https://github.com/letstri/permix'
   description: 'Type-safe permissions for JavaScript on client and server.'
 generated_from:
   domain_map: '_artifacts/domain_map.yaml'
   skill_spec: '_artifacts/skill_spec.md'
-generated_at: '2026-06-11'
+generated_at: '2026-07-02'
 
 skills:
   - name: 'Getting started'
@@ -29,62 +29,27 @@ skills:
       - 'letstri/permix:docs/content/docs/migration-v3-to-v4.mdx'
       - 'letstri/permix:permix/src/core/index.ts'
 
-  - name: 'Checking permissions'
-    slug: permix-check
+  - name: 'Permix (check, frontend, server)'
+    slug: permix
     type: core
     domain: authorization
-    path: 'permix/skills/permix-check/SKILL.md'
+    path: 'permix/skills/permix/SKILL.md'
     package: permix
     description: >
       check() dot paths, callbacks, ~all/~any, entity-aware ReBAC rules,
-      isReady and isReadyAsync.
+      isReady/isReadyAsync; PermixProvider/usePermix/createComponents and SSR
+      dehydrate/hydrate for React, Vue, Solid, Svelte, Next.js, TanStack
+      Start; setupMiddleware/checkMiddleware for Express, Hono, Fastify,
+      tRPC, oRPC, Node, Elysia. Thin router with references loaded on demand.
     requires:
       - permix-getting-started
-    sources:
-      - 'letstri/permix:docs/content/docs/guide/check.mdx'
-      - 'letstri/permix:docs/content/docs/guide/rebac.mdx'
-      - 'letstri/permix:docs/content/docs/guide/ready.mdx'
-      - 'letstri/permix:permix/src/core/check.ts'
-
-  - name: 'Frontend integration'
-    slug: permix-frontend
-    type: core
-    domain: frontend
-    path: 'permix/skills/permix-frontend/SKILL.md'
-    package: permix
-    description: >
-      PermixProvider, usePermix, createComponents for React, Vue, Solid, and Svelte.
-    requires:
-      - permix-getting-started
-      - permix-check
     subsystems:
       - react
       - vue
       - solid
       - svelte
-    sources:
-      - 'letstri/permix:docs/content/docs/integrations/react.mdx'
-      - 'letstri/permix:docs/content/docs/integrations/vue.mdx'
-      - 'letstri/permix:docs/content/docs/integrations/solid.mdx'
-      - 'letstri/permix:docs/content/docs/integrations/svelte.mdx'
-      - 'letstri/permix:permix/src/react/index.ts'
-      - 'letstri/permix:permix/src/vue/index.ts'
-      - 'letstri/permix:permix/src/solid/index.ts'
-      - 'letstri/permix:permix/src/svelte/index.ts'
-
-  - name: 'Server middleware'
-    slug: permix-server
-    type: core
-    domain: server
-    path: 'permix/skills/permix-server/SKILL.md'
-    package: permix
-    description: >
-      setupMiddleware and checkMiddleware for Express, Hono, Fastify, tRPC, oRPC,
-      Node, and Elysia.
-    requires:
-      - permix-getting-started
-      - permix-check
-    subsystems:
+      - next
+      - tanstack-start
       - express
       - hono
       - fastify
@@ -92,7 +57,21 @@ skills:
       - orpc
       - node
       - elysia
+    references:
+      - 'references/check.md'
+      - 'references/frontend.md'
+      - 'references/server.md'
     sources:
+      - 'letstri/permix:docs/content/docs/guide/check.mdx'
+      - 'letstri/permix:docs/content/docs/guide/rebac.mdx'
+      - 'letstri/permix:docs/content/docs/guide/ready.mdx'
+      - 'letstri/permix:docs/content/docs/guide/hydration.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/react.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/vue.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/solid.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/svelte.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/next.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/tanstack-start.mdx'
       - 'letstri/permix:docs/content/docs/integrations/express.mdx'
       - 'letstri/permix:docs/content/docs/integrations/hono.mdx'
       - 'letstri/permix:docs/content/docs/integrations/fastify.mdx'
@@ -101,27 +80,16 @@ skills:
       - 'letstri/permix:docs/content/docs/integrations/node.mdx'
       - 'letstri/permix:docs/content/docs/integrations/server.mdx'
       - 'letstri/permix:docs/content/docs/integrations/elysia.mdx'
+      - 'letstri/permix:permix/src/core/check.ts'
+      - 'letstri/permix:permix/src/react/index.ts'
+      - 'letstri/permix:permix/src/vue/index.ts'
+      - 'letstri/permix:permix/src/solid/index.ts'
+      - 'letstri/permix:permix/src/svelte/index.ts'
+      - 'letstri/permix:permix/src/next/index.ts'
+      - 'letstri/permix:permix/src/tanstack-start/index.ts'
       - 'letstri/permix:permix/src/express/index.ts'
       - 'letstri/permix:permix/src/hono/index.ts'
       - 'letstri/permix:permix/src/trpc/index.ts'
-
-  - name: 'SSR and hydration'
-    slug: permix-ssr
-    type: sub-skill
-    domain: ssr
-    path: 'permix/skills/permix-ssr/SKILL.md'
-    package: permix
-    description: >
-      dehydrate/hydrate, PermixHydrate, Next.js and TanStack Start SSR wiring.
-    requires:
-      - permix-getting-started
-      - permix-frontend
-    sources:
-      - 'letstri/permix:docs/content/docs/guide/hydration.mdx'
-      - 'letstri/permix:docs/content/docs/integrations/next.mdx'
-      - 'letstri/permix:docs/content/docs/integrations/tanstack-start.mdx'
-      - 'letstri/permix:permix/src/next/index.ts'
-      - 'letstri/permix:permix/src/tanstack-start/index.ts'
 
 coverage:
   ignored_packages:

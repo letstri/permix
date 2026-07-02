@@ -1,21 +1,3 @@
----
-name: permix-check
-description: >-
-  Checks permissions with Permix check(): dot paths, callbacks, ~all and ~any,
-  ActionSpec with entity data, ReBAC closures, isReady. Use when implementing
-  authorization checks, resource-level rules, or permix.check in app code.
-type: core
-library: permix
-library_version: '4.1.1'
-requires:
-  - permix-getting-started
-sources:
-  - 'letstri/permix:docs/content/docs/guide/check.mdx'
-  - 'letstri/permix:docs/content/docs/guide/rebac.mdx'
-  - 'letstri/permix:docs/content/docs/guide/ready.mdx'
-  - 'letstri/permix:permix/src/core/check.ts'
----
-
 # Permix — checking permissions
 
 Docs: https://permix.letstri.dev/docs/guide/check
@@ -102,7 +84,7 @@ Gate UI or early checks when permissions load asynchronously (fetch user, then `
 | Checking before `setup` | Call `setup` after auth; use `isReady` in UI |
 | Path not in schema | Add action to `createPermix<D>()` generic |
 | Missing check data | Add `type` / `required: true` on action; pass entity to `check` |
-| Trusting client-only checks | Enforce same paths on server (**permix-server** skill) |
+| Trusting client-only checks | Enforce same paths on server (see `references/server.md`) |
 | Expecting lazy `c()` | Combine with `&&` / `\|\|`; each `c()` runs immediately |
 
 ## Server vs client

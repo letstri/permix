@@ -6,7 +6,7 @@ description: >-
   types, role-based access, or permix.setup in a user project.
 type: core
 library: permix
-library_version: '4.1.1'
+library_version: '4.1.2'
 requires: []
 sources:
   - 'letstri/permix:docs/content/docs/quick-start.mdx'
@@ -83,7 +83,7 @@ permix.setup({
 ```
 
 - Static leaf: `boolean`
-- Depends on resource at check time: `(data) => boolean` (see **permix-check** skill)
+- Depends on resource at check time: `(data) => boolean` (see **permix** skill, `references/check.md`)
 - Call `setup` after login, on route change, or when the active user/tenant changes — it **replaces** previous rules.
 
 ## 3. Optional: initial rules at construction
@@ -170,5 +170,5 @@ Docs: https://permix.letstri.dev/docs/guide/events
 - [ ] Single exported `permix` instance (same reference everywhere)
 - [ ] Schema covers every permission the app uses
 - [ ] `setup` runs when auth/session is known
-- [ ] UI waits for `isReady` or handles not-ready (React: **permix-frontend** skill)
-- [ ] Server routes use middleware (**permix-server** skill) — never rely on client checks alone
+- [ ] UI waits for `isReady` or handles not-ready (see **permix** skill, `references/frontend.md`)
+- [ ] Server routes use middleware (see **permix** skill, `references/server.md`) — never rely on client checks alone

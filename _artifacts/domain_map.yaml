@@ -1,10 +1,10 @@
 # domain_map.yaml
 # Library: Permix
-# Version: 4.1.1
+# Version: 4.1.2
 
 library:
   name: permix
-  version: '4.1.1'
+  version: '4.1.2'
   repository: 'https://github.com/letstri/permix'
   description: >
     Lightweight, framework-agnostic, type-safe permissions for JavaScript apps.
@@ -70,35 +70,17 @@ skills:
       - 'letstri/permix:docs/content/docs/migration-v3-to-v4.mdx'
       - 'letstri/permix:permix/src/core/index.ts'
 
-  - name: 'Checking permissions'
-    slug: permix-check
+  - name: 'Permix (check, frontend, server)'
+    slug: permix
     domain: authorization
     description: >
-      Dot-path check, callback combinators, ~all/~any, entity-aware ReBAC rules,
-      isReady / isReadyAsync.
-    type: core
-    packages:
-      - permix
-    covers:
-      - check
-      - isReady
-      - ReBAC closures
-      - "'~all' / '~any'"
-    tasks:
-      - 'Gate UI or API logic with permix.check'
-      - 'Implement resource-level authorization with entity data'
-    sources:
-      - 'letstri/permix:docs/content/docs/guide/check.mdx'
-      - 'letstri/permix:docs/content/docs/guide/rebac.mdx'
-      - 'letstri/permix:docs/content/docs/guide/ready.mdx'
-      - 'letstri/permix:permix/src/core/check.ts'
-
-  - name: 'Frontend integration'
-    slug: permix-frontend
-    domain: frontend
-    description: >
-      PermixProvider, usePermix, createComponents, isReady UX for React, Vue,
-      Solid, and Svelte.
+      Everything past initial setup: dot-path check, callback combinators,
+      ~all/~any, entity-aware ReBAC rules, isReady/isReadyAsync;
+      PermixProvider/usePermix/createComponents and SSR dehydrate/hydrate for
+      React, Vue, Solid, Svelte, Next.js, TanStack Start; setupMiddleware and
+      checkMiddleware for Express, Hono, Fastify, tRPC, oRPC, Node, Elysia.
+      Single skill with a thin SKILL.md router and three reference files
+      loaded on demand.
     type: core
     packages:
       - permix
@@ -107,33 +89,8 @@ skills:
       - vue
       - solid
       - svelte
-    covers:
-      - PermixProvider
-      - usePermix
-      - createComponents
-      - Check component
-    tasks:
-      - 'Wrap the app tree and hide actions based on permissions'
-      - 'Integrate permix/react, permix/vue, permix/solid, or permix/svelte'
-    sources:
-      - 'letstri/permix:docs/content/docs/integrations/react.mdx'
-      - 'letstri/permix:docs/content/docs/integrations/vue.mdx'
-      - 'letstri/permix:docs/content/docs/integrations/solid.mdx'
-      - 'letstri/permix:docs/content/docs/integrations/svelte.mdx'
-      - 'letstri/permix:permix/src/react/index.ts'
-      - 'letstri/permix:permix/src/vue/index.ts'
-      - 'letstri/permix:permix/src/solid/index.ts'
-      - 'letstri/permix:permix/src/svelte/index.ts'
-
-  - name: 'Server middleware'
-    slug: permix-server
-    domain: server
-    description: >
-      setupMiddleware, checkMiddleware, getOrThrow for Express-style HTTP and RPC adapters.
-    type: core
-    packages:
-      - permix
-    subsystems:
+      - next
+      - tanstack-start
       - express
       - hono
       - fastify
@@ -142,13 +99,44 @@ skills:
       - node
       - elysia
     covers:
+      - check
+      - isReady
+      - ReBAC closures
+      - "'~all' / '~any'"
+      - PermixProvider
+      - usePermix
+      - createComponents
+      - Check component
+      - dehydrate
+      - hydrate
+      - PermixHydrate
       - setupMiddleware
       - checkMiddleware
       - getOrThrow
     tasks:
+      - 'Gate UI or API logic with permix.check'
+      - 'Implement resource-level authorization with entity data'
+      - 'Wrap the app tree and hide actions based on permissions'
+      - 'Integrate permix/react, permix/vue, permix/solid, or permix/svelte'
+      - 'Pass permission booleans from server render to client'
+      - 'Wire permix/next or permix/tanstack-start'
       - 'Protect HTTP or RPC routes on the server'
       - 'Derive rules from authenticated request context'
+    references:
+      - 'references/check.md'
+      - 'references/frontend.md'
+      - 'references/server.md'
     sources:
+      - 'letstri/permix:docs/content/docs/guide/check.mdx'
+      - 'letstri/permix:docs/content/docs/guide/rebac.mdx'
+      - 'letstri/permix:docs/content/docs/guide/ready.mdx'
+      - 'letstri/permix:docs/content/docs/guide/hydration.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/react.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/vue.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/solid.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/svelte.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/next.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/tanstack-start.mdx'
       - 'letstri/permix:docs/content/docs/integrations/express.mdx'
       - 'letstri/permix:docs/content/docs/integrations/hono.mdx'
       - 'letstri/permix:docs/content/docs/integrations/fastify.mdx'
@@ -157,32 +145,16 @@ skills:
       - 'letstri/permix:docs/content/docs/integrations/node.mdx'
       - 'letstri/permix:docs/content/docs/integrations/server.mdx'
       - 'letstri/permix:docs/content/docs/integrations/elysia.mdx'
+      - 'letstri/permix:permix/src/core/check.ts'
+      - 'letstri/permix:permix/src/react/index.ts'
+      - 'letstri/permix:permix/src/vue/index.ts'
+      - 'letstri/permix:permix/src/solid/index.ts'
+      - 'letstri/permix:permix/src/svelte/index.ts'
+      - 'letstri/permix:permix/src/next/index.ts'
+      - 'letstri/permix:permix/src/tanstack-start/index.ts'
       - 'letstri/permix:permix/src/express/index.ts'
       - 'letstri/permix:permix/src/hono/index.ts'
       - 'letstri/permix:permix/src/trpc/index.ts'
-
-  - name: 'SSR and hydration'
-    slug: permix-ssr
-    domain: ssr
-    description: >
-      dehydrate server state, hydrate on client, PermixHydrate, Next.js and
-      TanStack Start helpers.
-    type: sub-skill
-    packages:
-      - permix
-    covers:
-      - dehydrate
-      - hydrate
-      - PermixHydrate
-    tasks:
-      - 'Pass permission booleans from server render to client'
-      - 'Wire permix/next or permix/tanstack-start'
-    sources:
-      - 'letstri/permix:docs/content/docs/guide/hydration.mdx'
-      - 'letstri/permix:docs/content/docs/integrations/next.mdx'
-      - 'letstri/permix:docs/content/docs/integrations/tanstack-start.mdx'
-      - 'letstri/permix:permix/src/next/index.ts'
-      - 'letstri/permix:permix/src/tanstack-start/index.ts'
 
 coverage:
   ignored_packages:
@@ -210,7 +182,7 @@ failure_modes:
     source: 'letstri/permix:docs/content/docs/guide/ready.mdx'
     priority: HIGH
     status: active
-    skills: [permix-check, permix-frontend]
+    skills: [permix]
 
   - mistake: 'Relying on dehydrate alone for dynamic rules'
     impact: 'Function-based ReBAC checks wrong after SSR hydrate'
@@ -220,7 +192,7 @@ failure_modes:
     source: 'letstri/permix:docs/content/docs/guide/hydration.mdx'
     priority: CRITICAL
     status: active
-    skills: [permix-ssr]
+    skills: [permix]
 
   - mistake: 'Client-only authorization without server middleware'
     impact: 'Security bypass; attackers can call APIs directly'
@@ -230,4 +202,4 @@ failure_modes:
     source: 'letstri/permix:docs/content/docs/integrations/express.mdx'
     priority: CRITICAL
     status: active
-    skills: [permix-server]
+    skills: [permix]

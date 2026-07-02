@@ -21,17 +21,18 @@ List or load a specific skill:
 
 ```bash
 pnpm dlx @tanstack/intent@latest list
-pnpm dlx @tanstack/intent@latest load permix#permix-getting-started
+pnpm dlx @tanstack/intent@latest load permix#permix
 ```
 
 When you `pnpm update permix`, skills update with the package — knowledge travels through npm, not model training cutoffs.
 
 ## Manual install (Cursor)
 
-Copy skill folders into `.cursor/skills/`:
+Copy skill folders into `.agents/skills/`:
 
 ```bash
-cp -r node_modules/permix/skills/permix-* .cursor/skills/
+cp -r node_modules/permix/skills/permix .agents/skills/
+cp -r node_modules/permix/skills/permix-getting-started .agents/skills/
 ```
 
 Restart Cursor or start a new agent chat so skills are picked up.
@@ -41,10 +42,7 @@ Restart Cursor or start a new agent chat so skills are picked up.
 | Skill | Intent id | When to use |
 |-------|-----------|-------------|
 | [permix-getting-started](./permix-getting-started/SKILL.md) | `permix#permix-getting-started` | New project, schema, `setup`, roles/templates |
-| [permix-check](./permix-check/SKILL.md) | `permix#permix-check` | `check`, dynamic rules, ReBAC, `~all` / `~any` |
-| [permix-frontend](./permix-frontend/SKILL.md) | `permix#permix-frontend` | React, Vue, Solid, or Svelte UI integration |
-| [permix-server](./permix-server/SKILL.md) | `permix#permix-server` | Express, Hono, Fastify, tRPC, oRPC middleware |
-| [permix-ssr](./permix-ssr/SKILL.md) | `permix#permix-ssr` | `dehydrate` / `hydrate`, Next.js, TanStack Start |
+| [permix](./permix/SKILL.md) | `permix#permix` | Everything past setup: `check`/ReBAC (`references/check.md`), React/Vue/Solid/Svelte + SSR (`references/frontend.md`), Express/Hono/Fastify/tRPC/oRPC middleware (`references/server.md`) |
 
 ## Registry and version history
 

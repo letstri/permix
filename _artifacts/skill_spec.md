@@ -1,6 +1,6 @@
 # Permix — Agent skill specification
 
-Library: **permix** @ 4.1.1  
+Library: **permix** @ 4.1.2  
 Repository: https://github.com/letstri/permix  
 Docs: https://permix.letstri.dev/docs
 
@@ -13,19 +13,20 @@ These skills teach coding agents how to integrate Permix v4 in consumer applicat
 | Slug | Type | Domain | Load when |
 |------|------|--------|-----------|
 | `permix-getting-started` | core | core-setup | New Permix install, schema, roles, templates |
-| `permix-check` | core | authorization | `check`, ReBAC, `~all`/`~any`, readiness |
-| `permix-frontend` | core | frontend | React, Vue, Solid, Svelte providers and hooks |
-| `permix-server` | core | server | Express, Hono, Fastify, tRPC, oRPC middleware |
-| `permix-ssr` | sub-skill | ssr | dehydrate/hydrate, Next.js, TanStack Start |
+| `permix` | core | authorization + frontend + server | Everything past initial setup: `check`/ReBAC, React/Vue/Solid/Svelte + SSR, Express/Hono/Fastify/tRPC/oRPC middleware |
+
+`permix` is a single skill with a thin `SKILL.md` router and three reference
+files loaded on demand: `references/check.md`, `references/frontend.md`,
+`references/server.md`.
 
 ## Dependency graph
 
 ```text
 permix-getting-started
-├── permix-check
-│   ├── permix-frontend
-│   │   └── permix-ssr
-│   └── permix-server
+└── permix
+    ├── references/check.md
+    ├── references/frontend.md
+    └── references/server.md
 ```
 
 ## Critical failure modes
