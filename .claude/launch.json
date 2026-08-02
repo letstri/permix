@@ -7,6 +7,13 @@
       "runtimeArgs": ["run", "dev"],
       "cwd": "docs",
       "port": 3000
+    },
+    {
+      "name": "tanstack-start-example",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["run", "dev", "--port", "3001"],
+      "cwd": "examples/tanstack-start",
+      "port": 3001
     }
   ]
 }

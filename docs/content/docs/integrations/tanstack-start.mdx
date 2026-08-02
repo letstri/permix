@@ -7,7 +7,7 @@ description: Learn how to use Permix with TanStack Start
 
 Permix provides a dedicated integration for [TanStack Start](https://tanstack.com/start) through `permix/tanstack-start`. It exposes a `createPermix` factory that returns a **per-request** Permix instance backed by TanStack Start's [server request context](https://tanstack.com/start/latest/docs/framework/react/guide/middleware).
 
-You `setupMiddleware()` the rules once per request and `get()` them on the server inside **server functions** and **server routes** — without threading the instance through props. The client side reuses the React integration (`permix/react`) via `PermixProvider` + `PermixHydrate`.
+You `setupMiddleware()` the rules once per request and `get()` them on the server inside **server functions** and **server routes** — without threading the instance through props. A second instance lives on the **router context**, so `beforeLoad` and `loader` can check permissions isomorphically, and the same instance backs the React integration (`permix/react`) via `PermixProvider` + `PermixHydrate`.
 
 <Callout>
 Before getting started with the TanStack Start integration, make sure you've completed the initial setup steps in the [Quick Start](/docs/quick-start) guide. Familiarity with the [Hydration guide](/docs/guide/hydration) helps too.
@@ -122,11 +122,11 @@ export const Route = createFileRoute('/posts/$id')({
 })
 ```
 
-<Callout type="warn">
-Don't call `permix.get(context)` directly inside a route `loader` or `beforeLoad`. Those run **isomorphically** (on both server and client), and the `context` they receive is the [router context](https://tanstack.com/router/latest/docs/framework/react/guide/router-context) — not the server request context where `setupMiddleware()` stored the instance. Always do server checks inside a `createServerFn` (or a server route) so they execute on the server with access to the instance.
-</Callout>
-
 Use `get(context)` instead of `getOrThrow(context)` when you want a nullable value rather than a [`PermixNotFoundError`](/docs/guide/instance) if setup didn't run.
+
+<Callout type="warn">
+`permix.get(context)` only works where `context` is the **server request context** — server functions and server routes. A route `loader` or `beforeLoad` receives the [router context](https://tanstack.com/router/latest/docs/framework/react/guide/router-context) instead, and runs **isomorphically** on both server and client. To check permissions there, put an instance on the router context — see [Check in `beforeLoad` and loaders](#check-in-beforeload-and-loaders).
+</Callout>
 
 </Step>
 
@@ -162,12 +162,58 @@ const permix = createPermix<Definition>({
 
 <Step>
 
-## Send permissions to the client
+## Add Permix to the router context
 
-Use `dehydrate(context)` to serialize the request's permissions and hand them to a client provider. The server cannot send the Permix instance itself across the boundary — only the JSON state.
+`beforeLoad` and `loader` never see the server request context, but they do see the [router context](https://tanstack.com/router/latest/docs/framework/react/guide/router-context). Create a core Permix instance inside `getRouter()` and pass it there.
+
+`getRouter()` runs **once per request on the server** and **once per tab in the browser**, so this instance is request-scoped during SSR and a singleton in the browser — the same lifetime you want for the client cache.
+
+```tsx title="src/router.tsx"
+import type { PermissionsDefinition } from './lib/permix'
+import { createRouter as createTanStackRouter } from '@tanstack/react-router'
+import { createPermix } from 'permix'
+import { routeTree } from './routeTree.gen'
+
+export function getRouter() {
+  const permix = createPermix<PermissionsDefinition>()
+
+  return createTanStackRouter({
+    routeTree,
+    context: { permix },
+  })
+}
+```
+
+Type the context on the root route with `createRootRouteWithContext`:
+
+```tsx title="src/routes/__root.tsx"
+import type { Permix } from 'permix'
+import type { PermissionsDefinition } from '../lib/permix'
+import { createRootRouteWithContext } from '@tanstack/react-router'
+
+export interface RouterContext {
+  permix: Permix<PermissionsDefinition>
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
+  // ...
+})
+```
+
+<Callout type="warn">
+Typing the context is not enough on its own — the runtime value must be passed to `createTanStackRouter({ context })` too, otherwise `context.permix` is `undefined` in every route.
+</Callout>
+
+</Step>
+
+<Step>
+
+## Hydrate it in the root route
+
+Use `dehydrate(context)` to serialize the request's permissions, then hydrate the router-context instance in the root route's `beforeLoad`. The server cannot send the instance itself across the boundary — only the JSON state.
 
 <Callout>
-Route loaders in TanStack Start are **isomorphic** — they run on both server and client. Since the Permix instance only exists in the server context, you must call `dehydrate()` inside a `createServerFn` to ensure it always executes on the server.
+`beforeLoad` and `loader` are **isomorphic** — they run on both server and client. Since the request-scoped instance only exists in the server context, `dehydrate()` must be called inside a `createServerFn` so it always executes on the server.
 </Callout>
 
 ```ts title="src/lib/permix.server.ts"
@@ -178,41 +224,49 @@ export const getPermixState = createServerFn()
   .handler(({ context }) => permix.dehydrate(context))
 ```
 
+The root route's `beforeLoad` runs before every child route's `beforeLoad` and `loader`, so hydrating there makes `context.permix` ready everywhere below it. Returning the state also puts it on the context for the components.
+
 ```tsx title="src/routes/__root.tsx"
-import { createRootRoute, Outlet } from '@tanstack/react-router'
+import { Outlet } from '@tanstack/react-router'
 import { getPermixState } from '../lib/permix.server'
 import { Providers } from '../providers'
 
-export const Route = createRootRoute({
-  loader: async () => ({ state: await getPermixState() }),
+export const Route = createRootRouteWithContext<RouterContext>()({
+  beforeLoad: async ({ context }) => {
+    const state = await getPermixState()
+
+    context.permix.hydrate(state)
+
+    return { state }
+  },
   component: RootComponent,
 })
 
 function RootComponent() {
-  const { state } = Route.useLoaderData()
+  const { permix, state } = Route.useRouteContext()
 
   return (
-    <Providers state={state}>
+    <Providers permix={permix} state={state}>
       <Outlet />
     </Providers>
   )
 }
 ```
 
+Pass the very same instance to `PermixProvider` so routes and components read one source of truth:
+
 ```tsx title="src/providers.tsx"
-import type { DehydratedState } from 'permix'
+import type { DehydratedState, Permix } from 'permix'
 import type { PermissionsDefinition } from './lib/permix'
-import { createPermix } from 'permix'
 import { PermixHydrate, PermixProvider } from 'permix/react'
 
-// One singleton per browser tab, reusing the same definition as the server.
-const permix = createPermix<PermissionsDefinition>()
-
 export function Providers({
+  permix,
   state,
   children,
 }: {
-  state: DehydratedState<any>
+  permix: Permix<PermissionsDefinition>
+  state: DehydratedState<PermissionsDefinition>
   children: React.ReactNode
 }) {
   return (
@@ -221,13 +275,41 @@ export function Providers({
     </PermixProvider>
   )
 }
-
-export { permix }
 ```
 
 <Callout type="warn">
-`hydrate()` restores the boolean state but does not flip `isReady` on its own — function-based rules are lost during serialization. If you need `isReady` on the client, call `permix.setup(...)` on the client too with the same shape. See the [Hydration guide](/docs/guide/hydration) for details.
+`hydrate()` restores the boolean state but does not flip `isReady` on its own — function-based rules are lost during serialization. If you need `isReady`, or rules that depend on check-time data (`update: post => post.authorId === userId`), call `permix.setup(...)` on the client too with the same shape. See the [Hydration guide](/docs/guide/hydration) for details.
 </Callout>
+
+</Step>
+
+<Step>
+
+## Check in `beforeLoad` and loaders
+
+With the instance hydrated on the router context, any route can guard itself without a dedicated server function. The check runs on the server during SSR and on the client on subsequent navigations.
+
+```tsx title="src/routes/dashboard.tsx"
+import { createFileRoute, redirect } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/dashboard')({
+  beforeLoad: ({ context }) => {
+    if (!context.permix.check('post.create')) {
+      throw redirect({ to: '/login' })
+    }
+  },
+  component: DashboardComponent,
+})
+```
+
+<Callout type="warn">
+This is a **UX guard**, not enforcement. The client can always call your server functions directly, so mirror every guard with `checkMiddleware()` (or a `getOrThrow(context).check()`) on the server.
+</Callout>
+
+Two limits are worth knowing:
+
+- Hydrated rules are plain booleans, so a data-dependent rule like `post.update` collapses to its no-data result. Checks that need the entity belong in a server function — or re-run `setup()` on the client with the full rules.
+- `check()` throws [`PermixNotReadyError`](/docs/guide/instance) when the instance has neither been hydrated nor set up, which is what you'll see if the root `beforeLoad` was skipped.
 
 </Step>
 
@@ -235,14 +317,24 @@ export { permix }
 
 ## Use on the client
 
-From any client component, import the singleton from `src/providers.tsx` and the hooks/components from `permix/react`:
+Read the instance off the router context and pass it to `usePermix`:
+
+```tsx title="src/lib/use-permix.ts"
+import { useRouteContext } from '@tanstack/react-router'
+import { usePermix as useReactPermix } from 'permix/react'
+
+export function usePermix() {
+  const { permix } = useRouteContext({ from: '__root__' })
+
+  return useReactPermix(permix)
+}
+```
 
 ```tsx title="src/components/edit-button.tsx"
-import { usePermix } from 'permix/react'
-import { permix } from '../providers'
+import { usePermix } from '../lib/use-permix'
 
 export function EditButton({ post }: { post: { id: string, authorId: string } }) {
-  const { check } = usePermix(permix)
+  const { check } = usePermix()
 
   if (!check('post.update', post)) {
     return null
@@ -289,11 +381,29 @@ permix.setupMiddleware(async ({ request }) => {
 
 </Step>
 
+<Step>
+
+## Example
+
+A runnable app wiring all of the above together lives [here](https://github.com/letstri/permix/tree/main/examples/tanstack-start).
+
+</Step>
+
 </Steps>
 
 ## How per-request isolation works
 
 `setupMiddleware` creates a fresh core instance per request and stores it on TanStack Start's server request context. All subsequent `get()` / `getOrThrow()` / `check()` calls within the same request share that one instance. Across concurrent requests, each gets its **own** instance — state never leaks between users.
+
+The router-context instance is separate, and isolated for the same reason: `getRouter()` is called once per request on the server, so each SSR render builds its own router with its own Permix instance. In the browser `getRouter()` runs once, so that instance doubles as the per-tab client cache.
+
+| | Server request context | Router context |
+|---|---|---|
+| Created by | `setupMiddleware()` | `getRouter()` |
+| Read with | `permix.get(context)` / `getOrThrow(context)` | `context.permix` |
+| Available in | server functions, server routes | `beforeLoad`, `loader`, components |
+| Rules | full, including function-based | hydrated booleans (until you `setup()` on the client) |
+| Trustworthy | yes — enforcement | no — UX only |
 
 ## API
 
