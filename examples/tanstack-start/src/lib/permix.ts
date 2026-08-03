@@ -1,4 +1,6 @@
-import type { Permix, ValidateDefinition } from 'permix'
+import type { Permix, Rules, ValidateDefinition } from 'permix'
+import type { Session } from '@/lib/auth'
+import { createPermix as createCorePermix } from 'permix'
 import { createPermix } from 'permix/tanstack-start'
 
 export interface Post {
@@ -26,3 +28,22 @@ export const adminTemplate = permix.template({
 export const guestTemplate = permix.template({
   post: { create: false, read: true, update: false, delete: false },
 })
+
+export function createRouterPermix(): PermixInstance {
+  return createCorePermix<PermissionsDefinition>()
+}
+
+export interface RouterContext {
+  permix: PermixInstance
+}
+
+export function createClientRules(session: Session | null): Rules<PermissionsDefinition> {
+  return {
+    post: {
+      create: !!session,
+      read: true,
+      update: post => post?.authorId === session?.userId,
+      delete: session?.role === 'admin',
+    },
+  }
+}

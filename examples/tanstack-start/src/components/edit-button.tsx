@@ -1,9 +1,8 @@
 import type { Post } from '@/lib/permix'
-import { usePermix } from 'permix/react'
-import { permix } from '@/providers'
+import { usePermix } from '@/lib/use-permix'
 
 export function EditButton({ post }: { post: Post }) {
-  const { check } = usePermix(permix)
+  const { check } = usePermix()
 
   if (!check('post.update', post)) {
     return null
