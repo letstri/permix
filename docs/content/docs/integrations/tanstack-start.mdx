@@ -227,10 +227,11 @@ export const getPermixState = createServerFn()
 The root route's `beforeLoad` runs before every child route's `beforeLoad` and `loader`, so hydrating there makes `context.permix` ready everywhere below it. Returning the state also puts it on the context for the components.
 
 ```tsx title="src/routes/__root.tsx"
-import { Outlet } from '@tanstack/react-router'
+import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
 import { getPermixState } from '../lib/permix.server'
 import { Providers } from '../providers'
 
+// `RouterContext` from the previous step.
 export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: async ({ context }) => {
     const state = await getPermixState()
