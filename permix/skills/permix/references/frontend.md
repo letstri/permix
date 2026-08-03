@@ -192,6 +192,8 @@ Use framework helpers from `permix/next` or `permix/tanstack-start` when availab
 
 In TanStack Start, `permix.get(context)` only works in server functions and server routes. To check inside `beforeLoad`/`loader`, put a core instance on the **router context** in `getRouter()` (`context: { permix }`), type it with `createRootRouteWithContext`, hydrate it in the root route's `beforeLoad`, then call `context.permix.check(...)` in any child route. Passing only the context type without the runtime value leaves `context.permix` undefined.
 
+TanStack Start bundle caveat: if the `setupMiddleware()` callback imports server-only code (auth library, DB client, `node:` builtins), those imports leak into the client bundle — Start only strips `.server()` bodies it sees in app source, not the one hidden inside the library. Use `createMiddleware().server(permix.createSetupHandler(callback))` in `src/start.ts` instead; same behavior, but the boundary is visible to the compiler and the callback gets pruned.
+
 Docs:
 
 - https://permix.letstri.dev/docs/integrations/next
