@@ -84,6 +84,45 @@ export const startInstance = createStart(() => ({
 You can also attach `setupMiddleware()` to a specific server route's `middleware` array instead of registering it globally, if only some routes need permissions.
 </Callout>
 
+### Server-only imports in the setup callback
+
+TanStack Start strips server code from the client bundle by rewriting `createMiddleware().server(...)` calls it finds **in your source files**. `setupMiddleware()` makes that call inside the Permix package, so the compiler never sees a `.server()` boundary in your module — the setup callback and everything it imports stay in the client graph.
+
+With plain isomorphic rules that's harmless. But as soon as the callback pulls in server-only dependencies — an auth library, a database client, `node:` builtins — they leak into the browser and fail at runtime:
+
+- `Buffer is not defined`
+- `Module "events" has been externalized for browser compatibility`
+- database drivers appearing in the client bundle
+
+When the callback needs server-only imports, write the `.server()` boundary yourself and pass in `createSetupHandler()` — the same setup logic, but placed where the compiler can strip it:
+
+```ts title="src/start.ts"
+import { createMiddleware, createStart } from '@tanstack/react-start'
+import { auth } from './lib/auth' // server-only: stays out of the client bundle
+import { permix } from './lib/permix'
+
+const permixMiddleware = createMiddleware().server(
+  permix.createSetupHandler(async ({ request }) => {
+    const session = await auth.api.getSession({ headers: request.headers })
+
+    return {
+      post: {
+        create: !!session,
+        read: true,
+        update: post => post?.authorId === session?.userId,
+        delete: session?.role === 'admin',
+      },
+    }
+  }),
+)
+
+export const startInstance = createStart(() => ({
+  requestMiddleware: [permixMiddleware],
+}))
+```
+
+`createSetupHandler()` accepts exactly what `setupMiddleware()` accepts — a rules object or a callback receiving the `request` — and produces the same request-scoped instance, hooks included. `checkMiddleware()` is unaffected: it never closes over your setup imports.
+
 </Step>
 
 <Step>
@@ -304,6 +343,7 @@ Returns an object with the following methods:
 | Method | Description |
 |---|---|
 | `setupMiddleware(rules \| ({ request }) => rules)` | A **request** middleware that creates a per-request instance and runs `setup()`. Register it globally in `src/start.ts` or on a server route. |
+| `createSetupHandler(rules \| ({ request }) => rules)` | The server handler behind `setupMiddleware`, for passing to your own `createMiddleware().server(...)`. Use when the callback has [server-only imports](#server-only-imports-in-the-setup-callback). |
 | `checkMiddleware(...args)` | A **function** middleware that enforces a permission check before a server function's handler. |
 | `get(context)` | Read the request-scoped [`Permix<D>`](/docs/guide/instance) instance from a context object, or `null` if missing. |
 | `getOrThrow(context)` | Like `get`, but throws `PermixNotFoundError` when the instance is missing. |

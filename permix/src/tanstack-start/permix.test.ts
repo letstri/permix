@@ -123,6 +123,69 @@ describe('tanstack-start createPermix', () => {
     expect(permix.getOrThrow(run.received.context).check('post.create')).toBe(true)
   })
 
+  describe('createSetupHandler', () => {
+    it('returns a handler usable inside an app-owned server boundary', async () => {
+      const permix = createPermix<PermissionsDefinition>()
+
+      const handler = permix.createSetupHandler(async ({ request }) => ({
+        post: {
+          create: new URL(request.url).searchParams.get('admin') === '1',
+          read: true,
+        },
+      }))
+
+      let received: Record<string | symbol, unknown> = {}
+      await handler({
+        request: new Request('http://localhost/?admin=1'),
+        next: async (arg) => {
+          received = arg.context
+          return arg
+        },
+      })
+
+      expect(permix.getOrThrow(received).check('post.create')).toBe(true)
+    })
+
+    it('accepts a plain rules object', async () => {
+      const permix = createPermix<PermissionsDefinition>()
+      const handler = permix.createSetupHandler({ post: { create: true, read: false } })
+
+      let received: Record<string | symbol, unknown> = {}
+      await handler({
+        request: new Request('http://localhost'),
+        next: async (arg) => {
+          received = arg.context
+          return arg
+        },
+      })
+
+      const instance = permix.getOrThrow(received)
+      expect(instance.check('post.create')).toBe(true)
+      expect(instance.check('post.read')).toBe(false)
+    })
+
+    it('fires factory-level check hooks like setupMiddleware does', async () => {
+      const permix = createPermix<PermissionsDefinition>()
+      const onCheck = vi.fn()
+      permix.hook('check', onCheck)
+
+      const handler = permix.createSetupHandler({ post: { create: true, read: true } })
+
+      let received: Record<string | symbol, unknown> = {}
+      await handler({
+        request: new Request('http://localhost'),
+        next: async (arg) => {
+          received = arg.context
+          return arg
+        },
+      })
+
+      permix.getOrThrow(received).check('post.create')
+
+      expect(onCheck).toHaveBeenCalledWith({ path: 'post.create', data: undefined })
+    })
+  })
+
   describe('get / getOrThrow', () => {
     it('returns the instance from context', () => {
       const permix = createPermix<PermissionsDefinition>()

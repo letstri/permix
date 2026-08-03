@@ -12,6 +12,16 @@ export interface SetupContext {
   request: Request
 }
 
+/**
+ * The subset of TanStack Start's request middleware server options that
+ * {@link createSetupHandler} needs. Kept structural so the handler stays
+ * assignable across TanStack Start versions (peer dependency is `>=1`).
+ */
+export interface SetupHandlerContext {
+  request: Request
+  next: (options: { context: Record<string | symbol, unknown> }) => any
+}
+
 export interface MiddlewareContext {
   // eslint-disable-next-line ts/no-empty-object-type
   next: FunctionMiddlewareServerNextFn<{}, unknown, undefined>
@@ -60,16 +70,40 @@ function buildPermix<D extends Definition>(
   }
 
   /**
-   * TanStack Start middleware that creates a request-scoped Permix instance,
-   * calls `setup()` with the resolved rules, and stores it in the server context.
+   * Build the server handler used by {@link setupMiddleware}, for passing to
+   * your own `createMiddleware().server(...)` call.
    *
-   * Register it globally via `createStart({ requestMiddleware: [...] })` so it
-   * runs for every request, or attach it to specific server routes.
+   * Prefer `setupMiddleware()` unless the callback reaches for server-only
+   * imports (a database client, an auth library, `node:` builtins). TanStack
+   * Start strips `.server()` bodies from the client bundle by matching
+   * `createMiddleware().server(...)` **in your own source**. It cannot see the
+   * `.server()` call hidden inside `setupMiddleware()`, so those imports stay
+   * in the client graph and surface as `Buffer is not defined` or externalized
+   * `node:` module warnings in the browser.
+   *
+   * Writing the `.server()` boundary yourself puts the callback where the
+   * compiler can strip it.
+   *
+   * @example
+   * ```ts
+   * import { createMiddleware } from '@tanstack/react-start'
+   * import { auth } from './lib/auth'
+   * import { permix } from './lib/permix'
+   *
+   * export const permixMiddleware = createMiddleware().server(
+   *   permix.createSetupHandler(async ({ request }) => {
+   *     const session = await auth.api.getSession({ headers: request.headers })
+   *     return { post: { create: !!session, read: true } }
+   *   }),
+   * )
+   * ```
+   *
+   * @link https://permix.letstri.dev/docs/integrations/tanstack-start#server-only-imports-in-the-setup-callback
    */
-  function setupMiddleware(
+  function createSetupHandler(
     callbackOrRules: ((context: SetupContext) => MaybePromise<Rules<D>>) | Rules<D>,
   ) {
-    return createMiddleware().server(async ({ next, request }) => {
+    return async ({ next, request }: SetupHandlerContext): Promise<any> => {
       const rules = typeof callbackOrRules === 'function'
         ? await callbackOrRules({ request })
         : callbackOrRules
@@ -77,7 +111,23 @@ function buildPermix<D extends Definition>(
       const instance = createPermixCore<D>(rules)
       instance.hook('check', context => hooks.callHook('check', context))
       return next({ context: { [resolveKey()]: instance } })
-    })
+    }
+  }
+
+  /**
+   * TanStack Start middleware that creates a request-scoped Permix instance,
+   * calls `setup()` with the resolved rules, and stores it in the server context.
+   *
+   * Register it globally via `createStart({ requestMiddleware: [...] })` so it
+   * runs for every request, or attach it to specific server routes.
+   *
+   * If the callback imports server-only code, use {@link createSetupHandler}
+   * instead so TanStack Start can strip it from the client bundle.
+   */
+  function setupMiddleware(
+    callbackOrRules: ((context: SetupContext) => MaybePromise<Rules<D>>) | Rules<D>,
+  ) {
+    return createMiddleware().server(createSetupHandler(callbackOrRules))
   }
 
   /**
@@ -124,6 +174,7 @@ function buildPermix<D extends Definition>(
 
   return {
     setupMiddleware,
+    createSetupHandler,
     checkMiddleware,
     get,
     getOrThrow,
