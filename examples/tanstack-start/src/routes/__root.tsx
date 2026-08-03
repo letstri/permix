@@ -1,12 +1,13 @@
+import type { RouterContext } from '@/lib/permix'
 import { TanStackDevtools } from '@tanstack/react-devtools'
-import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
+import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { Providers } from '@/providers'
 import { getRootLoaderData } from '@/server/permix'
 
 import appCss from '../styles.css?url'
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<RouterContext>()({
   head: () => ({
     meta: [
       {
@@ -27,16 +28,22 @@ export const Route = createRootRoute({
       },
     ],
   }),
-  loader: () => getRootLoaderData(),
+  beforeLoad: async ({ context }) => {
+    const data = await getRootLoaderData()
+
+    context.permix.hydrate(data.state)
+
+    return data
+  },
   component: RootComponent,
   shellComponent: RootDocument,
 })
 
 function RootComponent() {
-  const { state, session } = Route.useLoaderData()
+  const { permix, state, session } = Route.useRouteContext()
 
   return (
-    <Providers state={state} session={session}>
+    <Providers permix={permix} state={state} session={session}>
       <Outlet />
     </Providers>
   )
