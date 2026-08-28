@@ -125,5 +125,12 @@ export default defineConfig({
         'react/jsx-key': 'off',
       },
     },
+    {
+      files: ['permix/src/nest/**', 'examples/nest/**'],
+      rules: {
+        'class-methods-use-this': 'off',
+        'typescript/no-extraneous-class': 'off',
+      },
+    },
   ],
 })

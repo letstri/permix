@@ -4,7 +4,7 @@ Authorization must run on the server. Client checks are UX only.
 
 Docs: https://permix.letstri.dev/docs/integrations/express
 
-## Pattern (Express-style; similar for Hono, Fastify, Node)
+## Pattern (Express-style; similar for Hono, Fastify, Node, Nest)
 
 Import from the framework subpath, not bare `permix`:
 
@@ -59,6 +59,32 @@ app.delete(
 
 Denied requests default to `403` with `{ error: 'Forbidden' }`. Customize with `onForbidden` in `createPermix` options.
 
+### NestJS (`permix/nest`)
+
+Use a global `APP_GUARD` plus `@Check`. The guard always sets up the per-request instance and only enforces a path when the decorator is present:
+
+```ts
+import { APP_GUARD } from '@nestjs/core'
+import { createPermix } from 'permix/nest'
+
+const permix = createPermix<{
+  post: ['create', 'read']
+}>()
+
+{
+  provide: APP_GUARD,
+  useValue: permix.guard(({ req }) => ({
+    post: { create: !!req.user, read: true },
+  })),
+}
+
+@Get()
+@permix.Check('post.read')
+findAll() {}
+```
+
+Entity checks run in the handler after the resource is loaded: `permix.getOrThrow(req).check('post.update', post)`.
+
 ### Access instance in handlers
 
 ```ts
@@ -77,6 +103,7 @@ app.get('/posts/:id', (req, res) => {
 | Express | `permix/express` |
 | Hono | `permix/hono` |
 | Fastify | `permix/fastify` |
+| NestJS | `permix/nest` |
 | tRPC | `permix/trpc` |
 | oRPC | `permix/orpc` |
 | Generic HTTP | `permix/node` or `permix/server` |
@@ -101,7 +128,7 @@ app.use(permix.setupMiddleware(rules))
 
 ## Checklist
 
-- [ ] `setupMiddleware` runs **before** `checkMiddleware` on protected routes
+- [ ] `setupMiddleware` runs **before** `checkMiddleware` on protected routes (Nest: register `permix.guard(...)` as `APP_GUARD` before `@Check`)
 - [ ] Rules derived from authenticated `req.user` (or RPC context), not client headers alone
 - [ ] Entity checks pass resource data when the action has `type` / `required: true`
 - [ ] Same paths as frontend (`post.update`, not ad-hoc strings)

@@ -29,6 +29,7 @@
     "integrations/hono",
     "integrations/elysia",
     "integrations/fastify",
+    "integrations/nest",
     "integrations/effect",
     "integrations/drizzle",
     "---",

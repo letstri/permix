@@ -42,7 +42,7 @@ Restart Cursor or start a new agent chat so skills are picked up.
 | Skill | Intent id | When to use |
 | --- | --- | --- |
 | [permix-getting-started](./permix-getting-started/SKILL.md) | `permix#permix-getting-started` | New project, schema, `setup`, roles/templates |
-| [permix](./permix/SKILL.md) | `permix#permix` | Everything past setup: `check`/ReBAC (`references/check.md`), React/Vue/Solid/Svelte + SSR (`references/frontend.md`), Express/Hono/Fastify/tRPC/oRPC middleware (`references/server.md`) |
+| [permix](./permix/SKILL.md) | `permix#permix` | Everything past setup: `check`/ReBAC (`references/check.md`), React/Vue/Solid/Svelte + SSR (`references/frontend.md`), Express/Hono/Fastify/NestJS/tRPC/oRPC middleware (`references/server.md`) |
 
 ## Registry and version history
 

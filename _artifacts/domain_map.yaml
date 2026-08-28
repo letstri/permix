@@ -34,7 +34,7 @@ domains:
     slug: server
     description: >
       Per-request setupMiddleware and checkMiddleware for Express, Hono, Fastify,
-      tRPC, oRPC, Node, and Elysia.
+      NestJS, tRPC, oRPC, Node, and Elysia.
 
   - name: 'SSR and hydration'
     slug: ssr
@@ -78,7 +78,7 @@ skills:
       ~all/~any, entity-aware ReBAC rules, isReady/isReadyAsync;
       PermixProvider/usePermix/createComponents and SSR dehydrate/hydrate for
       React, Vue, Solid, Svelte, Next.js, TanStack Start; setupMiddleware and
-      checkMiddleware for Express, Hono, Fastify, tRPC, oRPC, Node, Elysia.
+      checkMiddleware for Express, Hono, Fastify, NestJS, tRPC, oRPC, Node, Elysia.
       Single skill with a thin SKILL.md router and three reference files
       loaded on demand.
     type: core
@@ -94,6 +94,7 @@ skills:
       - express
       - hono
       - fastify
+      - nest
       - trpc
       - orpc
       - node
@@ -140,6 +141,7 @@ skills:
       - 'letstri/permix:docs/content/docs/integrations/express.mdx'
       - 'letstri/permix:docs/content/docs/integrations/hono.mdx'
       - 'letstri/permix:docs/content/docs/integrations/fastify.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/nest.mdx'
       - 'letstri/permix:docs/content/docs/integrations/trpc.mdx'
       - 'letstri/permix:docs/content/docs/integrations/orpc.mdx'
       - 'letstri/permix:docs/content/docs/integrations/node.mdx'

@@ -1,0 +1,261 @@
+---
+title: NestJS
+description: Learn how to use Permix with NestJS
+---
+
+## Overview
+
+Permix provides a NestJS integration that sets up permissions per request and enforces them with a guard plus a `@Check` decorator. The factory is created using `createPermix` from `permix/nest`.
+
+<Callout>
+  Before getting started with the NestJS integration, make sure you've completed
+  the initial setup steps in the [Quick Start](/docs/quick-start) guide.
+</Callout>
+
+<Steps>
+
+<Step>
+
+## Setup
+
+Create a Permix factory and register its guard as a global `APP_GUARD`. The guard always attaches a per-request instance; it only enforces a permission when `@Check` is present.
+
+```ts
+import { Module } from '@nestjs/common'
+import { APP_GUARD } from '@nestjs/core'
+import { createPermix } from 'permix/nest'
+
+interface Post {
+  id: string
+  authorId: string
+  title: string
+  content: string
+}
+
+export const permix = createPermix<{
+  post: [
+    { name: 'create'; type: Post },
+    { name: 'read'; type: Post },
+    { name: 'update'; type: Post },
+  ]
+}>()
+
+@Module({
+  providers: [
+    {
+      provide: APP_GUARD,
+      useValue: permix.guard(({ req }) => {
+        // You can access req.user or other properties to determine permissions
+        return {
+          post: {
+            create: true,
+            read: true,
+            update: false,
+          },
+        }
+      }),
+    },
+  ],
+})
+export class AppModule {}
+```
+
+<Callout>
+  The guard works with both the Express and Fastify Nest HTTP adapters. It
+  preserves full type safety from your Permix definition.
+</Callout>
+
+</Step>
+
+<Step>
+
+## Checking Permissions
+
+Use the `Check` decorator on a handler or controller:
+
+```ts
+import { Controller, Delete, Get, Post, Put } from '@nestjs/common'
+import { permix } from './permix'
+
+@Controller('posts')
+export class PostsController {
+  @Post()
+  @permix.Check('post.create')
+  create() {
+    return { success: true }
+  }
+
+  @Put(':id')
+  @permix.Check((c) => c('post.read') && c('post.update'))
+  update() {
+    return { success: true }
+  }
+
+  @Delete(':id')
+  @permix.Check('post.~all')
+  remove() {
+    return { success: true }
+  }
+
+  @Get()
+  @permix.Check('post.~any')
+  findAll() {
+    return { posts: getAllPosts() }
+  }
+}
+```
+
+</Step>
+
+<Step>
+
+## Accessing Permix Directly
+
+You can access the Permix instance directly in your route handlers using the `get` function:
+
+```ts
+@Get()
+findAll(@Req() req: Request) {
+  const { check } = permix.getOrThrow(req)
+
+  if (check('post.read')) {
+    return { posts: getAllPosts() }
+  }
+
+  throw new ForbiddenException({
+    error: 'You do not have permission to read posts',
+  })
+}
+```
+
+Entity-based (ReBAC) checks usually run in the handler after the resource is loaded:
+
+```ts
+@Put(':id')
+async update(@Param('id') id: string, @Req() req: Request) {
+  const post = await getPostById(id)
+  const { check } = permix.getOrThrow(req)
+
+  if (!check('post.update', post)) {
+    throw new ForbiddenException({ error: 'You cannot update this post' })
+  }
+
+  return { success: true }
+}
+```
+
+</Step>
+
+<Step>
+
+## Using Templates
+
+Permix provides a template helper to create reusable permission rule sets:
+
+```ts
+const adminTemplate = permix.template({
+  post: {
+    create: true,
+    read: true,
+    update: true,
+  },
+})
+
+{
+  provide: APP_GUARD,
+  useValue: permix.guard(({ req }) => {
+    if (req.user?.role === 'admin') {
+      return adminTemplate()
+    }
+
+    return {
+      post: {
+        create: false,
+        read: true,
+        update: false,
+      },
+    }
+  }),
+}
+```
+
+</Step>
+
+</Steps>
+
+## Custom Error Handling
+
+By default, a denied `@Check` throws a Nest `ForbiddenException` with `{ error: 'Forbidden' }`. You can customize this by providing an `onForbidden` handler:
+
+### Basic Error Handler
+
+```ts
+const permix = createPermix<Definition>({
+  onForbidden: () => {
+    throw new ForbiddenException({
+      error: 'Custom forbidden message',
+    })
+  },
+})
+```
+
+### Dynamic Error Handler
+
+You can also throw different responses based on the checked path:
+
+```ts
+const permix = createPermix<Definition>({
+  onForbidden: ({ path }) => {
+    if (path === 'post.create') {
+      throw new ForbiddenException({
+        error: `You don't have permission for ${path}`,
+      })
+    }
+
+    throw new ForbiddenException({
+      error: 'You do not have permission to perform this action',
+    })
+  },
+})
+```
+
+The `onForbidden` handler receives:
+
+- `req`: The HTTP request object (Express or Fastify)
+- `context`: Nest `ExecutionContext`
+- `path`: The permission path that was checked (or `null` for callback checks)
+- `data`: Optional entity data passed to the check
+
+## Advanced Usage
+
+### Async Permission Rules
+
+You can use async functions in your guard setup:
+
+```ts
+permix.guard(async ({ req }) => {
+  const userPermissions = await getUserPermissions(req.user.id)
+
+  return {
+    post: {
+      create: userPermissions.canCreatePosts,
+      read: userPermissions.canReadPosts,
+      update: userPermissions.canUpdatePosts,
+    },
+  }
+})
+```
+
+### Hooks
+
+You can register hooks at the factory level to listen for events across all requests:
+
+```ts
+permix.hook('check', ({ path, data }) => {
+  console.log(`Permission checked: ${path}`, data)
+})
+```
+
+### Example
+
+You can find the example of the NestJS integration [here](https://github.com/letstri/permix/tree/main/examples/nest).

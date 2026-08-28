@@ -40,7 +40,7 @@ skills:
       isReady/isReadyAsync; PermixProvider/usePermix/createComponents and SSR
       dehydrate/hydrate for React, Vue, Solid, Svelte, Next.js, TanStack
       Start; setupMiddleware/checkMiddleware for Express, Hono, Fastify,
-      tRPC, oRPC, Node, Elysia. Thin router with references loaded on demand.
+      NestJS, tRPC, oRPC, Node, Elysia. Thin router with references loaded on demand.
     requires:
       - permix-getting-started
     subsystems:
@@ -53,6 +53,7 @@ skills:
       - express
       - hono
       - fastify
+      - nest
       - trpc
       - orpc
       - node
@@ -75,6 +76,7 @@ skills:
       - 'letstri/permix:docs/content/docs/integrations/express.mdx'
       - 'letstri/permix:docs/content/docs/integrations/hono.mdx'
       - 'letstri/permix:docs/content/docs/integrations/fastify.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/nest.mdx'
       - 'letstri/permix:docs/content/docs/integrations/trpc.mdx'
       - 'letstri/permix:docs/content/docs/integrations/orpc.mdx'
       - 'letstri/permix:docs/content/docs/integrations/node.mdx'
