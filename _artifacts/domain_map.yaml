@@ -34,7 +34,7 @@ domains:
     slug: server
     description: >
       Per-request setupMiddleware and checkMiddleware for Express, Hono, Fastify,
-      tRPC, oRPC, Node, and Elysia.
+      tRPC, oRPC, Node, Elysia, and Astro.
 
   - name: 'SSR and hydration'
     slug: ssr
@@ -78,7 +78,7 @@ skills:
       ~all/~any, entity-aware ReBAC rules, isReady/isReadyAsync;
       PermixProvider/usePermix/createComponents and SSR dehydrate/hydrate for
       React, Vue, Solid, Svelte, Next.js, TanStack Start; setupMiddleware and
-      checkMiddleware for Express, Hono, Fastify, tRPC, oRPC, Node, Elysia.
+      checkMiddleware for Express, Hono, Fastify, tRPC, oRPC, Node, Elysia, Astro.
       Single skill with a thin SKILL.md router and three reference files
       loaded on demand.
     type: core
@@ -98,6 +98,7 @@ skills:
       - orpc
       - node
       - elysia
+      - astro
     covers:
       - check
       - isReady
@@ -144,6 +145,7 @@ skills:
       - 'letstri/permix:docs/content/docs/integrations/orpc.mdx'
       - 'letstri/permix:docs/content/docs/integrations/node.mdx'
       - 'letstri/permix:docs/content/docs/integrations/server.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/astro.mdx'
       - 'letstri/permix:docs/content/docs/integrations/elysia.mdx'
       - 'letstri/permix:permix/src/core/check.ts'
 
@@ -153,6 +155,7 @@ coverage:
     - examples/*
     - next
     - tanstack-start
+    - astro
 
 failure_modes:
   - mistake: 'Using v3 { action, dataType } schema shape'

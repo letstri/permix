@@ -1,7 +1,7 @@
 ---
 name: permix
 description: >-
-  Applies Permix authorization once a schema exists: permix.check() paths and ReBAC callbacks, frontend bindings (permix/react, permix/vue, permix/solid, permix/svelte) with SSR dehydrate/hydrate for Next.js and TanStack Start, and server middleware (permix/express, hono, fastify, trpc, orpc, node, elysia). Use for anything past initial setup — checking permissions, gating UI, or protecting routes. For creating the schema and first `permix.setup()`, use permix-getting-started first.
+  Applies Permix authorization once a schema exists: permix.check() paths and ReBAC callbacks, frontend bindings (permix/react, permix/vue, permix/solid, permix/svelte) with SSR dehydrate/hydrate for Next.js and TanStack Start, and server middleware (permix/express, hono, fastify, trpc, orpc, node, elysia, astro). Use for anything past initial setup — checking permissions, gating UI, or protecting routes. For creating the schema and first `permix.setup()`, use permix-getting-started first.
 metadata:
   type: core
   library: permix
@@ -26,6 +26,7 @@ sources:
   - 'letstri/permix:docs/content/docs/integrations/orpc.mdx'
   - 'letstri/permix:docs/content/docs/integrations/node.mdx'
   - 'letstri/permix:docs/content/docs/integrations/server.mdx'
+  - 'letstri/permix:docs/content/docs/integrations/astro.mdx'
   - 'letstri/permix:docs/content/docs/integrations/elysia.mdx'
   - 'letstri/permix:permix/src/core/check.ts'
 ---
@@ -38,7 +39,7 @@ Assumes a `permix` instance already exists (see **permix-getting-started**). Loa
 | --- | --- |
 | `permix.check()` paths, callbacks, `~all`/`~any`, ReBAC/ABAC with entity data, `isReady` | [references/check.md](references/check.md) |
 | React, Vue, Solid, or Svelte UI — `PermixProvider`, `usePermix`, `createComponents`, SSR `dehydrate`/`hydrate` for Next.js / TanStack Start | [references/frontend.md](references/frontend.md) |
-| Protecting Express, Hono, Fastify, tRPC, oRPC, Node, or Elysia routes — `setupMiddleware`, `checkMiddleware` | [references/server.md](references/server.md) |
+| Protecting Express, Hono, Fastify, tRPC, oRPC, Node, Elysia, or Astro routes — `setupMiddleware`, `checkMiddleware` | [references/server.md](references/server.md) |
 
 ## Rules that apply everywhere
 

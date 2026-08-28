@@ -7,6 +7,7 @@
   "keywords": [
     "access-control",
     "acl",
+    "astro",
     "authorization",
     "frontend",
     "javascript",
@@ -78,6 +79,10 @@
     "./server": {
       "types": "./dist/server/index.d.mts",
       "import": "./dist/server/index.mjs"
+    },
+    "./astro": {
+      "types": "./dist/astro/index.d.mts",
+      "import": "./dist/astro/index.mjs"
     },
     "./elysia": {
       "types": "./dist/elysia/index.d.mts",

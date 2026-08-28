@@ -19,7 +19,7 @@ Permix is a library that provides a way to manage permissions in your applicatio
 | Events | ✅ | ❌ |
 | Simple DX | ✅ Create instance, use built-in integrations | ❌ In CASL you need to manage a lot of stuff manually (type-safe, hydration, etc.) |
 | Modernity | ✅ Uses modern updates and features of each lib and framework | ❌ CASL was created a long time ago and hasn't updated the core |
-| Size | **2.64 kB** gzip (core) [react 0.86 kB, vue 0.87 kB, solid 0.82 kB, next 1.00 kB, tanstack-start 2.05 kB, svelte ~2.17 kB, …] | **6.17 kB** min+gzip (core) [@casl/react 0.62 kB] |
+| Size | **2.64 kB** gzip (core) [react 0.86 kB, vue 0.87 kB, solid 0.82 kB, next 1.00 kB, astro 1.19 kB, tanstack-start 2.05 kB, svelte ~2.17 kB, …] | **6.17 kB** min+gzip (core) [@casl/react 0.62 kB] |
 
 Sizes are hard numbers from published builds — see [Bundle size](#bundle-size). Bracketed values are integration adapters imported on top of core.
 
@@ -42,6 +42,7 @@ Built with `pnpm run build` in the `permix` package (`tsdown` for all entries ex
 | `permix/tanstack-start` | 2.05 kB | adapter |
 | `permix/node` | 0.95 kB | adapter |
 | `permix/server` | 1.10 kB | adapter |
+| `permix/astro` | 1.19 kB | adapter |
 | `permix/express` | 0.91 kB | adapter |
 | `permix/hono` | 0.88 kB | adapter |
 | `permix/fastify` | 1.04 kB | adapter |

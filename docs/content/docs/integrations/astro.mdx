@@ -1,0 +1,233 @@
+---
+title: Astro
+description: Learn how to use Permix with Astro
+---
+
+## Overview
+
+Permix provides middleware for [Astro](https://astro.build/) through `permix/astro`. It stores a per-request instance on `context.locals`, so Astro middleware, endpoints, and server-rendered pages share the same rules.
+
+UI checks in islands reuse the existing [`permix/react`](/docs/integrations/react), [`permix/vue`](/docs/integrations/vue), [`permix/solid`](/docs/integrations/solid), or [`permix/svelte`](/docs/integrations/svelte) integrations. Dehydrate on the server and hydrate in the island with `PermixHydrate`.
+
+<Callout>
+  Before getting started with the Astro integration, make sure you've completed
+  the initial setup steps in the [Quick Start](/docs/quick-start) guide.
+</Callout>
+
+<Steps>
+
+<Step>
+
+## Setup
+
+Create a Permix instance and run `setupMiddleware` from `src/middleware.ts`:
+
+```ts title="src/lib/permix.ts"
+import { createPermix } from 'permix/astro'
+
+interface Post {
+  id: string
+  authorId: string
+}
+
+export const permix = createPermix<{
+  post: [
+    { name: 'create'; type: Post },
+    { name: 'read'; type: Post },
+    { name: 'update'; type: Post },
+    { name: 'delete'; type: Post },
+  ]
+}>()
+```
+
+```ts title="src/middleware.ts"
+import { defineMiddleware } from 'astro:middleware'
+import { permix } from './lib/permix'
+
+export const onRequest = defineMiddleware(
+  permix.setupMiddleware(({ request }) => {
+    const isAdmin = request.headers.get('x-user-role') === 'admin'
+
+    return {
+      post: {
+        create: true,
+        read: true,
+        update: isAdmin,
+        delete: isAdmin,
+      },
+    }
+  })
+)
+```
+
+`setupMiddleware` is compatible with [`sequence`](https://docs.astro.build/en/guides/middleware/#chaining-middleware) if you already have other middleware.
+
+The instance lives on `locals`, not on the `Request` object.
+
+</Step>
+
+<Step>
+
+## Checking permissions
+
+Use `checkMiddleware` to guard an endpoint, or `getOrThrow` inside the handler for entity-aware checks:
+
+```ts title="src/pages/api/posts.ts"
+import type { APIRoute } from 'astro'
+import { permix } from '../../lib/permix'
+
+export const POST: APIRoute = (context) =>
+  permix.checkMiddleware('post.create')(context, async () => {
+    return Response.json({ ok: true })
+  })
+```
+
+```ts title="src/pages/api/posts/[id].ts"
+import type { APIRoute } from 'astro'
+import { permix } from '../../../lib/permix'
+
+export const PATCH: APIRoute = async (context) => {
+  const post = await getPost(context.params.id)
+
+  if (!permix.getOrThrow(context).check('post.update', post)) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  return Response.json({ ok: true })
+}
+```
+
+`checkMiddleware` accepts the same arguments as the core `check`: a path, a path plus entity data, or a callback.
+
+Denied requests default to `403` with `{ error: 'Forbidden' }`. Customize with `onForbidden` in `createPermix` options.
+
+</Step>
+
+<Step>
+
+## Pages and islands
+
+In a `.astro` page, read the instance from `Astro.locals` (or pass `Astro` as the context — `get` accepts either):
+
+```astro title="src/pages/posts/[id].astro"
+---
+import { permix } from '../../lib/permix'
+
+const post = await getPost(Astro.params.id)
+
+if (!permix.getOrThrow(Astro).check('post.read', post)) {
+  return Astro.redirect('/404')
+}
+
+const state = permix.getOrThrow(Astro).dehydrate()
+---
+
+<EditButton client:load post={post} state={state} />
+```
+
+Hydrate the island with the matching UI adapter:
+
+```tsx title="src/components/EditButton.tsx"
+import { createPermix } from 'permix'
+import { PermixHydrate, PermixProvider, usePermix } from 'permix/react'
+
+const permix = createPermix<{
+  post: [
+    { name: 'create'; type: { id: string; authorId: string } },
+    { name: 'read'; type: { id: string; authorId: string } },
+    { name: 'update'; type: { id: string; authorId: string } },
+    { name: 'delete'; type: { id: string; authorId: string } },
+  ]
+}>()
+
+export function EditButton({
+  post,
+  state,
+}: {
+  post: { id: string; authorId: string }
+  state: ReturnType<typeof permix.dehydrate>
+}) {
+  return (
+    <PermixProvider permix={permix}>
+      <PermixHydrate state={state}>
+        <Inner post={post} />
+      </PermixHydrate>
+    </PermixProvider>
+  )
+}
+
+function Inner({ post }: { post: { id: string; authorId: string } }) {
+  const { check } = usePermix(permix)
+  if (!check('post.update', post)) return null
+  return <button>Edit post</button>
+}
+```
+
+<Callout type="warn">
+  `hydrate()` restores booleans but does not restore function-based rules or
+  mark the instance ready. Call `permix.setup(...)` on the client with the full
+  rule set (including closures) after hydration. See the [Hydration
+  guide](/docs/guide/hydration).
+</Callout>
+
+</Step>
+
+<Step>
+
+## Templates
+
+```ts title="src/lib/permix.ts"
+import { createPermix } from 'permix/astro'
+
+export const permix = createPermix<{
+  post: ['create', 'read', 'update', 'delete']
+}>()
+
+export const adminTemplate = permix.template({
+  post: { create: true, read: true, update: true, delete: true },
+})
+
+export const guestTemplate = permix.template({
+  post: { create: false, read: true, update: false, delete: false },
+})
+```
+
+```ts title="src/middleware.ts"
+import { defineMiddleware } from 'astro:middleware'
+import { adminTemplate, guestTemplate, permix } from './lib/permix'
+
+export const onRequest = defineMiddleware(
+  permix.setupMiddleware(({ request }) => {
+    const isAdmin = request.headers.get('x-user-role') === 'admin'
+    return isAdmin ? adminTemplate() : guestTemplate()
+  })
+)
+```
+
+</Step>
+
+<Step>
+
+## Example
+
+You can find a runnable example of the Astro integration [here](https://github.com/letstri/permix/tree/main/examples/astro).
+
+</Step>
+
+</Steps>
+
+## API
+
+### `createPermix<D>(options?)`
+
+Returns an object with the following methods:
+
+| Method | Description |
+| --- | --- |
+| `setupMiddleware(rules \| callback)` | Astro middleware that creates a per-request instance on `locals`. |
+| `checkMiddleware(...args)` | Astro middleware that allows or returns the `onForbidden` response. |
+| `get(context \| locals)` | Return the instance, or `null`. |
+| `getOrThrow(context \| locals)` | Return the instance, or throw `PermixNotFoundError`. |
+| `getRules(context \| locals)` | Return the current rules, or `null`. |
+| `template(rules)` | Create a reusable rule set. Same as the core [`template`](/docs/guide/template). |
+| `contextKey(key)` | Store this factory under a custom `locals` key. |

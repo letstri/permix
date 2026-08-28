@@ -23,6 +23,7 @@
     "integrations/svelte",
     "integrations/node",
     "integrations/server",
+    "integrations/astro",
     "integrations/trpc",
     "integrations/orpc",
     "integrations/express",

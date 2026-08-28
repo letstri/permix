@@ -80,6 +80,7 @@ app.get('/posts/:id', (req, res) => {
 | tRPC | `permix/trpc` |
 | oRPC | `permix/orpc` |
 | Generic HTTP | `permix/node` or `permix/server` |
+| Astro | `permix/astro` |
 | Elysia | `permix/elysia` |
 | Effect | `permix/effect` — see integration docs |
 | Drizzle ORM | `permix/drizzle` (and `permix/drizzle/legacy`) — see integration docs |

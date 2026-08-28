@@ -14,6 +14,7 @@ export default defineConfig({
     './src/hono/index.ts',
     './src/node/index.ts',
     './src/server/index.ts',
+    './src/astro/index.ts',
     './src/elysia/index.ts',
     './src/fastify/index.ts',
     './src/solid/index.ts',
