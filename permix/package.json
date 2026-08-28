@@ -11,6 +11,7 @@
     "frontend",
     "javascript",
     "nextjs",
+    "nuxt",
     "permissions",
     "permissions-management",
     "rbac",
@@ -113,6 +114,10 @@
       "types": "./dist/next/index.d.mts",
       "import": "./dist/next/index.mjs"
     },
+    "./nuxt": {
+      "types": "./dist/nuxt/index.d.mts",
+      "import": "./dist/nuxt/index.mjs"
+    },
     "./tanstack-start": {
       "types": "./dist/tanstack-start/index.d.mts",
       "import": "./dist/tanstack-start/index.mjs"
@@ -146,6 +151,7 @@
     "@vue/test-utils": "^2.4.10",
     "drizzle-orm": "1.0.0-rc.3",
     "effect": "^3.21.2",
+    "h3": "^1.15.11",
     "happy-dom": "^20.9.0",
     "react-dom": "^19.2.6",
     "supertest": "^7.2.2",
@@ -168,6 +174,7 @@
     "express": ">=4",
     "fastify": ">=5",
     "fastify-plugin": ">=5",
+    "h3": ">=1.13",
     "hono": ">=4",
     "next": ">=14",
     "react": ">=18",
@@ -202,6 +209,9 @@
       "optional": true
     },
     "fastify-plugin": {
+      "optional": true
+    },
+    "h3": {
       "optional": true
     },
     "hono": {

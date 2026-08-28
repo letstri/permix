@@ -21,6 +21,7 @@ export default defineConfig({
     './src/drizzle/index.ts',
     './src/drizzle/legacy/index.ts',
     './src/next/index.ts',
+    './src/nuxt/index.ts',
     './src/tanstack-start/index.ts',
   ],
   dts: {

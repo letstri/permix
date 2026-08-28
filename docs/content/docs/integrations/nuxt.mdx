@@ -1,0 +1,282 @@
+---
+title: Nuxt
+description: Learn how to use Permix with Nuxt
+---
+
+## Overview
+
+Permix provides a dedicated integration for [Nuxt](https://nuxt.com/) through `permix/nuxt`. It exposes a `createPermix` factory that returns a **per-request** Permix instance stored on the Nitro `event.context`, so you can `setup()` the rules once and `check()` them in server middleware, API routes, and Vue server components without leaking state between concurrent requests.
+
+The client side reuses the existing Vue integration (`permix/vue`): the server `dehydrate()`s its state and the client hydrates it into its own singleton via `PermixProvider` + `PermixHydrate`.
+
+<Callout>
+  Before getting started with the Nuxt integration, make sure you've completed
+  the initial setup steps in the [Quick Start](/docs/quick-start) guide.
+  Familiarity with the [Hydration guide](/docs/guide/hydration) and the [Vue
+  integration](/docs/integrations/vue) helps too.
+</Callout>
+
+<Steps>
+
+<Step>
+
+## Define your permissions
+
+Create a Permix instance once in a shared module so it can be imported from Nitro and from Vue:
+
+```ts title="lib/permix.ts"
+import { createPermix } from 'permix/nuxt'
+
+interface Post {
+  id: string
+  authorId: string
+}
+
+export const permix = createPermix<{
+  post: [
+    { name: 'create'; type: Post },
+    { name: 'read'; type: Post },
+    { name: 'update'; type: Post },
+    { name: 'delete'; type: Post },
+  ]
+}>()
+```
+
+The returned helper does **not** hold any permission state at module scope — every request gets its own isolated instance on `event.context`.
+
+</Step>
+
+<Step>
+
+## Setup per request
+
+Call `setup()` early in the request lifecycle. A Nitro server middleware is a good place. Resolve any async data (session, headers, DB lookups) first, then pass plain rules to `setup`. Pass the `event` so the instance is stored on this request:
+
+```ts title="server/middleware/permix.ts"
+import { permix } from '~/lib/permix'
+
+export default defineEventHandler((event) => {
+  const user = event.context.user
+
+  permix.setup(
+    {
+      post: {
+        create: !!user,
+        read: true,
+        update: (post) => post?.authorId === user?.id,
+        delete: user?.role === 'admin',
+      },
+    },
+    event
+  )
+})
+```
+
+<Callout>
+  Because `setup()` is scoped to the current request's `event.context`, calling
+  it again from a nested route handler in the **same** request simply replaces
+  the rules for that request. Other requests are unaffected.
+</Callout>
+
+If you omit `event`, Permix tries h3's current-request helpers when they exist (`getRequestEvent` / `useEvent`). In Nitro handlers and Vue server components, pass `event` or `useRequestEvent()` so this works on all Nuxt versions.
+
+</Step>
+
+<Step>
+
+## Check on the server
+
+Anywhere a server route or Vue server component runs in that request, you can use `check()`. Pass `event` (or `useRequestEvent()`) when you are not relying on AsyncLocalStorage:
+
+```ts title="server/api/posts/index.post.ts"
+import { permix } from '~/lib/permix'
+
+export default defineEventHandler((event) => {
+  if (!permix.get(event).check('post.create')) {
+    throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+  }
+
+  // create the post...
+  return { ok: true }
+})
+```
+
+```vue title="pages/posts/[id].vue"
+<script setup lang="ts">
+import { permix } from '~/lib/permix'
+
+const event = useRequestEvent()
+const post = await getPost(useRoute().params.id as string)
+
+if (!permix.get(event).check('post.read', post)) {
+  throw createError({ statusCode: 404, statusMessage: 'Not Found' })
+}
+</script>
+```
+
+You can also reach the underlying core instance through `permix.get(event)` if you need methods like `isReady()` or `getRules()`.
+
+</Step>
+
+<Step>
+
+## Send permissions to the client
+
+Use `dehydrate()` to serialize the request's permissions and hand them to a client provider. The server cannot send the Permix instance itself across the boundary — only the JSON state.
+
+`permix/nuxt` is **server-only**. Create a client singleton with core `permix` and wrap the app with `PermixProvider` + `PermixHydrate` from `permix/vue`. Dehydrate in a server plugin so the client bundle never imports `h3`:
+
+```ts title="lib/permix-client.ts"
+import { createPermix } from 'permix'
+
+// One singleton per browser tab. The same type definition as on the server.
+export const permix = createPermix<{
+  post: [
+    { name: 'create'; type: { id: string; authorId: string } },
+    { name: 'read'; type: { id: string; authorId: string } },
+    { name: 'update'; type: { id: string; authorId: string } },
+    { name: 'delete'; type: { id: string; authorId: string } },
+  ]
+}>()
+```
+
+```ts title="plugins/permix.server.ts"
+import { permix } from '~/lib/permix'
+
+export default defineNuxtPlugin(() => {
+  const event = useRequestEvent()
+  useState('permix-state', () => (event ? permix.dehydrate(event) : null))
+})
+```
+
+```vue title="app.vue"
+<script setup lang="ts">
+import { PermixHydrate, PermixProvider } from 'permix/vue'
+import { permix } from '~/lib/permix-client'
+
+const state = useState('permix-state')
+</script>
+
+<template>
+  <PermixProvider :permix="permix">
+    <PermixHydrate v-if="state" :state="state">
+      <NuxtPage />
+    </PermixHydrate>
+  </PermixProvider>
+</template>
+```
+
+<Callout type="warn">
+  `hydrate()` restores the boolean state but does not flip `isReady` on its own
+  — function-based rules are lost during serialization. If you need `isReady` on
+  the client (e.g. to gate UI on `usePermix(...).isReady`), call
+  `permix.setup(...)` on the client too with the same shape (using booleans and
+  any function rules you want active client-side). See the [Hydration
+  guide](/docs/guide/hydration) for details.
+</Callout>
+
+</Step>
+
+<Step>
+
+## Use on the client
+
+From any Vue component, import the client singleton and `usePermix` from `permix/vue`:
+
+```vue title="components/EditButton.vue"
+<script setup lang="ts">
+import { usePermix } from 'permix/vue'
+import { permix } from '~/lib/permix-client'
+
+defineProps<{
+  post: { id: string; authorId: string }
+}>()
+
+const { check } = usePermix(permix)
+</script>
+
+<template>
+  <button v-if="check('post.update', post)">Edit post</button>
+</template>
+```
+
+If you prefer the component API, create checkers with `createComponents` from `permix/vue` — see the [Vue integration](/docs/integrations/vue#components) for details.
+
+</Step>
+
+<Step>
+
+## Templates
+
+`createPermix` exposes the same `template()` helper as the core API for reusing rule sets:
+
+```ts title="lib/permix.ts"
+import { createPermix } from 'permix/nuxt'
+
+export const permix = createPermix<{
+  post: ['create', 'read', 'update', 'delete']
+}>()
+
+export const adminTemplate = permix.template({
+  post: { create: true, read: true, update: true, delete: true },
+})
+
+export const guestTemplate = permix.template({
+  post: { create: false, read: true, update: false, delete: false },
+})
+```
+
+```ts title="server/middleware/permix.ts"
+import { permix, adminTemplate, guestTemplate } from '~/lib/permix'
+
+export default defineEventHandler((event) => {
+  const user = event.context.user
+  permix.setup(
+    user?.role === 'admin' ? adminTemplate() : guestTemplate(),
+    event
+  )
+})
+```
+
+</Step>
+
+<Step>
+
+## Example
+
+You can find a runnable example of the Nuxt integration [here](https://github.com/letstri/permix/tree/main/examples/nuxt).
+
+</Step>
+
+</Steps>
+
+## How per-request isolation works
+
+`createPermix` from `permix/nuxt` stores one core instance per factory on the current Nitro event's `context`. Inside one request:
+
+- The first call to `setup`/`check`/`get`/`dehydrate` creates (or reuses) **one** instance.
+- All subsequent calls in the same request — across middleware, API routes, and Vue server components that share that event — share that instance.
+
+Across concurrent requests, each event object gets its **own** instance. State never leaks between users.
+
+<Callout type="warn">
+  Do **not** store the result of `permix.get()` (or any rule data) in
+  module-level variables. That would defeat per-request isolation. Always go
+  through `permix.check()` / `permix.get(event)` so the request-scoped store is
+  consulted.
+</Callout>
+
+## API
+
+### `createPermix<D>()`
+
+Returns an object with the following methods:
+
+| Method | Description |
+| --- | --- |
+| `setup(rules, event?)` | Set the per-request permission rules. Pass `event` in Nitro handlers (or `useRequestEvent()` in Vue). |
+| `check(...args)` | Check a permission against the current request's rules (via `getRequestEvent()`). Same signature as the core `check`. |
+| `get(event?)` | Return the underlying [`Permix<D>`](/docs/guide/instance) instance for the request. |
+| `getRules(event?)` | Return the current rules object for the request-scoped instance, or `null`. |
+| `dehydrate(event?)` | Serialize the current request's rules to JSON (for `<PermixHydrate>` on the client). |
+| `template(rules)` | Create a reusable rule set. Same as the core [`template`](/docs/guide/template). |

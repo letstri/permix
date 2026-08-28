@@ -1,0 +1,17 @@
+{
+  "name": "nuxt",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "start": "tsx main.ts"
+  },
+  "dependencies": {
+    "h3": "^1.15.4",
+    "permix": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.4"
+  }
+}

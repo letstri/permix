@@ -188,9 +188,9 @@ function App({
 
 Run client `permix.setup(...)` where you restore the session (e.g. after `PermixHydrate` mounts or in the same auth effect).
 
-### Next.js / TanStack Start
+### Next.js / TanStack Start / Nuxt
 
-Use framework helpers from `permix/next` or `permix/tanstack-start` when available — they wire dehydrate/hydrate into the framework data flow.
+Use framework helpers from `permix/next`, `permix/tanstack-start`, or `permix/nuxt` when available — they wire dehydrate/hydrate into the framework data flow. Nuxt hydrates the client with `PermixProvider` / `PermixHydrate` from `permix/vue`.
 
 In TanStack Start, `permix.get(context)` only works in server functions and server routes. To check inside `beforeLoad`/`loader`, put a core instance on the **router context** in `getRouter()` (`context: { permix }`), type it with `createRootRouteWithContext`, hydrate it in the root route's `beforeLoad`, then call `context.permix.check(...)` in any child route. Passing only the context type without the runtime value leaves `context.permix` undefined.
 
@@ -200,6 +200,7 @@ Docs:
 
 - https://permix.letstri.dev/docs/integrations/next
 - https://permix.letstri.dev/docs/integrations/tanstack-start
+- https://permix.letstri.dev/docs/integrations/nuxt
 
 ### Flow diagram
 
@@ -225,5 +226,6 @@ For static-only permissions (all booleans), dehydrate + hydrate + `setup` with t
 - Solid: https://github.com/letstri/permix/tree/main/examples/solid
 - Svelte: https://github.com/letstri/permix/tree/main/examples/svelte
 - Next.js (SSR): https://github.com/letstri/permix/tree/main/examples/next
+- Nuxt (SSR): https://github.com/letstri/permix/tree/main/examples/nuxt
 - Role templates: https://github.com/letstri/permix/tree/main/examples/role-based
 - ReBAC: https://github.com/letstri/permix/tree/main/examples/rebac
