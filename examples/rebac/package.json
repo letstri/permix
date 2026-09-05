@@ -10,7 +10,7 @@
     "permix": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^25.9.5",
+    "@types/node": "^26.4.1",
     "tsx": "^4.23.13",
     "typescript": "^6.0.3"
   }
