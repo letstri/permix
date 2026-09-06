@@ -74,7 +74,7 @@ export const middleware = [
 ]
 ```
 
-You can also attach it to a specific route's `middleware` array instead of the root.
+You can also attach it to a specific route's `middleware` array instead of the root. The callback also receives `context`, so rules can read values set by earlier middleware (for example `context.get(userContext)`).
 
 </Step>
 

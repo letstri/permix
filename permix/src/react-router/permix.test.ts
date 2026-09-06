@@ -149,22 +149,25 @@ describe(createPermix, () => {
     expect(result?.status).toBe(200)
   })
 
-  it('should work with an async setup callback that receives the request', async () => {
+  it('should work with an async setup callback that receives the request and context', async () => {
     const permix = createPermix<PermissionsDefinition>()
     const context = createMockContext()
     const next = createMockNext()
     const request = new Request('https://example.com/?admin=1')
+    const userContext = {}
+    context.set(userContext, { role: 'admin' })
 
-    await permix.setupMiddleware(async ({ request: req }) => ({
+    await permix.setupMiddleware(async ({ request: req, context: ctx }) => ({
       post: {
         create: new URL(req.url).searchParams.get('admin') === '1',
         read: true,
-        update: false,
+        update: (ctx.get(userContext) as { role: string }).role === 'admin',
       },
       user: { delete: false },
     }))({ request, context }, next)
 
     expect(permix.getOrThrow(context).check('post.create')).toBe(true)
+    expect(permix.getOrThrow(context).check('post.update')).toBe(true)
   })
 
   it('should dehydrate permissions', async () => {

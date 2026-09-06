@@ -48,6 +48,8 @@ export type ReactRouterMiddleware = (
 
 export interface SetupContext {
   request: Request
+  /** Middleware context, so rules can read values set by earlier middleware. */
+  context: ReactRouterContext
   params?: Record<string, string | undefined>
 }
 
@@ -106,7 +108,7 @@ function buildPermix<D extends Definition>(
     return async ({ request, context, params }, next) => {
       const rules =
         typeof callbackOrRules === 'function'
-          ? await callbackOrRules({ request, params })
+          ? await callbackOrRules({ request, context, params })
           : callbackOrRules
       const instance = createPermixCore<D>(rules)
       instance.hook('check', (checkContext) => {
