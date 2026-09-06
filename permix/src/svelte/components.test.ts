@@ -35,6 +35,22 @@ describe('components', () => {
     expect(getByTestId('create')).toHaveTextContent('true')
   })
 
+  it('should rehydrate when state changes', async () => {
+    const permix = createPermix<{
+      post: ['create', 'read']
+    }>()
+
+    const { getByTestId, rerender } = render(HydrateApp, {
+      props: { permix, state: { post: { create: true, read: false } } },
+    })
+
+    expect(getByTestId('create')).toHaveTextContent('true')
+
+    await rerender({ permix, state: { post: { create: false, read: false } } })
+
+    expect(getByTestId('create')).toHaveTextContent('false')
+  })
+
   it('should work with Check component', () => {
     const permix = createPermix<{
       post: ['create']
