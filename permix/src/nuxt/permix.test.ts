@@ -1,215 +1,300 @@
-import { describe, expect, it, vi } from 'vitest'
+import type { App } from 'h3'
+import {
+  createApp,
+  createError,
+  createRouter,
+  defineEventHandler,
+  toWebHandler,
+} from 'h3'
+import { describe, expect, it } from 'vitest'
 
+import type { ValidateDefinition } from '../core'
+import { PermixNotFoundError } from '../core'
 import { createPermix } from './permix'
-import type { NuxtEvent } from './permix'
 
-let currentEvent: NuxtEvent | undefined
-
-vi.mock('h3', () => ({
-  getRequestEvent: () => currentEvent,
-}))
-
-async function withEvent<T>(
-  fn: (event: NuxtEvent) => T | Promise<T>
-): Promise<T> {
-  currentEvent = { context: {} }
-  try {
-    return await fn(currentEvent)
-  } finally {
-    currentEvent = undefined
-  }
+interface Post {
+  id: string
+  authorId: string
 }
 
-describe('nuxt createPermix', () => {
-  it('throws when no request event is available', () => {
-    const permix = createPermix<{
-      post: ['create']
-    }>()
+type PermissionsDefinition = ValidateDefinition<{
+  post: ['create', 'read', 'update']
+  user: ['delete']
+}>
 
-    expect(() => {
-      permix.setup({
-        post: {
-          create: true,
-        },
-      })
-    }).toThrow(/No request event found/)
+type PostWithData = ValidateDefinition<{
+  post: [{ name: 'create'; type: Post }]
+}>
+
+function request(app: App, path: string, init?: RequestInit) {
+  return toWebHandler(app)(new Request(`http://localhost${path}`, init))
+}
+
+describe(createPermix, () => {
+  const permix = createPermix<PermissionsDefinition>()
+
+  it('should throw ts error', () => {
+    // @ts-expect-error path does not exist
+    permix.checkMiddleware('post.delete')
   })
 
-  it('sets up rules and checks permissions', async () => {
-    await withEvent(() => {
-      const permix = createPermix<{
-        post: ['create', 'read']
-      }>()
+  it('should allow access when permission is granted', async () => {
+    const app = createApp()
 
-      permix.setup({
-        post: {
-          create: true,
-          read: false,
-        },
+    app.use(
+      defineEventHandler(
+        permix.setupMiddleware({
+          post: { create: true, read: false, update: false },
+          user: { delete: false },
+        })
+      )
+    )
+
+    const router = createRouter()
+    router.post(
+      '/posts',
+      defineEventHandler({
+        onRequest: [permix.checkMiddleware('post.create')],
+        handler: () => ({ success: true }),
       })
+    )
+    app.use(router)
 
-      expect(permix.check('post.create')).toBe(true)
-      expect(permix.check('post.read')).toBe(false)
+    const res = await request(app, '/posts', { method: 'POST' })
+    expect(res.status).toBe(200)
+    await expect(res.json()).resolves.toStrictEqual({ success: true })
+  })
+
+  it('should deny access when permission is not granted', async () => {
+    const app = createApp()
+
+    app.use(
+      defineEventHandler(
+        permix.setupMiddleware(() => ({
+          post: { create: false, read: false, update: false },
+          user: { delete: false },
+        }))
+      )
+    )
+
+    const router = createRouter()
+    router.post(
+      '/posts',
+      defineEventHandler({
+        onRequest: [permix.checkMiddleware('post.create')],
+        handler: () => ({ success: true }),
+      })
+    )
+    app.use(router)
+
+    const res = await request(app, '/posts', { method: 'POST' })
+    expect(res.status).toBe(403)
+    await expect(res.json()).resolves.toMatchObject({
+      statusCode: 403,
+      data: { error: 'Forbidden' },
     })
   })
 
-  it('works with data resolved before setup', async () => {
-    await withEvent(async () => {
-      const permix = createPermix<{
-        post: ['create']
-      }>()
-
-      const user = await Promise.resolve({ role: 'admin' as const })
-
-      permix.setup({
-        post: {
-          create: user.role === 'admin',
-        },
-      })
-
-      expect(permix.check('post.create')).toBe(true)
-    })
-  })
-
-  it('exposes the underlying core instance via get()', async () => {
-    await withEvent((event) => {
-      const permix = createPermix<{
-        post: ['create']
-      }>()
-
-      permix.setup({ post: { create: true } }, event)
-
-      const core = permix.get(event)
-
-      expect(core.isReady()).toBe(true)
-      expect(core.check('post.create')).toBe(true)
-    })
-  })
-
-  it('reads the current rules with getRules', async () => {
-    await withEvent(() => {
-      const permix = createPermix<{
-        post: ['create', 'read']
-      }>()
-
-      expect(permix.getRules()).toBeNull()
-
-      permix.setup({
-        post: {
-          create: true,
-          read: false,
-        },
-      })
-
-      expect(permix.getRules()).toStrictEqual({
-        post: {
-          create: true,
-          read: false,
-        },
-      })
-    })
-  })
-
-  it('dehydrates the request-scoped state', async () => {
-    await withEvent(() => {
-      const permix = createPermix<{
-        post: ['create', 'read']
-      }>()
-
-      permix.setup({
-        post: {
-          create: true,
-          read: false,
-        },
-      })
-
-      expect(permix.dehydrate()).toStrictEqual({
-        post: {
-          create: true,
-          read: false,
-        },
-      })
-    })
-  })
-
-  it('reuses the same instance across calls in the same request scope', async () => {
-    await withEvent(() => {
-      const permix = createPermix<{
-        post: ['create']
-      }>()
-
-      permix.setup({ post: { create: true } })
-
-      expect(permix.get()).toBe(permix.get())
-      expect(permix.check('post.create')).toBe(true)
-    })
-  })
-
-  it('isolates state between independent factories', async () => {
-    await withEvent(() => {
-      const permixA = createPermix<{ post: ['create'] }>()
-      const permixB = createPermix<{ post: ['create'] }>()
-
-      permixA.setup({ post: { create: true } })
-      permixB.setup({ post: { create: false } })
-
-      expect(permixA.check('post.create')).toBe(true)
-      expect(permixB.check('post.create')).toBe(false)
-      expect(permixA.get()).not.toBe(permixB.get())
-    })
-  })
-
-  it('isolates state between concurrent events', () => {
-    const permix = createPermix<{ post: ['create'] }>()
-    const eventA: NuxtEvent = { context: {} }
-    const eventB: NuxtEvent = { context: {} }
-
-    permix.setup({ post: { create: true } }, eventA)
-    permix.setup({ post: { create: false } }, eventB)
-
-    expect(permix.get(eventA).check('post.create')).toBe(true)
-    expect(permix.get(eventB).check('post.create')).toBe(false)
-    expect(permix.get(eventA)).not.toBe(permix.get(eventB))
-  })
-
-  it('creates reusable templates', () => {
-    const permix = createPermix<{
-      post: ['create', 'read']
-    }>()
-
-    const adminTemplate = permix.template({
-      post: {
-        create: true,
-        read: true,
+  it('should work with custom error handler', async () => {
+    const permix = createPermix<PermissionsDefinition>({
+      onForbidden: ({ path }) => {
+        throw createError({
+          statusCode: 403,
+          data: { error: `Custom error: ${path}` },
+        })
       },
     })
 
-    expect(adminTemplate()).toStrictEqual({
-      post: {
-        create: true,
-        read: true,
-      },
+    const app = createApp()
+
+    app.use(
+      defineEventHandler(
+        permix.setupMiddleware(() => ({
+          post: { create: false, read: false, update: false },
+          user: { delete: false },
+        }))
+      )
+    )
+    app.use(
+      '/posts',
+      defineEventHandler({
+        onRequest: [permix.checkMiddleware('post.create')],
+        handler: () => ({ success: true }),
+      })
+    )
+
+    const res = await request(app, '/posts', { method: 'POST' })
+    expect(res.status).toBe(403)
+    await expect(res.json()).resolves.toMatchObject({
+      data: { error: 'Custom error: post.create' },
     })
   })
 
-  it('supports parameterized templates', () => {
-    const permix = createPermix<{
-      post: [{ name: 'edit'; type: { authorId: string } }]
-    }>()
+  it('should pass data through to a rule callback', async () => {
+    const permix = createPermix<PostWithData>()
+    const app = createApp()
 
-    const template = permix.template((userId: string) => ({
-      post: {
-        edit: (post: { authorId: string } | undefined) =>
-          post?.authorId === userId,
-      },
-    }))
+    app.use(
+      defineEventHandler(
+        permix.setupMiddleware({
+          post: { create: (post) => post?.authorId === '1' },
+        })
+      )
+    )
+    app.use(
+      '/allowed',
+      defineEventHandler({
+        onRequest: [
+          permix.checkMiddleware('post.create', { id: '1', authorId: '1' }),
+        ],
+        handler: () => ({ success: true }),
+      })
+    )
+    app.use(
+      '/denied',
+      defineEventHandler({
+        onRequest: [
+          permix.checkMiddleware('post.create', { id: '1', authorId: '2' }),
+        ],
+        handler: () => ({ success: true }),
+      })
+    )
 
-    const rules = template('user-1')
-    const editFn = rules.post.edit as (
-      post: { authorId: string } | undefined
-    ) => boolean
+    const allowed = await request(app, '/allowed')
+    const denied = await request(app, '/denied')
+    expect(allowed.status).toBe(200)
+    expect(denied.status).toBe(403)
+  })
 
-    expect(editFn({ authorId: 'user-1' })).toBe(true)
-    expect(editFn({ authorId: 'user-2' })).toBe(false)
+  it('should work with checker callback form', async () => {
+    const app = createApp()
+
+    app.use(
+      defineEventHandler(
+        permix.setupMiddleware({
+          post: { create: true, read: true, update: false },
+          user: { delete: false },
+        })
+      )
+    )
+    app.use(
+      '/posts',
+      defineEventHandler({
+        onRequest: [
+          permix.checkMiddleware((c) => c('post.create') && c('post.read')),
+        ],
+        handler: () => ({ success: true }),
+      })
+    )
+
+    const res = await request(app, '/posts')
+    expect(res.status).toBe(200)
+  })
+
+  it('should work with template', async () => {
+    const app = createApp()
+    const admin = permix.template({
+      post: { create: true, read: true, update: true },
+      user: { delete: true },
+    })
+
+    app.use(defineEventHandler(permix.setupMiddleware(admin())))
+    app.use(
+      '/posts',
+      defineEventHandler({
+        onRequest: [permix.checkMiddleware('post.~all')],
+        handler: () => ({ success: true }),
+      })
+    )
+
+    const res = await request(app, '/posts')
+    expect(res.status).toBe(200)
+  })
+
+  it('should isolate instances between concurrent requests', async () => {
+    const app = createApp()
+
+    app.use(
+      defineEventHandler(
+        permix.setupMiddleware(({ event }) => ({
+          post: {
+            create: (event.context as any).admin === true,
+            read: true,
+            update: false,
+          },
+          user: { delete: false },
+        }))
+      )
+    )
+    app.use(
+      '/posts',
+      defineEventHandler((event) => ({
+        canCreate: permix.getOrThrow(event).check('post.create'),
+      }))
+    )
+
+    const admin = createApp()
+    admin.use(
+      defineEventHandler((event) => {
+        ;(event.context as any).admin = true
+      })
+    )
+    admin.use(app)
+
+    const [adminRes, guestRes] = await Promise.all([
+      request(admin, '/posts'),
+      request(app, '/posts'),
+    ])
+    await expect(adminRes.json()).resolves.toStrictEqual({ canCreate: true })
+    await expect(guestRes.json()).resolves.toStrictEqual({ canCreate: false })
+  })
+
+  it('should throw PermixNotFoundError when setupMiddleware has not run', async () => {
+    const event = { context: {} }
+
+    expect(permix.get(event)).toBeNull()
+    expect(permix.getRules(event)).toBeNull()
+    expect(() => permix.getOrThrow(event)).toThrow(PermixNotFoundError)
+    await expect(permix.checkMiddleware('post.read')(event)).rejects.toThrow(
+      PermixNotFoundError
+    )
+  })
+
+  it('should let two factories coexist on the same event', async () => {
+    const a = createPermix<PermissionsDefinition>()
+    const b = createPermix<PermissionsDefinition>().contextKey('permix-b')
+    const event = { context: {} as Record<string, unknown> }
+
+    await a.setupMiddleware({
+      post: { create: true, read: true, update: true },
+      user: { delete: true },
+    })(event)
+    await b.setupMiddleware({
+      post: { create: false, read: false, update: false },
+      user: { delete: false },
+    })(event)
+
+    expect(a.getOrThrow(event).check('post.create')).toBe(true)
+    expect(b.getOrThrow(event).check('post.create')).toBe(false)
+    expect(event.context['permix-b']).toBe(b.get(event))
+    expect(a.key).toBeTypeOf('symbol')
+    expect(b.key).toBe('permix-b')
+  })
+
+  it('should fire factory-level check hooks', async () => {
+    const permix = createPermix<PermissionsDefinition>()
+    const event = { context: {} }
+    const paths: unknown[] = []
+    permix.hook('check', ({ path }) => {
+      paths.push(path)
+    })
+
+    await permix.setupMiddleware({
+      post: { create: true, read: true, update: true },
+      user: { delete: true },
+    })(event)
+    await permix.checkMiddleware('post.read')(event)
+
+    expect(paths).toStrictEqual(['post.read'])
   })
 })

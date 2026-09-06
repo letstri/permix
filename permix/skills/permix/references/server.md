@@ -79,6 +79,7 @@ app.get('/posts/:id', (req, res) => {
 | Fastify | `permix/fastify` |
 | tRPC | `permix/trpc` |
 | oRPC | `permix/orpc` |
+| Nuxt / Nitro (h3) | `permix/nuxt` |
 | Generic HTTP | `permix/node` or `permix/server` |
 | Elysia | `permix/elysia` |
 | Effect | `permix/effect` — see integration docs |

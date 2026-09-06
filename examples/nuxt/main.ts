@@ -1,12 +1,6 @@
 import { createServer } from 'node:http'
 
-import {
-  createApp,
-  createRouter,
-  eventHandler,
-  setResponseStatus,
-  toNodeListener,
-} from 'h3'
+import { createApp, createRouter, defineEventHandler, toNodeListener } from 'h3'
 import type { ValidateDefinition } from 'permix'
 import { createPermix } from 'permix/nuxt'
 
@@ -16,47 +10,44 @@ type PermissionsDefinition = ValidateDefinition<{
 
 const permix = createPermix<PermissionsDefinition>()
 
+// In Nuxt this is `server/middleware/permix.ts`.
 const app = createApp()
-const router = createRouter()
 
-function setup(event: Parameters<typeof permix.setup>[1]) {
-  permix.setup(
-    {
+app.use(
+  defineEventHandler(
+    permix.setupMiddleware(() => ({
       user: {
         read: true,
         write: false,
       },
-    },
-    event
+    }))
   )
-}
+)
+
+// In Nuxt these are `server/api/*.ts` handlers.
+const router = createRouter()
 
 router.get(
   '/',
-  eventHandler((event) => {
-    setup(event)
-    return { canRead: permix.get(event).check('user.read') }
+  defineEventHandler({
+    onRequest: [permix.checkMiddleware('user.read')],
+    handler: () => 'Hello World',
   })
 )
 
 router.get(
   '/write',
-  eventHandler((event) => {
-    setup(event)
-    if (!permix.get(event).check('user.write')) {
-      setResponseStatus(event, 403)
-      return { error: 'Forbidden' }
-    }
-    return { ok: true }
+  defineEventHandler({
+    onRequest: [permix.checkMiddleware('user.write')],
+    handler: () => 'Hello World',
   })
 )
 
 router.get(
-  '/state',
-  eventHandler((event) => {
-    setup(event)
-    return permix.dehydrate(event)
-  })
+  '/permix',
+  defineEventHandler((event) => ({
+    canRead: permix.getOrThrow(event).check('user.read'),
+  }))
 )
 
 app.use(router)

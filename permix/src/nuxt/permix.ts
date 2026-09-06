@@ -1,159 +1,178 @@
-import * as h3 from 'h3'
-
 import type { Permix as PermixCore } from '../core'
-import { createPermix as createPermixCore, createTemplate } from '../core'
+import {
+  createCheckContext,
+  createHooks,
+  createPermix as createPermixCore,
+  createTemplate,
+  PermixNotFoundError,
+} from '../core'
+import type { CheckArgs, CheckContext } from '../core/check'
 import type { Definition } from '../core/definitions'
 import type { PermixHooks, Rules, RulesPaths } from '../core/permix'
-import type { DehydratedState } from '../core/rules'
+import type { MaybePromise } from '../utils'
 
 /**
- * Minimal Nitro/h3 event shape. Compatible with `H3Event` from `h3` and
- * Nuxt's `useRequestEvent()` return value.
+ * Minimal h3 / Nitro event shape. Compatible with `H3Event` from `h3` and the
+ * value returned by Nuxt's `useRequestEvent()`, so this entry has no runtime
+ * dependency on `h3`.
  */
 export interface NuxtEvent {
   context: object
 }
 
-interface H3RequestEventApi {
-  getRequestEvent?: () => NuxtEvent | undefined
-  useEvent?: () => NuxtEvent
+/**
+ * Plain h3 event handler. Wrap it with `defineEventHandler` (or pass it to
+ * `onRequest`) in Nuxt server middleware and routes.
+ */
+export type EventHandler = (event: NuxtEvent) => Promise<void>
+
+export interface MiddlewareContext {
+  event: NuxtEvent
 }
 
-function readCurrentEvent(): NuxtEvent | undefined {
-  // h3 1.x has no ALS helper; Nitro/h3 v2 may expose getRequestEvent or useEvent.
-  const runtime = h3 as H3RequestEventApi
-  if (typeof runtime.getRequestEvent === 'function') {
-    return runtime.getRequestEvent()
+export interface PermixOptions<D extends Definition> {
+  /**
+   * Called when a `checkMiddleware` denies the request. Defaults to throwing an
+   * error with `statusCode: 403`, which h3 turns into a 403 response. Throw
+   * `createError(...)` here to customise the response.
+   */
+  onForbidden?: (
+    params: CheckContext<D> & MiddlewareContext
+  ) => MaybePromise<void>
+}
+
+function buildPermix<D extends Definition>(
+  resolveKey: () => string | symbol,
+  options: PermixOptions<D> = {}
+) {
+  const onForbidden =
+    options.onForbidden ??
+    (() => {
+      // h3 reads statusCode/statusMessage/data off thrown errors.
+      throw Object.assign(new Error('Forbidden'), {
+        statusCode: 403,
+        statusMessage: 'Forbidden',
+        data: { error: 'Forbidden' },
+      })
+    })
+
+  const hooks = createHooks<PermixHooks<D>>()
+
+  function get(event: NuxtEvent): PermixCore<D> | null {
+    const instance = (event.context as any)[resolveKey()] as
+      | PermixCore<D>
+      | undefined
+    return instance ?? null
   }
-  if (typeof runtime.useEvent === 'function') {
-    try {
-      return runtime.useEvent()
-    } catch {
-      return undefined
+
+  function getOrThrow(event: NuxtEvent): PermixCore<D> {
+    const instance = get(event)
+    if (!instance) {
+      throw new PermixNotFoundError(resolveKey())
+    }
+    return instance
+  }
+
+  function setupMiddleware(
+    callbackOrRules:
+      | ((context: MiddlewareContext) => MaybePromise<Rules<D>>)
+      | Rules<D>
+  ): EventHandler {
+    return async (event) => {
+      const rules =
+        typeof callbackOrRules === 'function'
+          ? await callbackOrRules({ event })
+          : callbackOrRules
+      const instance = createPermixCore<D>(rules)
+      instance.hook('check', (context) => {
+        hooks.callHook('check', context)
+      })
+      ;(event.context as any)[resolveKey()] = instance
     }
   }
-  return undefined
-}
 
-function resolveEvent(
-  event: NuxtEvent | undefined,
-  key: string | symbol
-): NuxtEvent {
-  if (event) {
-    return event
-  }
-  const current = readCurrentEvent()
-  if (current) {
-    return current
-  }
-  throw new Error(
-    `[Permix]: No request event found for key ${String(key)}. Call setup() inside a Nuxt/Nitro request, or pass the event.`
-  )
-}
+  const checkMiddleware: (...args: CheckArgs<D>) => EventHandler =
+    (...args) =>
+    async (event) => {
+      const permix = getOrThrow(event)
 
-function getOrCreate(
-  event: NuxtEvent,
-  key: string | symbol,
-  create: () => PermixCore<any>
-): PermixCore<any> {
-  const context = event.context as Record<PropertyKey, unknown>
-  const existing = context[key] as PermixCore<any> | undefined
-  if (existing) {
-    return existing
-  }
-  const instance = create()
-  context[key] = instance
-  return instance
-}
+      if (!permix.check(...args)) {
+        await onForbidden({ event, ...createCheckContext(...args) })
+      }
+    }
 
-/**
- * Create a per-request Permix instance for Nuxt / Nitro.
- *
- * The instance is stored on the current request's `event.context`, so server
- * routes, server middleware, and Vue server components in the same request
- * share one instance while concurrent requests stay isolated.
- *
- * @example
- * ```ts
- * // lib/permix.ts
- * import { createPermix } from 'permix/nuxt'
- *
- * export const permix = createPermix<{
- *   post: ['create', 'read', 'update', 'delete']
- * }>()
- * ```
- *
- * ```ts
- * // server/middleware/permix.ts
- * import { permix } from '~/lib/permix'
- *
- * export default defineEventHandler((event) => {
- *   permix.setup({
- *     post: { create: true, read: true, update: false, delete: false },
- *   }, event)
- * })
- * ```
- *
- * @link https://permix.letstri.dev/docs/integrations/nuxt
- */
-export function createPermix<D extends Definition>() {
-  const key: symbol = Symbol('permix')
-
-  function getPermix(event?: NuxtEvent): PermixCore<D> {
-    const resolved = resolveEvent(event, key)
-    return getOrCreate(resolved, key, () => createPermixCore<D>())
-  }
-
-  function setup(rules: Rules<D>, event?: NuxtEvent): void {
-    getPermix(event).setup(rules)
-  }
-
-  const check: PermixCore<D>['check'] = (...args) => getPermix().check(...args)
-
-  function dehydrate(event?: NuxtEvent): DehydratedState<D> {
-    return getPermix(event).dehydrate()
-  }
-
-  function get(event?: NuxtEvent): PermixCore<D> {
-    return getPermix(event)
-  }
-
-  function getRules(event?: NuxtEvent): Rules<D> | null {
-    return getPermix(event).getRules()
+  function getRules(event: NuxtEvent): Rules<D> | null {
+    return get(event)?.getRules() ?? null
   }
 
   function template<T = void>(rules: Rules<D> | ((param: T) => Rules<D>)) {
     return createTemplate<D, T>(rules)
   }
 
-  function hook<K extends keyof PermixHooks<D>>(
-    name: K,
-    fn: PermixHooks<D>[K],
-    event?: NuxtEvent
-  ) {
-    return getPermix(event).hook(name, fn)
-  }
-
-  function hookOnce<K extends keyof PermixHooks<D>>(
-    name: K,
-    fn: PermixHooks<D>[K],
-    event?: NuxtEvent
-  ) {
-    getPermix(event).hookOnce(name, fn)
-  }
-
   return {
-    setup,
-    check,
-    dehydrate,
-    get,
-    getRules,
+    setupMiddleware,
+    checkMiddleware,
     template,
-    hook,
-    hookOnce,
+    get,
+    getOrThrow,
+    getRules,
+    hook: hooks.hook,
+    hookOnce: hooks.hookOnce,
+    get key() {
+      return resolveKey()
+    },
     $inferDefinition: undefined as unknown as D,
     $inferPath: undefined as unknown as RulesPaths<D>,
   }
+}
+
+/**
+ * Create a middleware factory that wires Permix into Nuxt / Nitro (h3) routes.
+ *
+ * The per-request instance lives on `event.context`, so server middleware,
+ * API routes, and SSR rendering of the same request share one instance while
+ * concurrent requests stay isolated.
+ *
+ * Use `.contextKey('name')` to set a custom context key (defaults to a unique
+ * `Symbol('permix')`).
+ *
+ * @example
+ * ```ts
+ * // server/utils/permix.ts
+ * import { createPermix } from 'permix/nuxt'
+ *
+ * export const permix = createPermix<{
+ *   post: ['create', 'read']
+ * }>()
+ *
+ * // server/middleware/permix.ts
+ * export default defineEventHandler(
+ *   permix.setupMiddleware(({ event }) => ({
+ *     post: { create: !!event.context.user, read: true },
+ *   })),
+ * )
+ *
+ * // server/api/posts.post.ts
+ * export default defineEventHandler({
+ *   onRequest: [permix.checkMiddleware('post.create')],
+ *   handler: () => ({ ok: true }),
+ * })
+ * ```
+ *
+ * @link https://permix.letstri.dev/docs/integrations/nuxt
+ */
+export function createPermix<D extends Definition>(
+  options: PermixOptions<D> = {}
+) {
+  let key: string | symbol = Symbol('permix')
+  const permix = buildPermix<D>(() => key, options)
+
+  return Object.assign(permix, {
+    contextKey(newKey: string | symbol) {
+      key = newKey
+      return permix
+    },
+  })
 }
 
 export type NuxtPermix<D extends Definition> = ReturnType<
