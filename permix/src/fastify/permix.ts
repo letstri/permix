@@ -110,6 +110,10 @@ function buildPermix<D extends Definition>(
 
       if (!allowed) {
         await onForbidden({ request, reply, ...createCheckContext(...args) })
+        // Fail closed if a custom handler forgot to reply.
+        if (!reply.sent) {
+          reply.status(403).send({ error: 'Forbidden' })
+        }
       }
     }
 

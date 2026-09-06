@@ -497,3 +497,28 @@ describe('key exposure', () => {
     expect(permix.key).toBeTypeOf('symbol')
   })
 })
+
+describe('async errors', () => {
+  it('should forward a rejected setup callback to next(err)', async () => {
+    const permix = createPermix<PermissionsDefinition>()
+    const app = express()
+
+    app.use(
+      permix.setupMiddleware(async () => {
+        throw new Error('session lookup failed')
+      })
+    )
+    app.get('/', (_req, res) => {
+      res.json({ ok: true })
+    })
+
+    const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+      res.status(500).json({ error: err.message })
+    }
+    app.use(errorHandler)
+
+    const response = await request(app).get('/')
+    expect(response.status).toBe(500)
+    expect(response.body).toStrictEqual({ error: 'session lookup failed' })
+  })
+})

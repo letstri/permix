@@ -60,15 +60,21 @@ function buildPermix<D extends Definition>(
       | Rules<D>
   ): Handler {
     return async (req, res, next) => {
-      const rules =
-        typeof callbackOrRules === 'function'
-          ? await callbackOrRules({ req, res, next })
-          : callbackOrRules
-      const instance = createPermixCore<D>(rules)
-      instance.hook('check', (context) => {
-        hooks.callHook('check', context)
-      })
-      ;(req as any)[resolveKey()] = instance
+      try {
+        const rules =
+          typeof callbackOrRules === 'function'
+            ? await callbackOrRules({ req, res, next })
+            : callbackOrRules
+        const instance = createPermixCore<D>(rules)
+        instance.hook('check', (context) => {
+          hooks.callHook('check', context)
+        })
+        ;(req as any)[resolveKey()] = instance
+      } catch (error) {
+        // Express 4 does not catch async rejections; forward them.
+        next(error)
+        return
+      }
       next()
     }
   }
@@ -83,15 +89,18 @@ function buildPermix<D extends Definition>(
         return
       }
 
-      const allowed = permix.check(...args)
-
-      if (!allowed) {
-        await onForbidden({
-          req,
-          res,
-          next,
-          ...createCheckContext(...args),
-        })
+      try {
+        if (!permix.check(...args)) {
+          await onForbidden({
+            req,
+            res,
+            next,
+            ...createCheckContext(...args),
+          })
+          return
+        }
+      } catch (error) {
+        next(error)
         return
       }
 

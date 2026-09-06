@@ -366,3 +366,20 @@ describe('key exposure', () => {
     expect(permix.key).toBeTypeOf('symbol')
   })
 })
+
+describe('async errors', () => {
+  it('should forward a rejected setup callback to next(err)', async () => {
+    const permix = createPermix<PermissionsDefinition>()
+    const req = createMockRequest()
+    const res = createMockResponse()
+    const next = createMockNext()
+    const error = new Error('session lookup failed')
+
+    await permix.setupMiddleware(async () => {
+      throw error
+    })(req, res, next)
+
+    expect(next).toHaveBeenCalledWith(error)
+    expect(permix.get(req)).toBeNull()
+  })
+})

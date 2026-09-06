@@ -385,3 +385,32 @@ describe('key exposure', () => {
     expect(permix.key).toBeTypeOf('symbol')
   })
 })
+
+describe('fail closed', () => {
+  it('should send 403 when a custom onForbidden does not reply', async () => {
+    const permix = createPermix<PermissionsDefinition>({
+      onForbidden: () => {},
+    })
+
+    const app = Fastify()
+
+    await app.register(
+      permix.setupMiddleware({
+        post: { create: false, read: false, update: false },
+        user: { delete: false },
+      })
+    )
+
+    app.post(
+      '/posts',
+      { preHandler: permix.checkMiddleware('post.create') },
+      (_req, reply) => {
+        reply.send({ success: true })
+      }
+    )
+
+    const response = await app.inject({ method: 'POST', url: '/posts' })
+    expect(response.statusCode).toBe(403)
+    expect(response.json()).toStrictEqual({ error: 'Forbidden' })
+  })
+})

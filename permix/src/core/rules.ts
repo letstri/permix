@@ -60,7 +60,11 @@ export function hydrateRules<D extends Definition>(
   state: DehydratedState<D>
 ): Rules<D> {
   const result: Record<string, unknown> = {}
-  for (const key in state as Record<string, unknown>) {
+  for (const key of Object.keys(state)) {
+    // Untrusted JSON: assigning `__proto__` would swap the prototype.
+    if (key === '__proto__') {
+      continue
+    }
     const value = (state as Record<string, unknown>)[key]
     result[key] =
       typeof value === 'boolean'

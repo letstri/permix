@@ -82,7 +82,16 @@ function buildPermix<D extends Definition>(
       const allowed = permix.check(...args)
 
       if (!allowed) {
-        return await onForbidden({ context, ...createCheckContext(...args) })
+        const result = await onForbidden({
+          context,
+          ...createCheckContext(...args),
+        })
+        // Fail closed if a custom handler returned nothing.
+        if (result === undefined) {
+          context.set.status = 'Forbidden'
+          return { error: 'Forbidden' }
+        }
+        return result
       }
     }
 

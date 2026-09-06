@@ -42,6 +42,14 @@ export function callRuleWithoutData(rule: () => unknown): boolean {
   }
 }
 
+// Own-property lookup only, so paths like `post.constructor` or `toString`
+// never resolve through the prototype chain.
+function ownChild(parent: object, key: string): Rule | undefined {
+  return Object.hasOwn(parent, key)
+    ? (parent as Record<string, Rule>)[key]
+    : undefined
+}
+
 function walk(rules: Rules<any>, inputArgs: unknown[]): boolean {
   let args = inputArgs
   const first = args[0]
@@ -51,11 +59,12 @@ function walk(rules: Rules<any>, inputArgs: unknown[]): boolean {
     const last = parts.at(-1)
 
     if (isSpecialSymbol(last)) {
-      let subtree: Rule = rules
+      let subtree: Rule | undefined = rules
       for (let i = 0; i < parts.length - 1; i++) {
-        if (subtree && typeof subtree === 'object') {
-          subtree = (subtree as Record<string, Rule>)[parts[i]]
-        }
+        subtree =
+          subtree && typeof subtree === 'object'
+            ? ownChild(subtree, parts[i])
+            : undefined
       }
 
       if (subtree === undefined) {
@@ -71,11 +80,15 @@ function walk(rules: Rules<any>, inputArgs: unknown[]): boolean {
         if (typeof rule === 'function') {
           return void out.push(callRuleWithoutData(rule))
         }
-        for (const key in rule) {
+        for (const key of Object.keys(rule)) {
           visit(rule[key])
         }
       }
       visit(subtree)
+      // An empty subtree grants nothing, even for `~all`.
+      if (out.length === 0) {
+        return false
+      }
       return last === '~all' ? out.every(Boolean) : out.some(Boolean)
     }
 
@@ -84,10 +97,10 @@ function walk(rules: Rules<any>, inputArgs: unknown[]): boolean {
     }
   }
 
-  let rule: Rule = rules
+  let rule: Rule | undefined = rules
   let i = 0
   for (; i < args.length && typeof rule === 'object'; i++) {
-    rule = rule[String(args[i])]
+    rule = ownChild(rule, String(args[i]))
   }
 
   if (typeof rule === 'boolean') {

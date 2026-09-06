@@ -334,3 +334,28 @@ describe('key exposure', () => {
     expect(permix.key).toBeTypeOf('symbol')
   })
 })
+
+describe('fail closed', () => {
+  it('should respond 403 when a custom onForbidden returns nothing', async () => {
+    const permix = createPermix<PermissionsDefinition>({
+      onForbidden: () => {},
+    })
+
+    const app = new Elysia()
+      .onBeforeHandle(
+        permix.setupMiddleware({
+          post: { create: false, read: false, update: false },
+          user: { delete: false },
+        })
+      )
+      .post('/posts', () => ({ success: true }), {
+        beforeHandle: permix.checkMiddleware('post.create'),
+      })
+
+    const res = await app.handle(
+      new Request('http://localhost/posts', { method: 'POST' })
+    )
+    expect(res.status).toBe(403)
+    await expect(res.json()).resolves.toStrictEqual({ error: 'Forbidden' })
+  })
+})

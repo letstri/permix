@@ -757,3 +757,42 @@ describe('deep rules', () => {
     })
   })
 })
+
+describe('prototype safety', () => {
+  const permix = createPermix<{
+    post: ['create']
+  }>()
+
+  permix.setup({ post: { create: true } })
+
+  it('should not resolve inherited names as rules', () => {
+    // @ts-expect-error not a defined path
+    expect(() => permix.check('toString')).toThrow(PermixRuleNotDefinedError)
+    // @ts-expect-error not a defined path
+    expect(() => permix.check('post.constructor')).toThrow(
+      PermixRuleNotDefinedError
+    )
+    // @ts-expect-error not a defined path
+    expect(() => permix.check('constructor.~any')).toThrow(
+      PermixRuleNotDefinedError
+    )
+  })
+
+  it('should ignore __proto__ keys when hydrating', () => {
+    const state = JSON.parse(
+      '{"__proto__":{"admin":true},"post":{"create":false}}'
+    )
+    permix.hydrate(state)
+
+    expect(permix.check('post.create')).toBe(false)
+    expect(Object.getPrototypeOf(permix.getRules())).toBe(Object.prototype)
+    expect((permix.getRules() as any).admin).toBeUndefined()
+  })
+
+  it('should deny ~all on an empty subtree', () => {
+    permix.hydrate({ post: {} } as any)
+
+    expect(permix.check('post.~all')).toBe(false)
+    expect(permix.check('post.~any')).toBe(false)
+  })
+})
