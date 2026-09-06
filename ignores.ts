@@ -9,7 +9,7 @@ export const ignorePatterns = [
   '**/out/**',
   '**/node_modules/**',
   '**/_artifacts/**',
-  '**/.agents/**',
+  '.agents/**',
   '**/next-env.d.ts',
   '**/*.gen.ts',
   '**/*.generated.ts',
