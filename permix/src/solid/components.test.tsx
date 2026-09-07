@@ -41,6 +41,43 @@ describe('components', () => {
     expect(container.firstChild).toHaveTextContent('true')
   })
 
+  it('uses dehydrated rules on the first render', () => {
+    const permixServer = createPermix<{
+      post: ['create', 'read']
+    }>()
+
+    permixServer.setup({
+      post: {
+        create: true,
+        read: false,
+      },
+    })
+
+    const dehydrated = permixServer.dehydrate()
+    const permixClient = createPermix<{
+      post: ['create', 'read']
+    }>()
+
+    const TestComponent = () => {
+      const { check, isReady } = usePermix(permixClient)
+      return (
+        <div>
+          {check('post.create').toString()}:{isReady().toString()}
+        </div>
+      )
+    }
+
+    const { container } = render(() => (
+      <PermixProvider permix={permixClient}>
+        <PermixHydrate state={dehydrated}>
+          <TestComponent />
+        </PermixHydrate>
+      </PermixProvider>
+    ))
+
+    expect(container.firstChild).toHaveTextContent('true:false')
+  })
+
   it('should work with Check component', () => {
     const permix = createPermix<{
       post: ['create']

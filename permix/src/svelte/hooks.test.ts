@@ -25,6 +25,24 @@ describe('permix svelte', () => {
     expect(getByTestId('read')).toHaveTextContent('false')
   })
 
+  it('reads ready state on the first render when setup ran before subscribe', () => {
+    const permix = createPermix<{
+      post: [{ name: 'create'; type: { id: string } }, 'read']
+    }>()
+
+    permix.setup({
+      post: {
+        create: () => true,
+        read: true,
+      },
+    })
+
+    const { getByTestId } = render(HookApp, { props: { permix } })
+
+    expect(getByTestId('ready')).toHaveTextContent('true')
+    expect(getByTestId('read')).toHaveTextContent('true')
+  })
+
   it('should work with DOM rerender', async () => {
     const permix = createPermix<{
       post: [{ name: 'create'; type: { id: string } }, 'read']

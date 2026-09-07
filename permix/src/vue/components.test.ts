@@ -50,6 +50,48 @@ describe('components', () => {
     expect(wrapper.text()).toBe('true')
   })
 
+  it('uses dehydrated rules on the first render', () => {
+    const permixServer = createPermix<{
+      post: ['create', 'read']
+    }>()
+
+    permixServer.setup({
+      post: {
+        create: true,
+        read: false,
+      },
+    })
+
+    const dehydrated = permixServer.dehydrate()
+    const permixClient = createPermix<{
+      post: ['create', 'read']
+    }>()
+
+    const TestComponent = {
+      template: "<div>{{ check('post.create') }}:{{ isReady }}</div>",
+      setup() {
+        const { check, isReady } = usePermix(permixClient)
+        return { check, isReady }
+      },
+    }
+
+    const wrapper = mount({
+      template: `
+        <PermixProvider :permix="permix">
+          <PermixHydrate :state="dehydrated">
+            <TestComponent />
+          </PermixHydrate>
+        </PermixProvider>
+      `,
+      components: { PermixProvider, PermixHydrate, TestComponent },
+      setup() {
+        return { permix: permixClient, dehydrated }
+      },
+    })
+
+    expect(wrapper.text()).toBe('true:false')
+  })
+
   it('should work with Check component', () => {
     const permix = createPermix<{
       post: ['create']

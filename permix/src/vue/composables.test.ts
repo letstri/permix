@@ -56,6 +56,30 @@ describe('composables', () => {
     expect(wrapper.get('[data-testid="read"]').text()).toBe('false')
   })
 
+  it('reads ready state on the first render when setup ran before subscribe', () => {
+    const permix = createPermix<{
+      post: ['create']
+    }>()
+
+    permix.setup({
+      post: {
+        create: true,
+      },
+    })
+
+    const TestWrapper = defineComponent({
+      template: '<div>{{ isReady }}:{{ check("post.create") }}</div>',
+      setup() {
+        const { check, isReady } = usePermix(permix)
+        return { check, isReady }
+      },
+    })
+
+    const wrapper = mountWithPermix(TestWrapper, permix)
+
+    expect(wrapper.get('div').text()).toBe('true:true')
+  })
+
   it('should work with DOM rerender', async () => {
     const permix = createPermix<{
       post: [{ name: 'create'; type: { id: string } }, 'read']
