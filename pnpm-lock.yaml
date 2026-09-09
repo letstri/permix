@@ -445,6 +445,19 @@ importers:
         specifier: ^8.2.2
         version: 8.2.2(@types/node@25.9.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0)
 
+  examples/react-router:
+    dependencies:
+      permix:
+        specifier: workspace:*
+        version: link:../../permix
+    devDependencies:
+      '@types/node':
+        specifier: ^25.9.1
+        version: 25.9.1
+      tsx:
+        specifier: ^4.22.4
+        version: 4.22.4
+
   examples/rebac:
     dependencies:
       permix:

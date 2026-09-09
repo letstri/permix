@@ -15,6 +15,7 @@
     "permissions-management",
     "rbac",
     "react",
+    "react-router",
     "security",
     "solid",
     "svelte",
@@ -116,6 +117,10 @@
     "./tanstack-start": {
       "types": "./dist/tanstack-start/index.d.mts",
       "import": "./dist/tanstack-start/index.mjs"
+    },
+    "./react-router": {
+      "types": "./dist/react-router/index.d.mts",
+      "import": "./dist/react-router/index.mjs"
     }
   },
   "scripts": {

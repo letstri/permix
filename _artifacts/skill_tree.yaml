@@ -39,7 +39,7 @@ skills:
       check() dot paths, callbacks, ~all/~any, entity-aware ReBAC rules,
       isReady/isReadyAsync; PermixProvider/usePermix/createComponents and SSR
       dehydrate/hydrate for React, Vue, Solid, Svelte, Next.js, TanStack
-      Start; setupMiddleware/checkMiddleware for Express, Hono, Fastify,
+      Start, React Router; setupMiddleware/checkMiddleware for Express, Hono, Fastify,
       tRPC, oRPC, Node, Elysia. Thin router with references loaded on demand.
     requires:
       - permix-getting-started
@@ -50,6 +50,7 @@ skills:
       - svelte
       - next
       - tanstack-start
+      - react-router
       - express
       - hono
       - fastify
@@ -72,6 +73,7 @@ skills:
       - 'letstri/permix:docs/content/docs/integrations/svelte.mdx'
       - 'letstri/permix:docs/content/docs/integrations/next.mdx'
       - 'letstri/permix:docs/content/docs/integrations/tanstack-start.mdx'
+      - 'letstri/permix:docs/content/docs/integrations/react-router.mdx'
       - 'letstri/permix:docs/content/docs/integrations/express.mdx'
       - 'letstri/permix:docs/content/docs/integrations/hono.mdx'
       - 'letstri/permix:docs/content/docs/integrations/fastify.mdx'
@@ -88,3 +90,4 @@ coverage:
     - examples/*
     - next
     - tanstack-start
+    - react-router

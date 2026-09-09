@@ -18,6 +18,7 @@
     "integrations/react",
     "integrations/next",
     "integrations/tanstack-start",
+    "integrations/react-router",
     "integrations/vue",
     "integrations/solid",
     "integrations/svelte",

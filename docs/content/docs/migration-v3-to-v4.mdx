@@ -240,7 +240,7 @@ permix.setup(getClientRules(user))
 
 `hydrate()` fires the **`setup` hook** (not a separate `hydrate` hook). Update listeners that used `hook('hydrate', ...)` in v3.
 
-See [Hydration](/docs/guide/hydration) and [Ready state](/docs/guide/ready). For App Router / TanStack Start, see [Next.js](/docs/integrations/next) and [TanStack Start](/docs/integrations/tanstack-start).
+See [Hydration](/docs/guide/hydration) and [Ready state](/docs/guide/ready). For App Router / TanStack Start / React Router, see [Next.js](/docs/integrations/next), [TanStack Start](/docs/integrations/tanstack-start), and [React Router](/docs/integrations/react-router).
 
 ---
 
@@ -340,6 +340,7 @@ These are additive — migrate the core API first, then adopt what you need:
 | ----------------------- | ------------------------------------------- |
 | `permix/next`           | Next.js App Router, request-scoped instance |
 | `permix/tanstack-start` | TanStack Start middleware and SSR           |
+| `permix/react-router`   | React Router 7 middleware and SSR           |
 | `permix/server`         | Framework-agnostic fetch middleware         |
 | `permix/svelte`         | Svelte 5 runes                              |
 | `permix/drizzle`        | Rules from Drizzle v1 schema                |
