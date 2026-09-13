@@ -263,6 +263,13 @@ permix.guard(async ({ req }) => {
 })
 ```
 
+<Callout type="warn">
+  Global guards run in the order they are registered. Anything the callback
+  reads off the request — `req.user` above — must be populated by an
+  authentication guard registered *before* the Permix guard, otherwise it is
+  still undefined when the callback runs.
+</Callout>
+
 ### Hooks
 
 You can register hooks at the factory level to listen for events across all requests:

@@ -360,6 +360,11 @@ describe('permix/nest', () => {
         guestRoute() {
           return { scope: 'guest' }
         }
+
+        @Get('probe')
+        probe(@Req() req: Request) {
+          return { admin: admin.getRules(req), guest: guest.getRules(req) }
+        }
       }
 
       @Module({
@@ -396,6 +401,21 @@ describe('permix/nest', () => {
       )
       expect(guestResponse.status).toBe(403)
       expect(guestResponse.body).toStrictEqual({ error: 'Forbidden' })
+
+      // Read both attachments once every guard has run, so a key collision
+      // cannot hide behind a guard that checked before the other attached.
+      const probeResponse = await request(nestApp.getHttpServer()).get('/probe')
+      expect(probeResponse.status).toBe(200)
+      expect(probeResponse.body).toStrictEqual({
+        admin: {
+          post: { create: true, read: true, update: true },
+          user: { delete: true },
+        },
+        guest: {
+          post: { create: false, read: true, update: false },
+          user: { delete: false },
+        },
+      })
     })
 
     it('should default to a per-instance symbol so two factories without a key do not collide', async () => {
@@ -414,6 +434,11 @@ describe('permix/nest', () => {
         @second.Check('post.create')
         secondRoute() {
           return { ok: true }
+        }
+
+        @Get('probe')
+        probe(@Req() req: Request) {
+          return { first: first.getRules(req), second: second.getRules(req) }
         }
       }
 
@@ -449,6 +474,19 @@ describe('permix/nest', () => {
         '/second'
       )
       expect(secondResponse.status).toBe(403)
+
+      const probeResponse = await request(nestApp.getHttpServer()).get('/probe')
+      expect(probeResponse.status).toBe(200)
+      expect(probeResponse.body).toStrictEqual({
+        first: {
+          post: { create: true, read: true, update: true },
+          user: { delete: true },
+        },
+        second: {
+          post: { create: false, read: false, update: false },
+          user: { delete: false },
+        },
+      })
     })
 
     it('should accept an explicit symbol key', async () => {
