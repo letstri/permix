@@ -424,13 +424,13 @@ importers:
   examples/nest:
     dependencies:
       '@nestjs/common':
-        specifier: ^11.1.6
+        specifier: ^11.2.3
         version: 11.2.3(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0)
       '@nestjs/core':
-        specifier: ^11.1.6
+        specifier: ^11.2.3
         version: 11.2.3(@nestjs/common@11.2.3(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/platform-express@11.2.3)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/platform-express':
-        specifier: ^11.1.6
+        specifier: ^11.2.3
         version: 11.2.3(@nestjs/common@11.2.3(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@11.2.3)(supports-color@7.2.0)
       permix:
         specifier: workspace:*
@@ -442,8 +442,11 @@ importers:
         specifier: ^7.8.2
         version: 7.8.2
     devDependencies:
+      '@types/express':
+        specifier: ^5.0.6
+        version: 5.0.6
       tsx:
-        specifier: ^4.22.4
+        specifier: ^4.23.13
         version: 4.23.13
       typescript:
         specifier: ^6.0.3

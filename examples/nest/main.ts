@@ -7,6 +7,7 @@ import {
   Req,
 } from '@nestjs/common'
 import { APP_GUARD, NestFactory } from '@nestjs/core'
+import type { Request } from 'express'
 import type { ValidateDefinition } from 'permix'
 import { createPermix } from 'permix/nest'
 
@@ -14,7 +15,7 @@ type PermissionsDefinition = ValidateDefinition<{
   user: ['read', 'write']
 }>
 
-const permix = createPermix<PermissionsDefinition>({
+const permix = createPermix<PermissionsDefinition, Request>({
   onForbidden: () => {
     throw new ForbiddenException({
       error: 'You do not have permission to access this resource',
@@ -37,7 +38,7 @@ class AppController {
   }
 
   @Get('permix')
-  inspect(@Req() req: { [key: PropertyKey]: unknown }) {
+  inspect(@Req() req: Request) {
     return { canRead: permix.getOrThrow(req).check('user.read') }
   }
 }

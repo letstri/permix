@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import type { INestApplication, Type } from '@nestjs/common'
+import type { ExecutionContext, INestApplication, Type } from '@nestjs/common'
 import {
   Controller,
   ForbiddenException,
@@ -10,8 +10,9 @@ import {
 } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
 import { Test } from '@nestjs/testing'
+import type { Request } from 'express'
 import request from 'supertest'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { ValidateDefinition } from '../core'
 import { createPermix } from './permix'
@@ -502,6 +503,60 @@ describe('permix/nest', () => {
       const response = await request(nestApp.getHttpServer()).post('/posts')
       expect(response.status).toBe(403)
       expect(response.body).toStrictEqual({ error: 'Forbidden' })
+    })
+
+    it('should accept an adapter request type', async () => {
+      const permix = createPermix<PermissionsDefinition, Request>()
+
+      @Controller()
+      class TypedController {
+        @Get('typed')
+        typed(@Req() req: Request) {
+          return { canRead: permix.getOrThrow(req).check('post.read') }
+        }
+      }
+
+      @Module({
+        controllers: [TypedController],
+        providers: [
+          {
+            provide: APP_GUARD,
+            useValue: permix.guard(({ req }) => ({
+              post: {
+                create: false,
+                read: req.method === 'GET',
+                update: false,
+              },
+              user: { delete: false },
+            })),
+          },
+        ],
+      })
+      class AppModule {}
+
+      const nestApp = await createApp(AppModule)
+      const response = await request(nestApp.getHttpServer()).get('/typed')
+
+      expect(response.status).toBe(200)
+      expect(response.body).toStrictEqual({ canRead: true })
+    })
+
+    it('should leave non-http execution contexts untouched', async () => {
+      const permix = createPermix<PermissionsDefinition>()
+      const message = { pattern: 'sum' }
+      const rules = vi.fn(() => denied)
+      const rpcContext = {
+        getType: () => 'rpc',
+        switchToHttp: () => ({ getRequest: () => message }),
+        getHandler: () => () => {},
+        getClass: () => class {},
+      } as unknown as ExecutionContext
+
+      await expect(permix.guard(rules).canActivate(rpcContext)).resolves.toBe(
+        true
+      )
+      expect(rules).not.toHaveBeenCalled()
+      expect(message).toStrictEqual({ pattern: 'sum' })
     })
   })
 

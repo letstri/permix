@@ -62,8 +62,18 @@ export class AppModule {}
 
 <Callout>
   The guard works with both the Express and Fastify Nest HTTP adapters. It
-  preserves full type safety from your Permix definition.
+  preserves full type safety from your Permix definition. Non-HTTP execution
+  contexts (RPC, WebSockets) are skipped, so the guard is safe to register
+  globally in a hybrid app.
 </Callout>
+
+Because the request shape depends on the HTTP adapter, `req` is untyped by default. Pass your adapter's request type as the second type argument to get it typed everywhere — in the guard callback, `onForbidden`, `get`, `getOrThrow` and `getRules`:
+
+```ts
+import type { Request } from 'express'
+
+export const permix = createPermix<Definition, Request>()
+```
 
 </Step>
 
@@ -186,6 +196,13 @@ const adminTemplate = permix.template({
 ## Custom Error Handling
 
 By default, a denied `@Check` throws a Nest `ForbiddenException` with `{ error: 'Forbidden' }`. You can customize this by providing an `onForbidden` handler:
+
+<Callout type="warn">
+  `onForbidden` is expected to throw. Unlike the Express integration, do not
+  write to the response directly — if the handler returns normally, Nest raises
+  its own `ForbiddenException` and a response you already sent would conflict
+  with it.
+</Callout>
 
 ### Basic Error Handler
 

@@ -7,15 +7,16 @@
     "start": "tsx main.ts"
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.6",
-    "@nestjs/core": "^11.1.6",
-    "@nestjs/platform-express": "^11.1.6",
+    "@nestjs/common": "^11.2.3",
+    "@nestjs/core": "^11.2.3",
+    "@nestjs/platform-express": "^11.2.3",
     "permix": "workspace:*",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
-    "tsx": "^4.22.4",
+    "@types/express": "^5.0.6",
+    "tsx": "^4.23.13",
     "typescript": "^6.0.3"
   }
 }
