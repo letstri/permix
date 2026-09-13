@@ -18,7 +18,6 @@
     "security",
     "solid",
     "svelte",
-    "tanstack-intent",
     "type-safe",
     "typescript",
     "vue"
@@ -122,17 +121,14 @@
     "build": "tsdown && pnpm run build:svelte",
     "build:svelte": "svelte-package -i src/svelte -o dist/svelte && node ./scripts/build-svelte.ts",
     "check-types": "tsc --build && svelte-check --tsconfig ./tsconfig.svelte.json",
-    "prepublishOnly": "run-s check-types test build scripts:copy-readme skills:validate",
+    "prepublishOnly": "run-s check-types test build scripts:copy-readme",
     "scripts:copy-readme": "node ./scripts/copy-readme.ts",
-    "skills:stale": "intent stale skills",
-    "skills:validate": "intent validate skills",
     "test": "vitest run"
   },
   "devDependencies": {
     "@solidjs/testing-library": "^0.8.10",
     "@sveltejs/package": "^2.5.8",
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
-    "@tanstack/intent": "^0.3.8",
     "@tanstack/react-start": "^1.168.49",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
@@ -230,9 +226,5 @@
   "engines": {
     "node": ">=22"
   },
-  "packageManager": "pnpm@12.3.4",
-  "intent": {
-    "repo": "letstri/permix",
-    "docs": "../docs/content/docs"
-  }
+  "packageManager": "pnpm@12.3.4"
 }
