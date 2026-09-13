@@ -4,6 +4,17 @@ description: The type-safe permission management you've always needed
 icon: RiInboxLine
 ---
 
+import {
+  RiBroadcastLine,
+  RiCodeSSlashLine,
+  RiFileCopyLine,
+  RiHourglassLine,
+  RiLinksLine,
+  RiSettings3Line,
+  RiShieldCheckLine,
+  RiWaterFlashLine,
+} from '@remixicon/react'
+
 ## Idea
 
 In my many years of experience, I have worked extensively with permissions management, and early in my career I wrote solutions that looked like this:
@@ -175,15 +186,40 @@ What are the benefits of using Permix?
 
 ## Core concepts
 
-| Topic                   | Guide                              |
-| ----------------------- | ---------------------------------- |
-| Schema and instance API | [Instance](/docs/guide/instance)   |
-| Assigning rules         | [Setup](/docs/guide/setup)         |
-| Checking permissions    | [Check](/docs/guide/check)         |
-| Role presets            | [Template](/docs/guide/template)   |
-| SSR transfer            | [Hydration](/docs/guide/hydration) |
-| Async bootstrap         | [Ready state](/docs/guide/ready)   |
-| Permission change hooks | [Events](/docs/guide/events)       |
+<Cards>
+  <Card
+    href="/docs/guide/instance"
+    title="Instance"
+    icon={<RiCodeSSlashLine />}
+  >
+    Describe the permission schema and create a Permix instance.
+  </Card>
+  <Card href="/docs/guide/setup" title="Setup" icon={<RiSettings3Line />}>
+    Assign boolean or function rules for the current user.
+  </Card>
+  <Card href="/docs/guide/check" title="Check" icon={<RiShieldCheckLine />}>
+    Check permissions with full type inference on paths and data.
+  </Card>
+  <Card href="/docs/guide/template" title="Template" icon={<RiFileCopyLine />}>
+    Reusable role presets that stay in sync with the schema.
+  </Card>
+  <Card
+    href="/docs/guide/hydration"
+    title="Hydration"
+    icon={<RiWaterFlashLine />}
+  >
+    Transfer rules from the server to the client for SSR.
+  </Card>
+  <Card href="/docs/guide/ready" title="Ready state" icon={<RiHourglassLine />}>
+    Wait for permissions before rendering with `isReady()`.
+  </Card>
+  <Card href="/docs/guide/events" title="Events" icon={<RiBroadcastLine />}>
+    React to `setup`, `ready`, and `check` with typed hooks.
+  </Card>
+  <Card href="/docs/guide/rebac" title="ReBAC" icon={<RiLinksLine />}>
+    Relationship-based rules with closures and data-based checks.
+  </Card>
+</Cards>
 
 ## Ready?
 

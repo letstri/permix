@@ -1,4 +1,4 @@
-import { getContext, setContext } from 'svelte'
+import { getContext, onDestroy, setContext } from 'svelte'
 
 import type { Definition, Permix, Rules } from '../core'
 import { createCheck } from '../core'
@@ -27,18 +27,16 @@ export function providePermix<T extends Definition>(permix: Permix<T>): void {
 
   setContext(PERMIX_CONTEXT_KEY, context)
 
-  $effect(() => {
-    const setup = permix.hook('setup', () => {
-      context.rules = permix.getRules()
-    })
-    const ready = permix.hook('ready', () => {
-      context.isReady = permix.isReady()
-    })
+  const setup = permix.hook('setup', () => {
+    context.rules = permix.getRules()
+  })
+  const ready = permix.hook('ready', () => {
+    context.isReady = permix.isReady()
+  })
 
-    return () => {
-      setup()
-      ready()
-    }
+  onDestroy(() => {
+    setup()
+    ready()
   })
 }
 

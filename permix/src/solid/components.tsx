@@ -1,10 +1,5 @@
 import type { JSX } from 'solid-js'
-import {
-  createEffect,
-  createMemo,
-  createRenderEffect,
-  onCleanup,
-} from 'solid-js'
+import { createMemo, createRenderEffect, onCleanup } from 'solid-js'
 import { createStore } from 'solid-js/store'
 
 import type {
@@ -33,7 +28,7 @@ export function PermixProvider<D extends Definition>(props: {
     rules: props.permix.getRules(),
   })
 
-  createEffect(() => {
+  createRenderEffect(() => {
     const setup = props.permix.hook('setup', () => {
       setContext('rules', props.permix.getRules())
     })

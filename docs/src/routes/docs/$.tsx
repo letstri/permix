@@ -8,7 +8,9 @@ import {
   DocsDescription,
   DocsPage,
   DocsTitle,
+  EditOnGitHub,
   MarkdownCopyButton,
+  PageLastUpdate,
   ViewOptionsPopover,
 } from 'fumadocs-ui/layouts/docs/page'
 import { Suspense } from 'react'
@@ -33,6 +35,7 @@ const serverLoader = createServerFn({
       path: page.path,
       slugs: page.slugs,
       markdownUrl: slugsToMarkdownPath(page.slugs).url,
+      lastModified: page.data.lastModified?.getTime(),
       pageTree: await source.serializePageTree(source.getPageTree()),
     }
   })
@@ -43,13 +46,16 @@ const clientLoader = browserCollections.docs.createClientLoader({
     {
       markdownUrl,
       path,
+      lastModified,
     }: {
       markdownUrl: string
       path: string
+      lastModified?: number
     }
   ) {
     // eslint-disable-next-line rules-of-hooks
     const components = useMDXComponents()
+    const githubUrl = `https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/docs/content/docs/${path}`
 
     return (
       <DocsPage
@@ -63,14 +69,15 @@ const clientLoader = browserCollections.docs.createClientLoader({
         </DocsDescription>
         <div className="-mt-4 flex flex-row items-center gap-2 border-b pb-6">
           <MarkdownCopyButton markdownUrl={markdownUrl} />
-          <ViewOptionsPopover
-            markdownUrl={markdownUrl}
-            githubUrl={`https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/docs/content/docs/${path}`}
-          />
+          <ViewOptionsPopover markdownUrl={markdownUrl} githubUrl={githubUrl} />
         </div>
         <DocsBody>
           <MDX components={components} />
         </DocsBody>
+        <div className="mt-8 flex flex-row flex-wrap items-center justify-between gap-4">
+          <EditOnGitHub href={githubUrl} />
+          {lastModified && <PageLastUpdate date={new Date(lastModified)} />}
+        </div>
       </DocsPage>
     )
   },
@@ -87,7 +94,7 @@ export const Route = createFileRoute('/docs/$')({
 })
 
 function Page() {
-  const { path, pageTree, markdownUrl } = useFumadocsLoader(
+  const { path, pageTree, markdownUrl, lastModified } = useFumadocsLoader(
     Route.useLoaderData()
   )
 
@@ -95,7 +102,7 @@ function Page() {
     <DocsLayout {...baseOptions()} tree={pageTree}>
       <SidebarScrollFix />
       <Suspense>
-        {clientLoader.useContent(path, { markdownUrl, path })}
+        {clientLoader.useContent(path, { markdownUrl, path, lastModified })}
       </Suspense>
     </DocsLayout>
   )

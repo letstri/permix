@@ -9,3 +9,4 @@ const permissions = usePermix(permix)
 </script>
 
 <div data-testid="create">{permissions.check('post.create').toString()}</div>
+<div data-testid="ready">{permissions.isReady.toString()}</div>
