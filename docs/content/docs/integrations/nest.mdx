@@ -67,12 +67,15 @@ export class AppModule {}
   globally in a hybrid app.
 </Callout>
 
-Because the request shape depends on the HTTP adapter, `req` is untyped by default. Pass your adapter's request type as the second type argument to get it typed everywhere — in the guard callback, `onForbidden`, `get`, `getOrThrow` and `getRules`:
+Nest supports several HTTP adapters with no request type in common, so `req` is untyped inside the guard callback and `onForbidden`. Annotate your own `@Req()` parameters where you need a typed request:
 
 ```ts
 import type { Request } from 'express'
 
-export const permix = createPermix<Definition, Request>()
+@Get()
+findAll(@Req() req: Request) {
+  return permix.getOrThrow(req).check('post.read')
+}
 ```
 
 </Step>

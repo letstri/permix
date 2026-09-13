@@ -15,7 +15,7 @@ type PermissionsDefinition = ValidateDefinition<{
   user: ['read', 'write']
 }>
 
-const permix = createPermix<PermissionsDefinition, Request>({
+const permix = createPermix<PermissionsDefinition>({
   onForbidden: () => {
     throw new ForbiddenException({
       error: 'You do not have permission to access this resource',

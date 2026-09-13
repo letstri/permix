@@ -544,7 +544,7 @@ describe('permix/nest', () => {
     })
 
     it('should accept an adapter request type', async () => {
-      const permix = createPermix<PermissionsDefinition, Request>()
+      const permix = createPermix<PermissionsDefinition>()
 
       @Controller()
       class TypedController {

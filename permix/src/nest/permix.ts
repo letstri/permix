@@ -20,31 +20,28 @@ import type { MaybePromise } from '../utils'
 
 /**
  * HTTP request object from `ExecutionContext.switchToHttp().getRequest()`.
- * Its shape depends on the HTTP adapter, so it defaults to `any`. Pass the
- * adapter request type to `createPermix` to narrow it, for example
- * `createPermix<Definition, Request>()` for Express.
+ * Nest supports several HTTP adapters with no request type in common, so this
+ * stays `any`; annotate your own `@Req()` parameters to get a typed request.
  */
 export type NestHttpRequest = any
 
-export interface GuardContext<R = NestHttpRequest> {
-  req: R
+export interface GuardContext {
+  req: NestHttpRequest
   context: ExecutionContext
 }
 
-export interface PermixOptions<D extends Definition, R = NestHttpRequest> {
+export interface PermixOptions<D extends Definition> {
   /**
    * Called when a `@Check` decorator denies the request. Defaults to throwing
    * a Nest `ForbiddenException` with `{ error: 'Forbidden' }`. The handler is
    * expected to throw: returning normally lets Nest raise its own
    * `ForbiddenException`.
    */
-  onForbidden?: (
-    params: CheckContext<D> & GuardContext<R>
-  ) => MaybePromise<void>
+  onForbidden?: (params: CheckContext<D> & GuardContext) => MaybePromise<void>
 }
 
-function getRequest<R>(context: ExecutionContext): R {
-  return context.switchToHttp().getRequest<R>()
+function getRequest(context: ExecutionContext): NestHttpRequest {
+  return context.switchToHttp().getRequest()
 }
 
 function readCheckArgs<D extends Definition>(
@@ -62,9 +59,9 @@ function readCheckArgs<D extends Definition>(
   return Reflect.getMetadata(metadataKey, classRef) as CheckArgs<D> | undefined
 }
 
-function buildPermix<D extends Definition, R>(
+function buildPermix<D extends Definition>(
   resolveKey: () => string | symbol,
-  options: PermixOptions<D, R> = {}
+  options: PermixOptions<D> = {}
 ) {
   const checkMetadataKey = Symbol('permix:check')
   const onForbidden =
@@ -75,12 +72,12 @@ function buildPermix<D extends Definition, R>(
 
   const hooks = createHooks<PermixHooks<D>>()
 
-  function get(req: R): PermixCore<D> | null {
-    const instance = (req as any)[resolveKey()] as PermixCore<D> | undefined
+  function get(req: NestHttpRequest): PermixCore<D> | null {
+    const instance = req[resolveKey()] as PermixCore<D> | undefined
     return instance ?? null
   }
 
-  function getOrThrow(req: R): PermixCore<D> {
+  function getOrThrow(req: NestHttpRequest): PermixCore<D> {
     const instance = get(req)
     if (!instance) {
       throw new PermixNotFoundError(resolveKey())
@@ -88,12 +85,12 @@ function buildPermix<D extends Definition, R>(
     return instance
   }
 
-  function attach(req: R, rules: Rules<D>): PermixCore<D> {
+  function attach(req: NestHttpRequest, rules: Rules<D>): PermixCore<D> {
     const instance = createPermixCore<D>(rules)
     instance.hook('check', (context) => {
       hooks.callHook('check', context)
     })
-    ;(req as any)[resolveKey()] = instance
+    req[resolveKey()] = instance
     return instance
   }
 
@@ -106,7 +103,7 @@ function buildPermix<D extends Definition, R>(
    */
   function guard(
     callbackOrRules:
-      | ((context: GuardContext<R>) => MaybePromise<Rules<D>>)
+      | ((context: GuardContext) => MaybePromise<Rules<D>>)
       | Rules<D>
   ): CanActivate {
     return {
@@ -117,7 +114,7 @@ function buildPermix<D extends Definition, R>(
           return true
         }
 
-        const req = getRequest<R>(context)
+        const req = getRequest(context)
         const rules =
           typeof callbackOrRules === 'function'
             ? await callbackOrRules({ req, context })
@@ -151,7 +148,7 @@ function buildPermix<D extends Definition, R>(
     ...args
   ) => SetMetadata(checkMetadataKey, args)
 
-  function getRules(req: R): Rules<D> | null {
+  function getRules(req: NestHttpRequest): Rules<D> | null {
     return get(req)?.getRules() ?? null
   }
 
@@ -206,11 +203,11 @@ function buildPermix<D extends Definition, R>(
  *
  * @link https://permix.letstri.dev/docs/integrations/nest
  */
-export function createPermix<D extends Definition, R = NestHttpRequest>(
-  options: PermixOptions<D, R> = {}
+export function createPermix<D extends Definition>(
+  options: PermixOptions<D> = {}
 ) {
   let key: string | symbol = Symbol('permix')
-  const permix = buildPermix<D, R>(() => key, options)
+  const permix = buildPermix<D>(() => key, options)
 
   return Object.assign(permix, {
     contextKey(newKey: string | symbol) {
@@ -221,6 +218,6 @@ export function createPermix<D extends Definition, R = NestHttpRequest>(
 }
 
 /** Return type of {@link createPermix}. */
-export type NestPermix<D extends Definition, R = NestHttpRequest> = ReturnType<
-  typeof createPermix<D, R>
+export type NestPermix<D extends Definition> = ReturnType<
+  typeof createPermix<D>
 >
