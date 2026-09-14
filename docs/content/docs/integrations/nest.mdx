@@ -85,10 +85,11 @@ findAll() {}
 </Callout>
 
 <Callout>
-  If more than one `permix.guard(...)` from the same factory applies to a
-  request (a global `APP_GUARD` plus a per-controller one, say), every guard
-  enforces the `@Check`, and the last one to run is the instance your handler
-  reads back through `permix.getOrThrow(req)`.
+  `permix.guard(...)` only sets up the per-request instance — `@Check` does the
+  enforcing. If more than one guard from the same factory applies to a request
+  (a global `APP_GUARD` plus a per-controller one, say), the last one to run
+  wins: its rules are what `@Check` enforces and what your handler reads back
+  through `permix.getOrThrow(req)`.
 </Callout>
 
 Nest supports several HTTP adapters with no request type in common, so `req` is untyped inside the guard callback and `onForbidden`. Annotate your own `@Req()` parameters where you need a typed request:

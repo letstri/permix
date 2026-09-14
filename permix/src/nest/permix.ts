@@ -96,11 +96,10 @@ function buildPermix<D extends Definition>(
   }
 
   /**
-   * Nest guard that always sets up a per-request Permix instance, then enforces
-   * `@Check(...)` when that decorator is present on the handler or controller.
+   * Nest guard that sets up a per-request Permix instance. Register globally
+   * with `APP_GUARD`, or per-controller / per-route with `@UseGuards`.
    *
-   * Register globally with `APP_GUARD`, or per-controller / per-route with
-   * `@UseGuards`.
+   * Non-HTTP contexts (RPC, WebSockets, GraphQL) are left untouched.
    */
   function guard(
     callbackOrRules:
@@ -109,70 +108,51 @@ function buildPermix<D extends Definition>(
   ): CanActivate {
     return {
       async canActivate(context) {
-        const args = readCheckArgs<D>(checkMetadataKey, context)
-
-        // Leave non-HTTP execution contexts (RPC, WebSockets, GraphQL)
-        // untouched so a global guard cannot corrupt them — but never let a
-        // `@Check` on such a handler through unenforced.
         if (context.getType() !== 'http') {
-          if (args) {
-            throw new PermixNotFoundError(resolveKey())
-          }
           return true
         }
-
         const req = getRequest(context)
-        const rules =
+        attach(
+          req,
           typeof callbackOrRules === 'function'
             ? await callbackOrRules({ req, context })
             : callbackOrRules
-        const instance = attach(req, rules)
-
-        if (!args) {
-          return true
-        }
-
-        const allowed = instance.check(...args)
-        if (allowed) {
-          return true
-        }
-
-        await onForbidden({
-          req,
-          context,
-          ...createCheckContext(...args),
-        })
-        return false
+        )
+        return true
       },
     }
   }
 
-  /**
-   * Guard attached by every `@Check`. It enforces nothing itself — it only
-   * asserts that `guard()` already ran for this request, so a `@Check` on a
-   * route the setup guard never reached fails closed instead of silently
-   * passing.
-   */
-  const assertSetup: CanActivate = {
-    canActivate(context) {
-      if (context.getType() === 'http') {
-        getOrThrow(getRequest(context))
+  const enforce: CanActivate = {
+    async canActivate(context) {
+      const args = readCheckArgs<D>(checkMetadataKey, context)
+      if (!args) {
+        return true
       }
-      return true
+      // `guard()` skips non-HTTP contexts, so there is no instance to check
+      // against — fail closed rather than let the `@Check` through.
+      if (context.getType() !== 'http') {
+        throw new PermixNotFoundError(resolveKey())
+      }
+      const req = getRequest(context)
+      if (getOrThrow(req).check(...args)) {
+        return true
+      }
+      await onForbidden({ req, context, ...createCheckContext(...args) })
+      return false
     },
   }
 
   /**
-   * Method or class decorator that records the permission check for `guard()`.
+   * Method or class decorator that enforces a permission. A handler-level
+   * `@Check` overrides a controller-level one.
    *
-   * It also attaches a guard that throws `PermixNotFoundError` when `guard()`
-   * has not run for the request, so forgetting to register the setup guard is
-   * a loud failure rather than an unprotected route.
+   * Throws `PermixNotFoundError` when `guard()` has not run for the request,
+   * so a forgotten setup guard is a loud failure, not an unprotected route.
    */
   const Check: (...args: CheckArgs<D>) => MethodDecorator & ClassDecorator = (
     ...args
-  ) =>
-    applyDecorators(SetMetadata(checkMetadataKey, args), UseGuards(assertSetup))
+  ) => applyDecorators(SetMetadata(checkMetadataKey, args), UseGuards(enforce))
 
   function getRules<R extends object>(req: R): Rules<D> | null {
     return get(req)?.getRules() ?? null
@@ -204,28 +184,6 @@ function buildPermix<D extends Definition>(
  *
  * Use `.contextKey('name')` to set a custom request key (defaults to a unique
  * `Symbol('permix')`).
- *
- * @example
- * ```ts
- * import { APP_GUARD } from '@nestjs/core'
- * import { createPermix } from 'permix/nest'
- *
- * const permix = createPermix<{
- *   post: ['create', 'read']
- * }>()
- *
- * @Get()
- * @permix.Check('post.read')
- * findAll() {}
- *
- * // app.module.ts
- * {
- *   provide: APP_GUARD,
- *   useValue: permix.guard(({ req }) => ({
- *     post: { create: !!req.user, read: true },
- *   })),
- * }
- * ```
  *
  * @link https://permix.letstri.dev/docs/integrations/nest
  */

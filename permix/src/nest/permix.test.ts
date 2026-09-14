@@ -1,5 +1,10 @@
 import 'reflect-metadata'
-import type { ExecutionContext, INestApplication, Type } from '@nestjs/common'
+import type {
+  CanActivate,
+  ExecutionContext,
+  INestApplication,
+  Type,
+} from '@nestjs/common'
 import {
   Controller,
   ForbiddenException,
@@ -630,9 +635,14 @@ describe('permix/nest', () => {
         getClass: () => class {},
       } as unknown as ExecutionContext
 
-      await expect(
-        permix.guard(denied).canActivate(rpcContext)
-      ).rejects.toThrow(PermixNotFoundError)
+      // `Check` attaches the enforcing guard through `UseGuards`.
+      const [enforce] = Reflect.getMetadata('__guards__', handler) as [
+        CanActivate,
+      ]
+
+      await expect(enforce.canActivate(rpcContext)).rejects.toThrow(
+        PermixNotFoundError
+      )
     })
 
     it('should fail closed when Check is used without a registered guard', async () => {
