@@ -9,12 +9,15 @@ import {
   Req,
 } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
+import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { FastifyAdapter } from '@nestjs/platform-fastify'
 import { Test } from '@nestjs/testing'
 import type { Request } from 'express'
 import request from 'supertest'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { ValidateDefinition } from '../core'
+import { PermixNotFoundError } from '../core'
 import { createPermix } from './permix'
 
 interface PostEntity {
@@ -53,6 +56,22 @@ describe('permix/nest', () => {
     app = moduleRef.createNestApplication({ logger: false })
     await app.init()
     return app
+  }
+
+  async function createFastifyApp(
+    module: Type<unknown>
+  ): Promise<NestFastifyApplication> {
+    const moduleRef = await Test.createTestingModule({
+      imports: [module],
+    }).compile()
+    const fastifyApp = moduleRef.createNestApplication<NestFastifyApplication>(
+      new FastifyAdapter(),
+      { logger: false }
+    )
+    app = fastifyApp
+    await fastifyApp.init()
+    await fastifyApp.getHttpAdapter().getInstance().ready()
+    return fastifyApp
   }
 
   describe(createPermix, () => {
@@ -595,6 +614,92 @@ describe('permix/nest', () => {
       )
       expect(rules).not.toHaveBeenCalled()
       expect(message).toStrictEqual({ pattern: 'sum' })
+    })
+
+    it('should fail closed when a Check runs on a non-http context', async () => {
+      const permix = createPermix<PermissionsDefinition>()
+      const handler = () => {}
+      ;(permix.Check('post.read') as MethodDecorator)({}, 'handler', {
+        value: handler,
+      })
+
+      const rpcContext = {
+        getType: () => 'rpc',
+        switchToHttp: () => ({ getRequest: () => ({}) }),
+        getHandler: () => handler,
+        getClass: () => class {},
+      } as unknown as ExecutionContext
+
+      await expect(
+        permix.guard(denied).canActivate(rpcContext)
+      ).rejects.toThrow(PermixNotFoundError)
+    })
+
+    it('should fail closed when Check is used without a registered guard', async () => {
+      const permix = createPermix<PermissionsDefinition>()
+
+      @Controller()
+      class PostsController {
+        @Get('posts')
+        @permix.Check('post.read')
+        read() {
+          return { success: true }
+        }
+      }
+
+      @Module({ controllers: [PostsController] })
+      class AppModule {}
+
+      const nestApp = await createApp(AppModule)
+      const response = await request(nestApp.getHttpServer()).get('/posts')
+
+      expect(response.status).toBe(500)
+    })
+
+    it('should work with the fastify adapter', async () => {
+      const permix = createPermix<PermissionsDefinition>()
+
+      @Controller()
+      class PostsController {
+        @Get('posts')
+        @permix.Check('post.read')
+        read() {
+          return { success: true }
+        }
+
+        @Get('posts/forbidden')
+        @permix.Check('post.update')
+        update() {
+          return { success: true }
+        }
+      }
+
+      @Module({
+        controllers: [PostsController],
+        providers: [
+          {
+            provide: APP_GUARD,
+            useValue: permix.guard({
+              post: { create: false, read: true, update: false },
+              user: { delete: false },
+            }),
+          },
+        ],
+      })
+      class AppModule {}
+
+      const nestApp = await createFastifyApp(AppModule)
+
+      const allowed = await nestApp.inject({ method: 'GET', url: '/posts' })
+      expect(allowed.statusCode).toBe(200)
+      expect(allowed.json()).toStrictEqual({ success: true })
+
+      const forbidden = await nestApp.inject({
+        method: 'GET',
+        url: '/posts/forbidden',
+      })
+      expect(forbidden.statusCode).toBe(403)
+      expect(forbidden.json()).toStrictEqual({ error: 'Forbidden' })
     })
   })
 

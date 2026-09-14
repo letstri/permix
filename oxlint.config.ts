@@ -126,7 +126,7 @@ export default defineConfig({
       },
     },
     {
-      files: ['permix/src/nest/**', 'examples/nest/**'],
+      files: ['permix/src/nest/*.test.ts', 'examples/nest/**'],
       rules: {
         'class-methods-use-this': 'off',
         'typescript/no-extraneous-class': 'off',

@@ -1,9 +1,10 @@
-import type {
-  CanActivate,
-  CustomDecorator,
-  ExecutionContext,
+import type { CanActivate, ExecutionContext } from '@nestjs/common'
+import {
+  applyDecorators,
+  ForbiddenException,
+  SetMetadata,
+  UseGuards,
 } from '@nestjs/common'
-import { ForbiddenException, SetMetadata } from '@nestjs/common'
 
 import type { Permix as PermixCore } from '../core'
 import {
@@ -72,12 +73,12 @@ function buildPermix<D extends Definition>(
 
   const hooks = createHooks<PermixHooks<D>>()
 
-  function get(req: NestHttpRequest): PermixCore<D> | null {
-    const instance = req[resolveKey()] as PermixCore<D> | undefined
+  function get<R extends object>(req: R): PermixCore<D> | null {
+    const instance = (req as any)[resolveKey()] as PermixCore<D> | undefined
     return instance ?? null
   }
 
-  function getOrThrow(req: NestHttpRequest): PermixCore<D> {
+  function getOrThrow<R extends object>(req: R): PermixCore<D> {
     const instance = get(req)
     if (!instance) {
       throw new PermixNotFoundError(resolveKey())
@@ -85,12 +86,12 @@ function buildPermix<D extends Definition>(
     return instance
   }
 
-  function attach(req: NestHttpRequest, rules: Rules<D>): PermixCore<D> {
+  function attach<R extends object>(req: R, rules: Rules<D>): PermixCore<D> {
     const instance = createPermixCore<D>(rules)
     instance.hook('check', (context) => {
       hooks.callHook('check', context)
     })
-    req[resolveKey()] = instance
+    ;(req as any)[resolveKey()] = instance
     return instance
   }
 
@@ -108,9 +109,15 @@ function buildPermix<D extends Definition>(
   ): CanActivate {
     return {
       async canActivate(context) {
-        // Leave non-HTTP execution contexts (RPC, WebSockets, GraphQL
-        // subscriptions) untouched so a global guard cannot corrupt them.
+        const args = readCheckArgs<D>(checkMetadataKey, context)
+
+        // Leave non-HTTP execution contexts (RPC, WebSockets, GraphQL)
+        // untouched so a global guard cannot corrupt them — but never let a
+        // `@Check` on such a handler through unenforced.
         if (context.getType() !== 'http') {
+          if (args) {
+            throw new PermixNotFoundError(resolveKey())
+          }
           return true
         }
 
@@ -121,7 +128,6 @@ function buildPermix<D extends Definition>(
             : callbackOrRules
         const instance = attach(req, rules)
 
-        const args = readCheckArgs<D>(checkMetadataKey, context)
         if (!args) {
           return true
         }
@@ -142,13 +148,33 @@ function buildPermix<D extends Definition>(
   }
 
   /**
-   * Method or class decorator that records the permission check for `guard()`.
+   * Guard attached by every `@Check`. It enforces nothing itself — it only
+   * asserts that `guard()` already ran for this request, so a `@Check` on a
+   * route the setup guard never reached fails closed instead of silently
+   * passing.
    */
-  const Check: (...args: CheckArgs<D>) => CustomDecorator<string | symbol> = (
-    ...args
-  ) => SetMetadata(checkMetadataKey, args)
+  const assertSetup: CanActivate = {
+    canActivate(context) {
+      if (context.getType() === 'http') {
+        getOrThrow(getRequest(context))
+      }
+      return true
+    },
+  }
 
-  function getRules(req: NestHttpRequest): Rules<D> | null {
+  /**
+   * Method or class decorator that records the permission check for `guard()`.
+   *
+   * It also attaches a guard that throws `PermixNotFoundError` when `guard()`
+   * has not run for the request, so forgetting to register the setup guard is
+   * a loud failure rather than an unprotected route.
+   */
+  const Check: (...args: CheckArgs<D>) => MethodDecorator & ClassDecorator = (
+    ...args
+  ) =>
+    applyDecorators(SetMetadata(checkMetadataKey, args), UseGuards(assertSetup))
+
+  function getRules<R extends object>(req: R): Rules<D> | null {
     return get(req)?.getRules() ?? null
   }
 

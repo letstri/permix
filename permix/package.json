@@ -134,6 +134,7 @@
     "@nestjs/common": "^11.2.3",
     "@nestjs/core": "^11.2.3",
     "@nestjs/platform-express": "^11.2.3",
+    "@nestjs/platform-fastify": "^11.2.3",
     "@nestjs/testing": "^11.2.3",
     "@solidjs/testing-library": "^0.8.10",
     "@sveltejs/package": "^2.5.8",
@@ -183,6 +184,7 @@
     "next": ">=14",
     "react": ">=18",
     "react-dom": ">=18",
+    "reflect-metadata": ">=0.1.13",
     "solid-js": ">=1",
     "svelte": ">=5",
     "vue": ">=3"
@@ -231,6 +233,9 @@
       "optional": true
     },
     "react-dom": {
+      "optional": true
+    },
+    "reflect-metadata": {
       "optional": true
     },
     "solid-js": {
