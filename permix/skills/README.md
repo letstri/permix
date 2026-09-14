@@ -23,7 +23,7 @@ Restart your editor or start a new agent chat so skills are picked up. When you 
 | Skill | When to use |
 | --- | --- |
 | [permix-getting-started](./permix-getting-started/SKILL.md) | New project, schema, `setup`, roles/templates |
-| [permix](./permix/SKILL.md) | Everything past setup: `check`/ReBAC (`references/check.md`), React/Vue/Solid/Svelte + SSR (`references/frontend.md`), Express/Hono/Fastify/tRPC/oRPC middleware (`references/server.md`) |
+| [permix](./permix/SKILL.md) | Everything past setup: `check`/ReBAC (`references/check.md`), React/Vue/Solid/Svelte + SSR (`references/frontend.md`), Express/Hono/Fastify/NestJS/tRPC/oRPC middleware (`references/server.md`) |
 
 ## Without skills
 

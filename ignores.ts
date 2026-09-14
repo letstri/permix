@@ -3,6 +3,7 @@ export const ignorePatterns = [
   '**/.next/**',
   '**/.turbo/**',
   '**/.vercel/**',
+  '**/.claude/**',
   '**/dist/**',
   '**/build/**',
   '**/coverage/**',
