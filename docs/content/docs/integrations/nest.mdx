@@ -1,11 +1,12 @@
 ---
 title: NestJS
 description: Learn how to use Permix with NestJS
+icon: RiHexagonLine
 ---
 
 ## Overview
 
-Permix provides a NestJS integration that sets up permissions per request and enforces them with a guard plus a `@Check` decorator. The factory is created using `createPermix` from `permix/nest`.
+Set up permissions per request with a guard, enforce them with a `@Check` decorator. Create the factory with `createPermix` from `permix/nest`.
 
 <Callout>
   Before getting started with the NestJS integration, make sure you've completed
@@ -18,7 +19,7 @@ Permix provides a NestJS integration that sets up permissions per request and en
 
 ## Setup
 
-Create a Permix factory and register its guard as a global `APP_GUARD`. The guard always attaches a per-request instance; it only enforces a permission when `@Check` is present.
+Create a factory and register its guard as a global `APP_GUARD`.
 
 ```ts
 import { Module } from '@nestjs/common'
@@ -61,19 +62,13 @@ export class AppModule {}
 ```
 
 <Callout>
-  The guard works with both the Express and Fastify Nest HTTP adapters. It
-  preserves full type safety from your Permix definition. Non-HTTP execution
-  contexts (RPC, WebSockets, GraphQL) are skipped, so the guard is safe to
-  register globally in a hybrid app — a `@Check` on such a handler throws
-  `PermixNotFoundError` rather than passing unenforced.
+  `permix.guard(...)` sets up the instance, `@Check` enforces it. A `@Check`
+  with no guard on the request throws `PermixNotFoundError` — it never passes
+  unchecked. Works with the Express and Fastify adapters; non-HTTP contexts
+  (RPC, WebSockets, GraphQL) are skipped.
 </Callout>
 
-<Callout type="warn">
-  `@Check` is enforced by the guard, so it needs `permix.guard(...)` to have
-  run for that request. If it has not, the request fails with
-  `PermixNotFoundError` instead of silently skipping the check. When you
-  register the setup guard per route rather than globally, put `@UseGuards`
-  above `@Check` so it runs first:
+Registering the guard per route instead of globally? Put `@UseGuards` above `@Check` so it runs first:
 
 ```ts
 @Get()
@@ -82,17 +77,7 @@ export class AppModule {}
 findAll() {}
 ```
 
-</Callout>
-
-<Callout>
-  `permix.guard(...)` only sets up the per-request instance — `@Check` does the
-  enforcing. If more than one guard from the same factory applies to a request
-  (a global `APP_GUARD` plus a per-controller one, say), the last one to run
-  wins: its rules are what `@Check` enforces and what your handler reads back
-  through `permix.getOrThrow(req)`.
-</Callout>
-
-Nest supports several HTTP adapters with no request type in common, so `req` is untyped inside the guard callback and `onForbidden`. Annotate your own `@Req()` parameters where you need a typed request:
+`req` is untyped inside the guard callback and `onForbidden`, since Nest's HTTP adapters share no request type. Annotate your own `@Req()` parameters:
 
 ```ts
 import type { Request } from 'express'
@@ -109,7 +94,7 @@ findAll(@Req() req: Request) {
 
 ## Checking Permissions
 
-Use the `Check` decorator on a handler or controller:
+Use `@Check` on a handler or controller:
 
 ```ts
 import { Controller, Delete, Get, Post, Put } from '@nestjs/common'
@@ -149,7 +134,7 @@ export class PostsController {
 
 ## Accessing Permix Directly
 
-You can access the Permix instance directly in your route handlers using the `get` function:
+Access the instance in a handler with `getOrThrow`:
 
 ```ts
 @Get()
@@ -166,7 +151,7 @@ findAll(@Req() req: Request) {
 }
 ```
 
-Entity-based (ReBAC) checks usually run in the handler after the resource is loaded:
+Entity (ReBAC) checks run here, after the resource is loaded:
 
 ```ts
 @Put(':id')
@@ -188,7 +173,7 @@ async update(@Param('id') id: string, @Req() req: Request) {
 
 ## Using Templates
 
-Permix provides a template helper to create reusable permission rule sets:
+Reusable rule sets:
 
 ```ts
 const adminTemplate = permix.template({
@@ -223,42 +208,19 @@ const adminTemplate = permix.template({
 
 ## Custom Error Handling
 
-By default, a denied `@Check` throws a Nest `ForbiddenException` with `{ error: 'Forbidden' }`. You can customize this by providing an `onForbidden` handler:
+A denied `@Check` throws `ForbiddenException` with `{ error: 'Forbidden' }`. Override it with `onForbidden`:
 
 <Callout type="warn">
-  `onForbidden` is expected to throw. Unlike the Express integration, do not
-  write to the response directly — if the handler returns normally, Nest raises
-  its own `ForbiddenException` and a response you already sent would conflict
-  with it.
+  `onForbidden` must throw. Unlike the Express integration, do not write to the
+  response directly — returning normally lets Nest raise its own
+  `ForbiddenException` on top of whatever you sent.
 </Callout>
-
-### Basic Error Handler
-
-```ts
-const permix = createPermix<Definition>({
-  onForbidden: () => {
-    throw new ForbiddenException({
-      error: 'Custom forbidden message',
-    })
-  },
-})
-```
-
-### Dynamic Error Handler
-
-You can also throw different responses based on the checked path:
 
 ```ts
 const permix = createPermix<Definition>({
   onForbidden: ({ path }) => {
-    if (path === 'post.create') {
-      throw new ForbiddenException({
-        error: `You don't have permission for ${path}`,
-      })
-    }
-
     throw new ForbiddenException({
-      error: 'You do not have permission to perform this action',
+      error: `You don't have permission for ${path}`,
     })
   },
 })
@@ -275,7 +237,7 @@ The `onForbidden` handler receives:
 
 ### Async Permission Rules
 
-You can use async functions in your guard setup:
+The guard callback can be async:
 
 ```ts
 permix.guard(async ({ req }) => {
@@ -292,15 +254,13 @@ permix.guard(async ({ req }) => {
 ```
 
 <Callout type="warn">
-  Global guards run in the order they are registered. Anything the callback
-  reads off the request — `req.user` above — must be populated by an
-  authentication guard registered *before* the Permix guard, otherwise it is
-  still undefined when the callback runs.
+  Global guards run in registration order. Register your auth guard *before* the
+  Permix guard, or `req.user` is still undefined when the callback runs.
 </Callout>
 
 ### Hooks
 
-You can register hooks at the factory level to listen for events across all requests:
+Factory-level hooks fire for every request:
 
 ```ts
 permix.hook('check', ({ path, data }) => {
@@ -310,4 +270,4 @@ permix.hook('check', ({ path, data }) => {
 
 ### Example
 
-You can find the example of the NestJS integration [here](https://github.com/letstri/permix/tree/main/examples/nest).
+Full example: [examples/nest](https://github.com/letstri/permix/tree/main/examples/nest).
