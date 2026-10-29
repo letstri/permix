@@ -1,6 +1,8 @@
 import { render, waitFor } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { renderToString } from 'react-dom/server'
+import { describe, expect, it, vi } from 'vitest'
 
+import type { DehydratedState } from '../core'
 import { createPermix, PermixRuleNotDefinedError } from '../core'
 import { createComponents, PermixHydrate, PermixProvider } from './components'
 import { usePermix } from './hooks'
@@ -39,6 +41,93 @@ describe('components', () => {
     )
 
     expect(container.firstChild).toHaveTextContent('true')
+  })
+
+  it('should render each hydrated state with a shared instance on the server', () => {
+    const permix = createPermix<{
+      admin: ['view']
+    }>()
+
+    const Probe = () => {
+      const { check } = usePermix(permix)
+      return <span>{String(check('admin.view'))}</span>
+    }
+
+    const App = ({ state }: { state: DehydratedState<any> }) => (
+      <PermixProvider permix={permix}>
+        <PermixHydrate state={state}>
+          <Probe />
+        </PermixHydrate>
+      </PermixProvider>
+    )
+
+    const admin = { admin: { view: true } }
+    const regular = { admin: { view: false } }
+
+    expect(renderToString(<App state={admin} />)).toBe('<span>true</span>')
+    expect(renderToString(<App state={regular} />)).toBe('<span>false</span>')
+    expect(renderToString(<App state={admin} />)).toBe('<span>true</span>')
+  })
+
+  it('should prefer hydrated state over rules the instance had at mount', async () => {
+    const permix = createPermix<{
+      post: ['create']
+    }>()
+
+    permix.setup({ post: { create: false } })
+
+    const TestComponent = () => {
+      const { check } = usePermix(permix)
+      return <div>{check('post.create').toString()}</div>
+    }
+
+    const { container } = render(
+      <PermixProvider permix={permix}>
+        <PermixHydrate state={{ post: { create: true } }}>
+          <TestComponent />
+        </PermixHydrate>
+      </PermixProvider>
+    )
+
+    expect(container.firstChild).toHaveTextContent('true')
+
+    permix.setup({ post: { create: false } })
+
+    await waitFor(() => {
+      expect(container.firstChild).toHaveTextContent('false')
+    })
+  })
+
+  it('should apply a new hydrated state on rerender', () => {
+    const permix = createPermix<{
+      post: ['create']
+    }>()
+    const consoleError = vi.spyOn(console, 'error')
+
+    const TestComponent = () => {
+      const { check } = usePermix(permix)
+      return <div>{check('post.create').toString()}</div>
+    }
+
+    const App = ({ state }: { state: DehydratedState<any> }) => (
+      <PermixProvider permix={permix}>
+        <PermixHydrate state={state}>
+          <TestComponent />
+        </PermixHydrate>
+      </PermixProvider>
+    )
+
+    const { container, rerender } = render(
+      <App state={{ post: { create: true } }} />
+    )
+
+    expect(container.firstChild).toHaveTextContent('true')
+
+    rerender(<App state={{ post: { create: false } }} />)
+
+    expect(container.firstChild).toHaveTextContent('false')
+    expect(consoleError).not.toHaveBeenCalled()
+    consoleError.mockRestore()
   })
 
   it('should work with Check component', () => {

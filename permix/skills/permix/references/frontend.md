@@ -188,6 +188,8 @@ function App({
 
 Run client `permix.setup(...)` where you restore the session (e.g. after `PermixHydrate` mounts or in the same auth effect).
 
+If the same tree renders on the server, use a per-request instance there — a module-level instance is shared across concurrent requests.
+
 ### Next.js / TanStack Start
 
 Use framework helpers from `permix/next` or `permix/tanstack-start` when available — they wire dehydrate/hydrate into the framework data flow.
