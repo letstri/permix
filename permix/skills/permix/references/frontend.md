@@ -188,9 +188,13 @@ function App({
 
 Run client `permix.setup(...)` where you restore the session (e.g. after `PermixHydrate` mounts or in the same auth effect).
 
+If the same tree renders on the server, use a per-request instance there — a module-level instance is shared across concurrent requests.
+
 ### Next.js / TanStack Start
 
 Use framework helpers from `permix/next` or `permix/tanstack-start` when available — they wire dehydrate/hydrate into the framework data flow.
+
+In Next.js, `'use client'` providers still render on the server, so don't create the client instance at module level. Create it with `useState(() => createPermix<D>())` inside the provider (one per request during SSR, one per tab in the browser) and expose it to client components through your own context and hook. Don't import a module-level instance into client components.
 
 In TanStack Start, `permix.get(context)` only works in server functions and server routes. To check inside `beforeLoad`/`loader`, put a core instance on the **router context** in `getRouter()` (`context: { permix }`), type it with `createRootRouteWithContext`, hydrate it in the root route's `beforeLoad`, then call `context.permix.check(...)` in any child route. Passing only the context type without the runtime value leaves `context.permix` undefined.
 

@@ -157,6 +157,13 @@ function App({ dehydratedState }: { dehydratedState: DehydratedState<any> }) {
 }
 ```
 
+<Callout type="warn">
+  If this tree also renders on the server, create the Permix instance per
+  request there. A module-level instance is shared by every request: concurrent
+  renders can overwrite each other's hydrated rules, and `permix.check()`
+  outside React sees whichever request hydrated last.
+</Callout>
+
 See the [Hydration guide](/docs/guide/hydration) and framework-specific pages for [Next.js](/docs/integrations/next) and [TanStack Start](/docs/integrations/tanstack-start).
 
 </Step>

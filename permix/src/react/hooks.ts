@@ -6,7 +6,6 @@ import { createCheck } from '../core'
 export interface PermixContext<T extends Definition> {
   permix: Permix<T>
   isReady: boolean
-  rules: Rules<T> | null
 }
 
 export const Context = React.createContext<PermixContext<any>>(null!)
@@ -31,14 +30,32 @@ export function usePermixContext() {
 export function usePermix<T extends Definition>(
   permix: Pick<Permix<T>, 'getRules' | 'check'>
 ) {
-  const { isReady, rules } = usePermixContext()
+  const { permix: instance, isReady } = usePermixContext()
 
-  const check: Permix<T>['check'] = React.useCallback(
-    (...args) =>
-      createCheck<T>(() => (rules ?? permix.getRules()) as Rules<T> | null)(
-        ...args
-      ),
-    [rules, permix]
+  // `hydrate()` fires `setup` while `PermixHydrate` renders; defer to avoid
+  // updating this component during another component's render.
+  const subscribe = React.useCallback(
+    (onChange: () => void) =>
+      instance.hook('setup', () => {
+        queueMicrotask(onChange)
+      }),
+    [instance]
+  )
+  const getRules = React.useCallback(
+    () => (instance.getRules() ?? permix.getRules()) as Rules<T> | null,
+    [instance, permix]
+  )
+
+  // Read rules from the instance on every render instead of a provider snapshot,
+  // so a `PermixHydrate` above this component applies in the same pass (incl. SSR).
+  const rules = React.useSyncExternalStore(subscribe, getRules, getRules)
+
+  // `check` reads the instance when called, so a handler that runs right after
+  // `setup()` doesn't wait for the re-render; `rules` only changes its identity.
+  const check: Permix<T>['check'] = React.useMemo(
+    () => createCheck<T>(getRules),
+    // eslint-disable-next-line react/memo-dependencies, react-hooks/exhaustive-deps
+    [getRules, rules]
   )
 
   return { check, isReady }

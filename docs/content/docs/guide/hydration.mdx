@@ -68,11 +68,13 @@ import express from 'express'
 import { createPermix } from 'permix'
 
 const app = express()
-const permix = createPermix<{
-  post: ['create', 'read']
-}>()
 
 app.get('/', (req, res) => {
+  // One instance per request: a shared one would leak rules between users
+  const permix = createPermix<{
+    post: ['create', 'read']
+  }>()
+
   // Setup permissions on the server
   permix.setup({
     post: {
