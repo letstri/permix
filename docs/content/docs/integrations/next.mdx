@@ -157,7 +157,7 @@ import {
   PermixProvider,
   usePermix as useReactPermix,
 } from 'permix/react'
-import { createContext, use, useState } from 'react'
+import { createContext, useContext, useState } from 'react'
 
 // The same type definition as on the server.
 type PermissionsDefinition = {
@@ -174,7 +174,7 @@ const ClientPermixContext = createContext<Permix<PermissionsDefinition> | null>(
 )
 
 export function usePermix() {
-  const permix = use(ClientPermixContext)
+  const permix = useContext(ClientPermixContext)
 
   if (!permix) {
     throw new Error('usePermix must be used within <Providers>')
@@ -193,11 +193,11 @@ export function Providers({
   const [permix] = useState(() => createPermix<PermissionsDefinition>())
 
   return (
-    <ClientPermixContext value={permix}>
+    <ClientPermixContext.Provider value={permix}>
       <PermixProvider permix={permix}>
         <PermixHydrate state={state}>{children}</PermixHydrate>
       </PermixProvider>
-    </ClientPermixContext>
+    </ClientPermixContext.Provider>
   )
 }
 ```
