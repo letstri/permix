@@ -50,9 +50,12 @@ export function usePermix<T extends Definition>(
   // so a `PermixHydrate` above this component applies in the same pass (incl. SSR).
   const rules = React.useSyncExternalStore(subscribe, getRules, getRules)
 
-  const check: Permix<T>['check'] = React.useCallback(
-    (...args) => createCheck<T>(() => rules)(...args),
-    [rules]
+  // `check` reads the instance when called, so a handler that runs right after
+  // `setup()` doesn't wait for the re-render; `rules` only changes its identity.
+  const check: Permix<T>['check'] = React.useMemo(
+    () => createCheck<T>(getRules),
+    // eslint-disable-next-line react/memo-dependencies, react-hooks/exhaustive-deps
+    [getRules, rules]
   )
 
   return { check, isReady }

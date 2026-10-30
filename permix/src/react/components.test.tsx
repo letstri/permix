@@ -1,6 +1,6 @@
-import { render, waitFor } from '@testing-library/react'
+import { render, renderHook, waitFor } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, onTestFinished, vi } from 'vitest'
 
 import type { DehydratedState } from '../core'
 import { createPermix, PermixRuleNotDefinedError } from '../core'
@@ -103,6 +103,9 @@ describe('components', () => {
       post: ['create']
     }>()
     const consoleError = vi.spyOn(console, 'error')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+    })
 
     const TestComponent = () => {
       const { check } = usePermix(permix)
@@ -127,7 +130,27 @@ describe('components', () => {
 
     expect(container.firstChild).toHaveTextContent('false')
     expect(consoleError).not.toHaveBeenCalled()
-    consoleError.mockRestore()
+  })
+
+  it('should check new rules before the component re-renders', () => {
+    const permix = createPermix<{
+      post: ['create']
+    }>()
+
+    permix.setup({ post: { create: false } })
+
+    const { result } = renderHook(() => usePermix(permix), {
+      wrapper: ({ children }) => (
+        <PermixProvider permix={permix}>{children}</PermixProvider>
+      ),
+    })
+    const { check } = result.current
+
+    expect(check('post.create')).toBe(false)
+
+    permix.setup({ post: { create: true } })
+
+    expect(check('post.create')).toBe(true)
   })
 
   it('should work with Check component', () => {

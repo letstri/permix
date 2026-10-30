@@ -194,6 +194,8 @@ If the same tree renders on the server, use a per-request instance there — a m
 
 Use framework helpers from `permix/next` or `permix/tanstack-start` when available — they wire dehydrate/hydrate into the framework data flow.
 
+In Next.js, `'use client'` providers still render on the server, so don't create the client instance at module level. Create it with `useState(() => createPermix<D>())` inside the provider (one per request during SSR, one per tab in the browser) and expose it to client components through your own context and hook. Don't import a module-level instance into client components.
+
 In TanStack Start, `permix.get(context)` only works in server functions and server routes. To check inside `beforeLoad`/`loader`, put a core instance on the **router context** in `getRouter()` (`context: { permix }`), type it with `createRootRouteWithContext`, hydrate it in the root route's `beforeLoad`, then call `context.permix.check(...)` in any child route. Passing only the context type without the runtime value leaves `context.permix` undefined.
 
 TanStack Start bundle caveat: if the `setupMiddleware()` callback imports server-only code (auth library, DB client, `node:` builtins), those imports leak into the client bundle — Start only strips `.server()` bodies it sees in app source, not the one hidden inside the library. Use `createMiddleware().server(permix.createSetupHandler(callback))` in `src/start.ts` instead; same behavior, but the boundary is visible to the compiler and the callback gets pruned.
